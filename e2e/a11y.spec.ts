@@ -34,7 +34,7 @@ for (const theme of ["light", "dark"] as const) {
         [theme]
       );
       await page.goto(resolvePath(page_.path));
-      await page.waitForLoadState("networkidle").catch(() => {});
+      await page.waitForLoadState("domcontentloaded");
       await page.waitForTimeout(400);
 
       await page.evaluate(AUDIT);

@@ -6,7 +6,6 @@ import type { RouteDay } from "@/app/api/route-availability/route";
 import { addDays, daysBetween, formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { DATE_CHIP_STRIDE_PX } from "@/lib/ui/dateChip";
 
 const TONE: Record<RouteDay["state"], { dot: string; text: string }> = {
@@ -76,12 +75,14 @@ export function DateStrip({
     });
   }, [date, data]);
 
-  if (disabled || !from || !to) {
-    const placeholders = Array.from({ length: span }, (_, i) => addDays(today, i));
+  const placeholderDays = Array.from({ length: windowSpan }, (_, i) => addDays(today, i));
+  const waiting = disabled || !from || !to || isPending;
+
+  if (!data) {
     return (
-      <div className="opacity-45" aria-disabled="true">
+      <div className={waiting ? "opacity-45" : undefined} aria-disabled={waiting || undefined}>
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Journey date">
-          {placeholders.map((day) => {
+          {placeholderDays.map((day) => {
             const selected = day === date;
             const label = day === today ? "Today" : day === addDays(today, 1) ? "Tomorrow" : formatWeekday(day);
             return (
@@ -106,24 +107,11 @@ export function DateStrip({
             );
           })}
         </div>
-        <p className="mt-2 px-0.5 text-[0.6875rem] text-faint">Pick origin and destination to see which days have seats.</p>
+        <p className="mt-2 min-h-[1.125rem] px-0.5 text-[0.6875rem] text-faint">
+          Pick origin and destination to see which days have seats.
+        </p>
       </div>
     );
-  }
-
-  if (isPending) {
-    return (
-      <div className="flex gap-1.5 overflow-hidden" aria-hidden>
-        {Array.from({ length: span }, (_, i) => (
-          <Skeleton key={i} className="h-[4.5rem] w-[4.25rem] shrink-0 rounded-xl" />
-        ))}
-      </div>
-    );
-  }
-
-  // A failed strip must not masquerade as "no trains available".
-  if (isError) {
-    return <p className="text-[0.75rem] text-danger">Couldn&rsquo;t load availability for these dates.</p>;
   }
 
   return (
@@ -168,20 +156,26 @@ export function DateStrip({
           );
         })}
       </div>
-      <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-[0.6875rem] text-faint">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-ok" aria-hidden /> Seats free
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-warn" aria-hidden /> RAC only
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-danger" aria-hidden /> Waitlist only
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-border-strong" aria-hidden /> No trains
-        </span>
-      </p>
+      {isError ? (
+        <p className="mt-2 min-h-[1.125rem] px-0.5 text-[0.6875rem] text-danger">
+          Couldn&rsquo;t load availability for these dates.
+        </p>
+      ) : (
+        <p className="mt-2 flex min-h-[1.125rem] flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-[0.6875rem] text-faint">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-ok" aria-hidden /> Seats free
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-warn" aria-hidden /> RAC only
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-danger" aria-hidden /> Waitlist only
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-border-strong" aria-hidden /> No trains
+          </span>
+        </p>
+      )}
     </div>
   );
 }

@@ -99,9 +99,9 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
         {t("search.submit")}
       </button>
 
-      {!canSearch && !compact && (
-        <p className="mt-2.5 text-center text-[0.75rem] text-faint">
-          {from && to ? "Pick two different stations" : t("home.noLogin")}
+      {!compact && (
+        <p className="mt-2.5 min-h-[1.125rem] text-center text-[0.75rem] text-faint">
+          {from && to && from.token === to.token ? "Pick two different stations" : t("home.noLogin")}
         </p>
       )}
     </form>
