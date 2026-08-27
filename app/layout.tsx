@@ -4,6 +4,8 @@ import { AppHeader, MobileNav } from "@/components/AppHeader";
 import { Providers } from "@/components/ui/Providers";
 import { LocaleProvider } from "@/lib/i18n/useLocale";
 import { OfflineSupport } from "@/components/ui/OfflineSupport";
+import { ChatProvider } from "@/lib/agent/ChatProvider";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import "./globals.css";
 
@@ -25,8 +27,6 @@ export const metadata: Metadata = {
   title: "IRCTC — Indian Railways, reimagined",
   description:
     "An independent redesign concept for IRCTC. Book the journey, not just the ticket — every class's availability at a glance, honest waitlist odds, real berth selection, and live tracking that doesn't stop at payment. Not the official IRCTC service.",
-  // Nothing here should ever be mistaken for the real booking service, so keep
-  // it out of search results entirely.
   robots: { index: false, follow: false },
   manifest: "/manifest.webmanifest",
 };
@@ -58,14 +58,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <Providers>
           <LocaleProvider>
-            <AppHeader />
-            <OfflineSupport />
-            {/* Bottom bar on phones needs clearance under scrolling content. */}
-            <main id="main" className="pb-[3.75rem] sm:pb-0">
-              {children}
-            </main>
-            <MobileNav />
-            <VoiceButton />
+            <ChatProvider>
+              <AppHeader />
+              <OfflineSupport />
+              <main id="main" className="pb-[3.75rem] sm:pb-0">
+                {children}
+              </main>
+              <MobileNav />
+              <ChatPanel />
+              <VoiceButton />
+            </ChatProvider>
           </LocaleProvider>
         </Providers>
       </body>
