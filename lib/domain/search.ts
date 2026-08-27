@@ -1,6 +1,7 @@
 import type { Availability, ClassCode, QuotaCode, ScheduleStop, Station, Train } from "@/lib/types";
 import { getWorld } from "@/lib/mock/seed";
 import { getAvailabilityMatrix, runsOnDate } from "@/lib/mock/availability";
+import { PRINCIPAL_TERMINAL, toMockCode } from "@/lib/railradar/codes";
 
 export interface JourneyOption {
   train: Train;
@@ -100,7 +101,15 @@ export function searchJourneys(params: SearchParams): JourneyOption[] {
 export function resolveStationGroup(token: string): string[] {
   const world = getWorld();
   if (token.startsWith("city:")) {
-    return world.stationsByCity.get(token.slice(5)) ?? [];
+    const city = token.slice(5);
+    const grouped = world.stationsByCity.get(city);
+    if (grouped && grouped.length > 0) return grouped;
+    const principal = PRINCIPAL_TERMINAL[city.toUpperCase()];
+    if (principal && world.stations.has(principal)) return [principal];
+    const mapped = principal ? toMockCode(principal) : "";
+    return mapped && world.stations.has(mapped) ? [mapped] : [];
   }
-  return world.stations.has(token) ? [token] : [];
+  if (world.stations.has(token)) return [token];
+  const mapped = toMockCode(token);
+  return world.stations.has(mapped) ? [mapped] : [];
 }

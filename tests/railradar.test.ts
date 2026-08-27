@@ -17,6 +17,7 @@ import {
   toTrainType,
   trainFromResponse,
 } from "@/lib/railradar/map";
+import { resolveLiveStationCode, toLiveCode, toMockCode } from "@/lib/railradar/stations";
 import type {
   RrCoachesResponse,
   RrLiveResponse,
@@ -81,6 +82,21 @@ describe("RailRadar mapping", () => {
     it("title-cases shouted station names without mangling normal ones", () => {
       expect(titleCase("DELHI JN.")).toBe("Delhi Jn.");
       expect(titleCase("KSR Bengaluru")).toBe("KSR Bengaluru");
+    });
+
+    it("maps generated codes onto live ones and back", () => {
+      expect(toLiveCode("BCT")).toBe("MMCT");
+      expect(toMockCode("MMCT")).toBe("BCT");
+      expect(toLiveCode("NDLS")).toBe("NDLS");
+    });
+  });
+
+  describe("search tokens", () => {
+    it("turns a city token into the city's principal terminal", async () => {
+      expect(await resolveLiveStationCode("city:Delhi")).toBe("NDLS");
+      expect(await resolveLiveStationCode("city:Mumbai")).toBe("CSMT");
+      expect(await resolveLiveStationCode("BCT")).toBe("MMCT");
+      expect(await resolveLiveStationCode("")).toBeNull();
     });
   });
 

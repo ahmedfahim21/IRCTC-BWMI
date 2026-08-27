@@ -7,7 +7,7 @@ import { quoteRefund } from "@/lib/domain/refunds";
 import { coachPositions } from "@/lib/domain/platform";
 import { findCrossings } from "@/lib/domain/crossings";
 import { buildAlternatives } from "@/lib/domain/alternatives";
-import { searchJourneys, isConfirmable } from "@/lib/domain/search";
+import { searchJourneys, isConfirmable, resolveStationGroup } from "@/lib/domain/search";
 import { journeyInstant, addDays } from "@/lib/domain/time";
 
 const world = getWorld();
@@ -191,6 +191,12 @@ describe("crossings", () => {
 });
 
 describe("search and alternatives", () => {
+  it("maps a live Mumbai Central code onto the generated timetable", () => {
+    expect(resolveStationGroup("MMCT")).toEqual(["BCT"]);
+    expect(resolveStationGroup("BCT")).toEqual(["BCT"]);
+    expect(resolveStationGroup("city:New Delhi")).toEqual(["NDLS"]);
+  });
+
   it("finds trains for a real route with a full availability matrix", () => {
     const journeys = searchJourneys({ fromCode: "NDLS", toCode: "HWH", dateIso: "2026-09-15", quota: "GN", today: TODAY });
     expect(journeys.length).toBeGreaterThan(2);

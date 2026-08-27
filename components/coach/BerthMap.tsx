@@ -19,11 +19,14 @@ export function BerthMap({
   selections,
   onToggle,
   passengerCount,
+  selectable = true,
 }: {
   coach: CoachLayout;
   selections: BerthSelection[];
   onToggle: (berth: Berth) => void;
   passengerCount: number;
+  /** When false, the diagram is visible but berths cannot be claimed. */
+  selectable?: boolean;
 }) {
   const bays = useMemo(() => {
     const grouped = new Map<number, Berth[]>();
@@ -56,7 +59,7 @@ export function BerthMap({
       </div>
 
       <div className="-mx-1 overflow-x-auto px-1 pb-2">
-        <div className="flex min-w-fit items-stretch gap-1.5">
+        <div className="flex min-w-fit items-stretch gap-2">
           {/* Door and toilets sit at both ends of a coach. */}
           <EndCap />
           {bays.map(([bayNumber, berths]) => (
@@ -68,6 +71,7 @@ export function BerthMap({
               selectedNumbers={selectedNumbers}
               onToggle={onToggle}
               atCapacity={selections.length >= passengerCount}
+              selectable={selectable}
             />
           ))}
           <EndCap />
@@ -85,9 +89,9 @@ function isSeated(type: CoachType) {
 
 function EndCap() {
   return (
-    <div className="flex w-7 shrink-0 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border text-faint">
-      <DoorOpen className="size-3" aria-hidden />
-      <Droplets className="size-3" aria-hidden />
+    <div className="flex w-9 shrink-0 flex-col items-center justify-center gap-2.5 rounded-md border border-dashed border-border text-faint">
+      <DoorOpen className="size-3.5" aria-hidden />
+      <Droplets className="size-3.5" aria-hidden />
       <span className="sr-only">Door and toilets</span>
     </div>
   );
@@ -100,6 +104,7 @@ function Bay({
   selectedNumbers,
   onToggle,
   atCapacity,
+  selectable,
 }: {
   berths: Berth[];
   seated: boolean;
@@ -107,12 +112,13 @@ function Bay({
   selectedNumbers: Set<number>;
   onToggle: (berth: Berth) => void;
   atCapacity: boolean;
+  selectable: boolean;
 }) {
   if (seated) {
     return (
-      <div className="flex shrink-0 gap-1 rounded-md border border-border bg-surface-2 p-1">
+      <div className="flex shrink-0 gap-1.5 rounded-md border border-border bg-surface-2 p-1.5">
         {berths.map((berth) => (
-          <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} />
+          <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} selectable={selectable} />
         ))}
       </div>
     );
@@ -129,12 +135,12 @@ function Bay({
   }
 
   return (
-    <div className="flex shrink-0 items-stretch gap-1.5 rounded-md border border-border bg-surface-2 p-1">
-      <div className="flex gap-1">
+    <div className="flex shrink-0 items-stretch gap-2 rounded-md border border-border bg-surface-2 p-1.5">
+      <div className="flex gap-1.5">
         {columns.map((column, index) => (
-          <div key={index} className="flex flex-col gap-1">
+          <div key={index} className="flex flex-col gap-1.5">
             {column.map((berth) => (
-              <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} />
+              <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} selectable={selectable} />
             ))}
           </div>
         ))}
@@ -143,10 +149,10 @@ function Bay({
       {sideBerths.length > 0 && (
         <>
           {/* The corridor. */}
-          <span className="w-1.5 shrink-0 self-stretch rounded-full bg-surface-3" aria-hidden />
-          <div className="flex flex-col justify-between gap-1">
+          <span className="w-2 shrink-0 self-stretch rounded-full bg-surface-3" aria-hidden />
+          <div className="flex flex-col justify-between gap-1.5">
             {sideBerths.map((berth) => (
-              <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} />
+              <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} selectable={selectable} />
             ))}
           </div>
         </>
@@ -160,13 +166,15 @@ function BerthButton({
   selected,
   onToggle,
   atCapacity,
+  selectable,
 }: {
   berth: Berth;
   selected: boolean;
   onToggle: (berth: Berth) => void;
   atCapacity: boolean;
+  selectable: boolean;
 }) {
-  const disabled = berth.isBooked || (atCapacity && !selected);
+  const disabled = !selectable || berth.isBooked || (atCapacity && !selected);
 
   const notes = [
     berth.nearToilet ? "near the toilet" : null,
@@ -186,7 +194,7 @@ function BerthButton({
       }
       aria-label={`Berth ${berth.number}, ${berth.type}${berth.isBooked ? ", taken" : notes.length ? `, ${notes.join(", ")}` : ""}`}
       className={cn(
-        "relative flex h-9 w-[2.35rem] flex-col items-center justify-center rounded border text-[0.5625rem] leading-none transition-colors",
+        "relative flex h-11 w-[2.85rem] flex-col items-center justify-center rounded-md border text-[0.625rem] leading-none transition-colors",
         berth.isBooked
           ? "cursor-not-allowed border-border bg-surface-3 text-faint/50"
           : selected
@@ -195,10 +203,10 @@ function BerthButton({
         atCapacity && !selected && !berth.isBooked && "cursor-not-allowed opacity-40"
       )}
     >
-      <span className="tnum text-[0.6875rem]">{berth.number}</span>
+      <span className="tnum text-[0.8125rem]">{berth.number}</span>
       <span className="opacity-75">{berth.type}</span>
       {berth.hasCharging && !berth.isBooked && (
-        <Plug className="absolute right-0.5 top-0.5 size-1.5 opacity-60" aria-hidden />
+        <Plug className="absolute right-0.5 top-0.5 size-2 opacity-60" aria-hidden />
       )}
     </button>
   );
@@ -206,21 +214,21 @@ function BerthButton({
 
 function Legend() {
   return (
-    <ul className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[0.6875rem] text-faint">
+    <ul className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[0.75rem] text-faint">
       <li className="flex items-center gap-1.5">
-        <span className="size-2.5 rounded-sm border border-ok/30 bg-ok-soft" aria-hidden /> Free
+        <span className="size-3 rounded-sm border border-ok/30 bg-ok-soft" aria-hidden /> Free
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="size-2.5 rounded-sm border border-brand bg-brand" aria-hidden /> Yours
+        <span className="size-3 rounded-sm border border-brand bg-brand" aria-hidden /> Yours
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="size-2.5 rounded-sm border border-border bg-surface-3" aria-hidden /> Taken
+        <span className="size-3 rounded-sm border border-border bg-surface-3" aria-hidden /> Taken
       </li>
       <li className="flex items-center gap-1.5">
-        <Plug className="size-2.5" aria-hidden /> Charging point
+        <Plug className="size-3" aria-hidden /> Charging point
       </li>
       <li className="flex items-center gap-1.5">
-        <DoorOpen className="size-2.5" aria-hidden /> Door and toilets
+        <DoorOpen className="size-3" aria-hidden /> Door and toilets
       </li>
     </ul>
   );
