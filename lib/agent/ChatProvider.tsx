@@ -2,12 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useChat } from "@ai-sdk/react";
-import {
-  DefaultChatTransport,
-  getToolName,
-  isToolUIPart,
-  lastAssistantMessageIsCompleteWithToolCalls,
-} from "ai";
+import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
 import { applyAgentTool, useAgentNavigation } from "@/lib/agent/useAgentActions";
 import { isUiAction, VOICE_TRANSCRIPT_EVENT } from "@/lib/agent/uiActions";
 
@@ -22,23 +17,15 @@ export function useAgentChat(): ChatApi | null {
 export function ChatProvider({ children }: { children: ReactNode }) {
   useAgentNavigation();
   const applied = useRef(new Set<string>());
-  const output = useRef<ChatApi["addToolOutput"] | null>(null);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
 
   const chat = useChat({
     transport,
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onToolCall: ({ toolCall }) => {
       if (!isUiAction(toolCall.toolName)) return;
       void applyAgentTool(toolCall.toolName, (toolCall.input ?? {}) as Record<string, unknown>);
-      void output.current?.({
-        tool: toolCall.toolName,
-        toolCallId: toolCall.toolCallId,
-        output: { ok: true },
-      });
     },
   });
-  output.current = chat.addToolOutput;
 
   useEffect(() => {
     for (const message of chat.messages) {
