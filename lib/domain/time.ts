@@ -38,6 +38,11 @@ export function todayIso(now: Date = new Date()): string {
   return new Date(now.getTime() + IST_OFFSET_MINUTES * 60000).toISOString().slice(0, 10);
 }
 
+/** Whole days from one ISO date to another. Negative when `to` is earlier. */
+export function daysBetween(fromIso: string, toIso: string): number {
+  return Math.round((Date.parse(`${toIso}T00:00:00Z`) - Date.parse(`${fromIso}T00:00:00Z`)) / 86400000);
+}
+
 export function addDays(dateIso: string, days: number): string {
   const d = new Date(`${dateIso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);

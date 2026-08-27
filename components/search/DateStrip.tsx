@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { RouteDay } from "@/app/api/route-availability/route";
-import { addDays, formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
+import { addDays, daysBetween, formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -17,10 +18,18 @@ const TONE: Record<RouteDay["state"], { dot: string; text: string }> = {
   none: { dot: "bg-border-strong", text: "text-faint" },
 };
 
+/** Matches the rendered chip: w-[4.25rem] plus the 0.375rem gap, at 16px root. */
+const CHIP_STRIDE = 68 + 6;
+
 /**
- * Availability across the next fortnight, shown before you commit to a date.
+ * Availability across the coming fortnight, shown before you commit to a date.
  * Searching a date only to be told nothing runs that day is a wasted round trip
  * — the answer should be on screen while you're still choosing.
+ *
+ * The window is anchored to today and never re-anchors to the selection. It
+ * used to start at whatever date was picked, which meant choosing one refetched
+ * the strip (everything below it flashed as the skeleton came back) and left
+ * you unable to scroll back to any earlier date.
  */
 export function DateStrip({
   from,
@@ -36,14 +45,36 @@ export function DateStrip({
   span?: number;
 }) {
   const today = todayIso();
-  const start = date < today ? today : date;
+  const scroller = useRef<HTMLDivElement>(null);
+
+  // Always start at today, and stretch far enough to contain the selection —
+  // so a date chosen from a URL or a far-off pick is still on the strip.
+  const daysOut = Math.max(0, daysBetween(today, date));
+  const windowSpan = Math.max(span, daysOut + 4);
 
   const { data, isPending, isError } = useQuery({
-    queryKey: ["routeAvailability", from, to, start, span],
-    queryFn: ({ signal }) => api.routeAvailability({ from, to, date: start, span }, signal),
+    // Deliberately not keyed on the selected date: picking a day inside the
+    // window is a highlight change, not a new request.
+    queryKey: ["routeAvailability", from, to, today, windowSpan],
+    queryFn: ({ signal }) => api.routeAvailability({ from, to, date: today, span: windowSpan }, signal),
     enabled: Boolean(from && to),
     staleTime: 60_000,
+    // If the window does have to grow, keep showing the old strip rather than
+    // collapsing to a skeleton underneath the user's cursor.
+    placeholderData: keepPreviousData,
   });
+
+  // Bring the selection into view without touching the page's own scroll.
+  useEffect(() => {
+    const box = scroller.current;
+    if (!box || !data) return;
+    const index = data.days.findIndex((day) => day.date === date);
+    if (index < 0) return;
+    box.scrollTo({
+      left: Math.max(0, index * CHIP_STRIDE - box.clientWidth / 2 + CHIP_STRIDE / 2),
+      behavior: "smooth",
+    });
+  }, [date, data]);
 
   if (!from || !to) return null;
 
@@ -64,7 +95,12 @@ export function DateStrip({
 
   return (
     <div>
-      <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Journey date">
+      <div
+        ref={scroller}
+        className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
+        role="radiogroup"
+        aria-label="Journey date"
+      >
         {data.days.map((day) => {
           const selected = day.date === date;
           const tone = TONE[day.state];
