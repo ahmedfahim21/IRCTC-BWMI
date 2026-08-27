@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { INDIA_OUTLINE, project } from "@/components/rail/indiaOutline";
+import { INDIA_MAINLAND, INDIA_RINGS, project } from "@/components/rail/indiaOutline";
 import type { PackedTrain } from "@/lib/railradar/liveMap";
 import { cn } from "@/components/ui/cn";
 
@@ -74,7 +74,10 @@ export function TrainMap({
   const pointsRef = useRef(points);
   pointsRef.current = points;
 
-  const outline = useMemo(() => INDIA_OUTLINE.map(([lng, lat]) => project(lng, lat)), []);
+  const rings = useMemo(() => INDIA_RINGS.map((ring) => ring.map(([lng, lat]) => project(lng, lat))), []);
+  // Framed on the mainland alone, so offshore territory doesn't zoom the
+  // country out to a speck.
+  const outline = useMemo(() => INDIA_MAINLAND.map(([lng, lat]) => project(lng, lat)), []);
 
   /** Fit India to the viewport on first paint and on resize. */
   const fit = useCallback(() => {
@@ -125,10 +128,12 @@ export function TrainMap({
     const tx = (x: number) => x * view.scale + view.x;
     const ty = (y: number) => y * view.scale + view.y;
 
-    // Landmass
+    // Landmass — every ring in one path, so a single fill covers the country.
     ctx.beginPath();
-    outline.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(tx(x), ty(y)) : ctx.lineTo(tx(x), ty(y))));
-    ctx.closePath();
+    for (const ring of rings) {
+      ring.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(tx(x), ty(y)) : ctx.lineTo(tx(x), ty(y))));
+      ctx.closePath();
+    }
     ctx.fillStyle = surface;
     ctx.fill();
     ctx.strokeStyle = border;
@@ -165,7 +170,7 @@ export function TrainMap({
       ctx.lineWidth = 2;
       ctx.stroke();
     }
-  }, [points, outline, view, selected]);
+  }, [points, rings, view, selected]);
 
   /** Pointer handling: drag to pan, wheel or pinch to zoom. */
   const pointers = useRef(new Map<number, { x: number; y: number }>());
