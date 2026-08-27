@@ -1,0 +1,201 @@
+"use client";
+
+import { useEffect, useId, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Building2, MapPin, X } from "lucide-react";
+import { api } from "@/lib/apiClient";
+import { cn } from "@/components/ui/cn";
+
+export interface StationValue {
+  token: string;
+  label: string;
+  sublabel: string;
+}
+
+const RECENTS_KEY = "irctc.recentStations";
+
+function readRecents(): StationValue[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]") as StationValue[];
+  } catch {
+    return [];
+  }
+}
+
+function pushRecent(value: StationValue) {
+  const next = [value, ...readRecents().filter((r) => r.token !== value.token)].slice(0, 6);
+  localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+}
+
+/**
+ * Station picker. Cities with more than one terminus are offered as a single
+ * choice, because "I'm going to Delhi" is the real intent — knowing that your
+ * train leaves from NZM rather than NDLS is the railway's problem, not yours.
+ */
+export function StationCombobox({
+  label,
+  value,
+  onChange,
+  placeholder,
+  icon,
+}: {
+  label: string;
+  value: StationValue | null;
+  onChange: (value: StationValue | null) => void;
+  placeholder: string;
+  icon: React.ReactNode;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const [recents, setRecents] = useState<StationValue[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const listId = useId();
+
+  useEffect(() => setRecents(readRecents()), []);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
+
+  const trimmed = query.trim();
+  const { data, isFetching } = useQuery({
+    queryKey: ["stations", trimmed],
+    queryFn: ({ signal }) => api.stations(trimmed, 10, signal),
+    enabled: open,
+    staleTime: 5 * 60_000,
+  });
+
+  const showRecents = open && trimmed.length === 0 && recents.length > 0;
+  const options: StationValue[] = showRecents
+    ? recents
+    : (data?.results ?? []).map((r) => ({
+        token: r.token,
+        label: r.kind === "city" ? r.name : r.name,
+        sublabel: r.kind === "city" ? `${r.memberCodes.join(" · ")}` : `${r.code} · ${r.city}, ${r.stateCode}`,
+      }));
+
+  const commit = (option: StationValue) => {
+    onChange(option);
+    pushRecent(option);
+    setRecents(readRecents());
+    setQuery("");
+    setOpen(false);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setOpen(true);
+      setHighlight((h) => Math.min(h + 1, options.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setHighlight((h) => Math.max(h - 1, 0));
+    } else if (event.key === "Enter" && open && options[highlight]) {
+      event.preventDefault();
+      commit(options[highlight]);
+    } else if (event.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div ref={wrapRef} className="relative flex-1">
+      <label className="eyebrow mb-1.5 block px-0.5" htmlFor={`${listId}-input`}>
+        {label}
+      </label>
+      <div
+        className={cn(
+          "flex items-center gap-2.5 rounded-xl border bg-surface px-3 transition-colors",
+          open ? "border-brand" : "border-border hover:border-border-strong"
+        )}
+      >
+        <span className="shrink-0 text-faint" aria-hidden>
+          {icon}
+        </span>
+        <input
+          id={`${listId}-input`}
+          ref={inputRef}
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={open && options[highlight] ? `${listId}-opt-${highlight}` : undefined}
+          autoComplete="off"
+          value={open ? query : (value?.label ?? "")}
+          placeholder={value ? value.label : placeholder}
+          onFocus={() => {
+            setOpen(true);
+            setHighlight(0);
+          }}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+            setHighlight(0);
+          }}
+          onKeyDown={onKeyDown}
+          className="h-12 min-w-0 flex-1 bg-transparent text-[0.95rem] text-text outline-none placeholder:text-faint"
+        />
+        {value && !open && (
+          <button
+            type="button"
+            aria-label={`Clear ${label}`}
+            onClick={() => {
+              onChange(null);
+              inputRef.current?.focus();
+            }}
+            className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
+          >
+            <X className="size-3.5" aria-hidden />
+          </button>
+        )}
+      </div>
+
+      {value && !open && <p className="mt-1 truncate px-1 text-[0.6875rem] text-faint">{value.sublabel}</p>}
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-lg)]">
+          {showRecents && <p className="eyebrow px-3 pb-1 pt-2.5">Recent</p>}
+          <ul id={listId} role="listbox" aria-label={label} className="max-h-72 overflow-y-auto py-1">
+            {options.length === 0 && (
+              <li className="px-3 py-6 text-center text-[0.8125rem] text-faint">
+                {isFetching ? "Searching…" : trimmed ? `No station matching “${trimmed}”` : "Type a city or station code"}
+              </li>
+            )}
+            {options.map((option, index) => {
+              const isCity = option.token.startsWith("city:");
+              return (
+                <li key={option.token} id={`${listId}-opt-${index}`} role="option" aria-selected={index === highlight}>
+                  <button
+                    type="button"
+                    onMouseEnter={() => setHighlight(index)}
+                    onClick={() => commit(option)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors",
+                      index === highlight ? "bg-surface-2" : ""
+                    )}
+                  >
+                    <span className={cn("shrink-0", isCity ? "text-brand" : "text-faint")} aria-hidden>
+                      {isCity ? <Building2 className="size-4" /> : <MapPin className="size-4" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[0.875rem] text-text">{option.label}</span>
+                      <span className="block truncate text-[0.6875rem] text-faint">{option.sublabel}</span>
+                    </span>
+                    {isCity && <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-[0.625rem] text-brand">All stations</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
