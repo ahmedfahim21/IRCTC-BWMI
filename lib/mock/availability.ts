@@ -8,9 +8,9 @@ import type {
 import { rngFor } from "./rng";
 import { BERTH_COUNTS } from "./berths";
 import { computeFare } from "@/lib/domain/fares";
-import { addDays } from "@/lib/domain/time";
+import { addDays, daysBetween } from "@/lib/domain/time";
 
-export { addDays };
+export { addDays, daysBetween };
 
 /** Share of a class's capacity carved out for each quota. */
 const QUOTA_SHARE: Record<QuotaCode, number> = {
@@ -26,12 +26,6 @@ const QUOTA_SHARE: Record<QuotaCode, number> = {
 const HAS_RAC: ClassCode[] = ["SL", "3A", "3E", "2A", "CC"];
 
 export const ALL_QUOTAS: QuotaCode[] = ["GN", "TQ", "PT", "LD", "SS"];
-
-export function daysBetween(fromIso: string, toIso: string): number {
-  const a = Date.parse(`${fromIso}T00:00:00Z`);
-  const b = Date.parse(`${toIso}T00:00:00Z`);
-  return Math.round((b - a) / 86400000);
-}
 
 export function dayOfWeek(dateIso: string): number {
   return new Date(`${dateIso}T00:00:00Z`).getUTCDay();

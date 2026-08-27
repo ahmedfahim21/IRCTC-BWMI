@@ -142,12 +142,16 @@ export function StationCombobox({
           onKeyDown={onKeyDown}
           className="h-12 min-w-0 flex-1 bg-transparent text-[0.95rem] text-text outline-none placeholder:text-faint"
         />
-        {value && !open && (
+        {/* Stays put while the field has focus, so it neither flickers nor
+            forces the input to resize mid-typing — and you can still clear a
+            station without blurring first. */}
+        {value && (
           <button
             type="button"
             aria-label={`Clear ${label}`}
             onClick={() => {
               onChange(null);
+              setQuery("");
               inputRef.current?.focus();
             }}
             className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
@@ -157,7 +161,15 @@ export function StationCombobox({
         )}
       </div>
 
-      {value && !open && <p className="mt-1 truncate px-1 text-[0.6875rem] text-faint">{value.sublabel}</p>}
+      {/*
+        * Always occupies a line, and stays put while the field has focus.
+        * Rendering this conditionally grew the field by 20px the moment a
+        * station was picked — shoving the second field and the submit button
+        * down — and then jumped back up on the next focus.
+        */}
+      <p className="mt-1 h-4 truncate px-1 text-[0.6875rem] leading-4 text-faint" aria-hidden={!value}>
+        {value?.sublabel ?? ""}
+      </p>
 
       {open && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-lg)]">
