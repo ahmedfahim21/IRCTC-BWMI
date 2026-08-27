@@ -1,0 +1,21 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+test-results
+playwright-report
+
+# Secrets — never committed. RAILRADAR_API_KEY lives here.
+.env
+.env.local
+.env.*.local
+
+# Cached upstream API responses (and the quota counter)
+.cache
+.next-build
+.next-e2e
+
+# Machine-specific dev launcher (absolute paths)
+.claude/launch.json
