@@ -5,8 +5,9 @@
   "packageManager": "pnpm@10.13.1",
   "scripts": {
     "dev": "next dev -p 3277",
-    "build": "NEXT_DIST_DIR=.next-build next build",
-    "start": "NEXT_DIST_DIR=.next-build next start -p 3277",
+    "build": "next build",
+    "build:isolated": "NEXT_DIST_DIR=.next-build next build",
+    "start": "next start -p 3277",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

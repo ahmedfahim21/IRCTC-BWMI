@@ -3,9 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   /*
-   * Builds write to their own directory so `next build` never clobbers the
-   * .next a running dev server is serving from — which silently 404s the
-   * client chunks and leaves the page unhydrated.
+   * Defaults to .next, which is what Vercel and every other host expects.
+   * Overridable so a build can be pointed elsewhere when one is already
+   * running from .next — `pnpm build:isolated` and the Playwright config both
+   * do that, because building over a live dev server silently 404s its client
+   * chunks and leaves the page unhydrated.
    */
   distDir: process.env.NEXT_DIST_DIR || ".next",
   experimental: { optimizePackageImports: ["lucide-react"] },

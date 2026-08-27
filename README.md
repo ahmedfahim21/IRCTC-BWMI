@@ -207,6 +207,21 @@ never spend the request budget or depend on what the railway is doing today:
 pnpm typecheck && pnpm test && pnpm build
 ```
 
+## Deploying
+
+`pnpm build` writes to `.next`, which is what Vercel and every other host looks
+for. Use `pnpm build:isolated` instead when a dev server is already running from
+`.next` — building over it silently 404s its client chunks and leaves the page
+unhydrated.
+
+Set `RAILRADAR_API_KEY` and `SARVAM_API_KEY` as environment variables on the
+host. Neither is ever sent to the browser.
+
+On a serverless host the filesystem is read-only apart from `/tmp`, so the
+upstream cache moves there automatically and disk persistence is best-effort —
+if the directory can't be written, it logs once and carries on with the
+in-memory cache. Nothing fails because a cache write failed.
+
 ---
 
 ## How it's put together
