@@ -102,12 +102,15 @@ export function DateStrip({
                 <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
                   {formatDateShort(day)}
                 </span>
-                <span className="text-[0.625rem] text-faint">—</span>
+                <span className="flex h-4 items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-border-strong" aria-hidden />
+                  <span className="text-[0.625rem] text-faint">—</span>
+                </span>
               </button>
             );
           })}
         </div>
-        <p className="mt-2 min-h-[1.125rem] px-0.5 text-[0.6875rem] text-faint">
+        <p className="mt-2 min-h-[2.75rem] px-0.5 text-[0.6875rem] leading-snug text-faint">
           Pick origin and destination to see which days have seats.
         </p>
       </div>
@@ -146,7 +149,7 @@ export function DateStrip({
               <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
                 {formatDateShort(day.date)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex h-4 items-center gap-1">
                 <span className={cn("size-1.5 rounded-full", tone.dot)} aria-hidden />
                 <span className={cn("text-[0.625rem]", tone.text)}>
                   {dead ? "None" : day.confirmableCount > 0 ? `${day.confirmableCount} open` : "Full"}
@@ -157,11 +160,11 @@ export function DateStrip({
         })}
       </div>
       {isError ? (
-        <p className="mt-2 min-h-[1.125rem] px-0.5 text-[0.6875rem] text-danger">
+        <p className="mt-2 min-h-[2.75rem] px-0.5 text-[0.6875rem] leading-snug text-danger">
           Couldn&rsquo;t load availability for these dates.
         </p>
       ) : (
-        <p className="mt-2 flex min-h-[1.125rem] flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-[0.6875rem] text-faint">
+        <p className="mt-2 flex min-h-[2.75rem] flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-[0.6875rem] text-faint">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-ok" aria-hidden /> Seats free
           </span>
