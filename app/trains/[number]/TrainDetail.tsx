@@ -8,7 +8,7 @@ import { ArrowRight, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from 
 import { api } from "@/lib/apiClient";
 import { formatDuration, formatMinute, todayIso } from "@/lib/domain/time";
 import { RailSpine } from "@/components/rail/RailSpine";
-import { SchematicMap } from "@/components/rail/SchematicMap";
+import { TrainHeroMap } from "@/components/map/TrainHeroMap";
 import { CoachStrip, PlatformDiagram } from "@/components/coach/CoachStrip";
 import { BerthMap } from "@/components/coach/BerthMap";
 import { PunctualitySparkline } from "@/components/rail/PunctualitySparkline";
@@ -130,14 +130,14 @@ export function TrainDetail({ number }: { number: string }) {
         <Stat icon={Gauge} label="Fastest leg" value={`${train.maxSpeedKmph}`} sub="km/h" />
       </dl>
 
-      <SchematicMap
+      <TrainHeroMap
+        trainNumber={train.number}
         schedule={train.schedule}
         stations={stations}
         live={live}
         highlightFrom={from}
         highlightTo={to}
         className="mb-4 aspect-[3/2] w-full sm:aspect-[16/7]"
-        aspect={3 / 2}
       />
 
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border" role="tablist">

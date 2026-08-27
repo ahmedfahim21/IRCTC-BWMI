@@ -8,7 +8,7 @@ import { api } from "@/lib/apiClient";
 import { formatRupees } from "@/components/availability/ClassCell";
 import { TicketCard } from "@/components/trip/TicketCard";
 import { LivePanel, Alarms } from "@/components/trip/LivePanel";
-import { SchematicMap } from "@/components/rail/SchematicMap";
+import { TrainHeroMap } from "@/components/map/TrainHeroMap";
 import { RailSpine } from "@/components/rail/RailSpine";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -110,14 +110,14 @@ export function TripDetail({ pnr }: { pnr: string }) {
             />
           )}
 
-          <SchematicMap
+          <TrainHeroMap
+            trainNumber={train.number}
             schedule={train.schedule}
             stations={stations}
             live={cancelled ? null : live}
             highlightFrom={booking.fromCode}
             highlightTo={booking.toCode}
             className="aspect-[3/2] w-full sm:aspect-[16/7]"
-            aspect={3 / 2}
           />
 
           <div className="card overflow-hidden">

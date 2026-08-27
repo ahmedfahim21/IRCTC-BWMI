@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { stubMapTiles } from "./stubTiles";
 
 /**
  * Layout stability on the search form.
@@ -56,6 +57,7 @@ async function stripState(page: Page) {
 
 test.describe("availability date strip", () => {
   test.beforeEach(async ({ page }) => {
+    await stubMapTiles(page);
     await page.addInitScript(() => localStorage.clear());
     await page.goto("/");
     await pickStation(page, 0, "delhi");
@@ -102,6 +104,7 @@ test.describe("availability date strip", () => {
 
 test.describe("search form layout", () => {
   test.beforeEach(async ({ page }) => {
+    await stubMapTiles(page);
     await page.addInitScript(() => localStorage.clear());
     await page.goto("/");
     await expect(page.locator('[role="combobox"]').first()).toBeVisible();

@@ -1,9 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { stubMapTiles } from "./stubTiles";
 
 /**
  * The whole point of the product, end to end: find a train, see every class at
  * once, pick a real berth, pay, and land on a live trip screen.
  */
+test.beforeEach(async ({ page }) => {
+  await stubMapTiles(page);
+});
 test("search → pick a berth → confirm → track the trip", async ({ page }) => {
   const date = new Date();
   date.setDate(date.getDate() + 12);
