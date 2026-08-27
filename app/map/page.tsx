@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LiveMap } from "./LiveMap";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function MapPage() {
-  return <LiveMap />;
+  return (
+    <Suspense fallback={<div className="h-[calc(100dvh-3.5rem)] bg-surface-2" aria-hidden />}>
+      <LiveMap />
+    </Suspense>
+  );
 }
