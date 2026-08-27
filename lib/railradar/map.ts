@@ -13,6 +13,7 @@ import type {
 import { BERTH_COUNTS } from "@/lib/mock/berths";
 import { computeFare } from "@/lib/domain/fares";
 import { IST_OFFSET_MINUTES } from "@/lib/domain/time";
+import { backfillCoords } from "@/lib/geo/coords";
 import type {
   RrCoachesResponse,
   RrLiveResponse,
@@ -105,7 +106,7 @@ export function rakeFromCoaches(response: RrCoachesResponse): Coach[] {
 }
 
 export function stationFromRef(ref: { code: string; name: string; city?: string; lat?: number; lng?: number }): Station {
-  return {
+  return backfillCoords({
     code: ref.code,
     name: titleCase(ref.name),
     city: titleCase(ref.city ?? ref.name),
@@ -114,7 +115,7 @@ export function stationFromRef(ref: { code: string; name: string; city?: string;
     lng: ref.lng ?? Number.NaN,
     zone: "",
     platformCount: 0,
-  };
+  });
 }
 
 /** RailRadar returns some names in caps; the UI is title case throughout. */
@@ -129,18 +130,20 @@ export function titleCase(value: string): string {
 }
 
 export function stationsFromSearch(results: RrStationSearchResult[]): Station[] {
-  return results.map((r) => ({
-    code: r.code,
-    name: titleCase(r.name),
-    city: titleCase(r.city),
-    stateCode: "",
-    lat: Number.NaN,
-    lng: Number.NaN,
-    zone: "",
-    // The API ranks by popularity rather than platform count; reuse the field
-    // for ordering so the rest of the app can stay unchanged.
-    platformCount: Math.min(20, Math.round(r.popularity / 40)),
-  }));
+  return results.map((r) =>
+    backfillCoords({
+      code: r.code,
+      name: titleCase(r.name),
+      city: titleCase(r.city),
+      stateCode: "",
+      lat: Number.NaN,
+      lng: Number.NaN,
+      zone: "",
+      // The API ranks by popularity rather than platform count; reuse the field
+      // for ordering so the rest of the app can stay unchanged.
+      platformCount: Math.min(20, Math.round(r.popularity / 40)),
+    })
+  );
 }
 
 export function classesFromRake(rake: Coach[]): ClassCode[] {
