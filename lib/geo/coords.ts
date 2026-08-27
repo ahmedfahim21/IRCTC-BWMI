@@ -1,13 +1,18 @@
 import type { Station } from "@/lib/types";
 import { lookupStationCoords } from "./stationCoords";
 
+function isUsable(lat: number, lng: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+}
+
 /**
- * Fill missing coordinates from the bundled table. A miss stays NaN — callers
- * skip the pin rather than painting (0, 0) in the Gulf of Guinea.
+ * Prefer coordinates already on the station; otherwise look the code up in
+ * the bundled table. A miss stays NaN — never (0, 0), which would pin the
+ * Himalayas to the Gulf of Guinea.
  */
 export function backfillCoords(station: Station): Station {
-  if (Number.isFinite(station.lat) && Number.isFinite(station.lng)) return station;
-  const coords = lookupStationCoords(station.code);
-  if (!coords) return station;
-  return { ...station, lat: coords.lat, lng: coords.lng };
+  if (isUsable(station.lat, station.lng)) return station;
+  const found = lookupStationCoords(station.code);
+  if (!found) return { ...station, lat: Number.NaN, lng: Number.NaN };
+  return { ...station, lat: found.lat, lng: found.lng };
 }

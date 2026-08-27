@@ -37,12 +37,14 @@ export function DateStrip({
   date,
   onPick,
   span = 14,
+  disabled = false,
 }: {
   from: string;
   to: string;
   date: string;
   onPick: (date: string) => void;
   span?: number;
+  disabled?: boolean;
 }) {
   const today = todayIso();
   const scroller = useRef<HTMLDivElement>(null);
@@ -57,7 +59,7 @@ export function DateStrip({
     // window is a highlight change, not a new request.
     queryKey: ["routeAvailability", from, to, today, windowSpan],
     queryFn: ({ signal }) => api.routeAvailability({ from, to, date: today, span: windowSpan }, signal),
-    enabled: Boolean(from && to),
+    enabled: Boolean(from && to) && !disabled,
     staleTime: 60_000,
     // If the window does have to grow, keep showing the old strip rather than
     // collapsing to a skeleton underneath the user's cursor.
@@ -76,7 +78,40 @@ export function DateStrip({
     });
   }, [date, data]);
 
-  if (!from || !to) return null;
+  if (disabled || !from || !to) {
+    const placeholders = Array.from({ length: span }, (_, i) => addDays(today, i));
+    return (
+      <div className="opacity-45" aria-disabled="true">
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Journey date">
+          {placeholders.map((day) => {
+            const selected = day === date;
+            const label = day === today ? "Today" : day === addDays(today, 1) ? "Tomorrow" : formatWeekday(day);
+            return (
+              <button
+                key={day}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                disabled
+                aria-label={`${formatDateShort(day)}, pick stations to see availability`}
+                className={cn(
+                  "flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl border px-2 py-2.5",
+                  selected ? "border-brand bg-brand-soft" : "border-border bg-surface"
+                )}
+              >
+                <span className="text-[0.625rem] uppercase tracking-wider text-faint">{label}</span>
+                <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
+                  {formatDateShort(day)}
+                </span>
+                <span className="text-[0.625rem] text-faint">—</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 px-0.5 text-[0.6875rem] text-faint">Pick origin and destination to see which days have seats.</p>
+      </div>
+    );
+  }
 
   if (isPending) {
     return (

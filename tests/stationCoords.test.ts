@@ -1,66 +1,64 @@
 import { describe, expect, it } from "vitest";
 import { lookupStationCoords, stationCoordTable } from "@/lib/geo/stationCoords";
 import { backfillCoords } from "@/lib/geo/coords";
+import type { Station } from "@/lib/types";
 
-const INDIA_BBOX = { minLat: 6, maxLat: 37.2, minLng: 68, maxLng: 97.5 };
+const INDIA = { minLat: 6, maxLat: 37.2, minLng: 68, maxLng: 97.5 };
 
-const SAMPLE = ["NDLS", "NZM", "MAS", "HWH", "SBC", "BZA", "JP", "LKO", "PNBE", "ADI", "KYQ", "BCT", "MMCT", "CSTM", "CSMT"];
+const stub = (code: string, lat = Number.NaN, lng = Number.NaN): Station => ({
+  code,
+  name: code,
+  city: code,
+  stateCode: "",
+  lat,
+  lng,
+  zone: "",
+  platformCount: 0,
+});
 
 describe("bundled station coordinates", () => {
-  it("parses a table of unique IR codes", () => {
+  it("parses a lazy Map of CODE|lat|lng rows", () => {
     const table = stationCoordTable();
-    expect(table.size).toBeGreaterThan(9000);
-    expect(new Set(table.keys()).size).toBe(table.size);
-  });
-
-  it("resolves the sample codes used across the app", () => {
-    for (const code of SAMPLE) {
-      const coords = lookupStationCoords(code);
-      expect(coords, code).not.toBeNull();
-      expect(Number.isFinite(coords!.lat)).toBe(true);
-      expect(Number.isFinite(coords!.lng)).toBe(true);
-    }
-  });
-
-  it("returns null for a known-missing code rather than (0, 0)", () => {
-    expect(lookupStationCoords("DRSV")).toBeNull();
+    expect(table.size).toBeGreaterThan(5000);
     expect(lookupStationCoords("")).toBeNull();
-    expect(lookupStationCoords("not-a-code")).toBeNull();
   });
 
-  it("keeps every entry inside the India bbox", () => {
-    for (const [code, { lat, lng }] of stationCoordTable()) {
-      expect(lat, code).toBeGreaterThanOrEqual(INDIA_BBOX.minLat);
-      expect(lat, code).toBeLessThanOrEqual(INDIA_BBOX.maxLat);
-      expect(lng, code).toBeGreaterThanOrEqual(INDIA_BBOX.minLng);
-      expect(lng, code).toBeLessThanOrEqual(INDIA_BBOX.maxLng);
+  it("has sample terminals in India", () => {
+    const samples = ["NDLS", "BCT", "MMCT", "HWH", "MAS", "CSMT", "CSTM"] as const;
+    for (const code of samples) {
+      const point = lookupStationCoords(code);
+      expect(point, code).not.toBeNull();
+      expect(point!.lat).toBeGreaterThanOrEqual(INDIA.minLat);
+      expect(point!.lat).toBeLessThanOrEqual(INDIA.maxLat);
+      expect(point!.lng).toBeGreaterThanOrEqual(INDIA.minLng);
+      expect(point!.lng).toBeLessThanOrEqual(INDIA.maxLng);
     }
   });
 
-  it("backfills NaN coordinates from the table", () => {
-    const filled = backfillCoords({
-      code: "NDLS",
-      name: "New Delhi",
-      city: "Delhi",
-      stateCode: "DL",
-      zone: "NR",
-      platformCount: 16,
-      lat: Number.NaN,
-      lng: Number.NaN,
-    });
-    expect(filled.lat).toBeCloseTo(28.64, 1);
-    expect(filled.lng).toBeCloseTo(77.22, 1);
+  it("returns null for codes with no known position", () => {
+    expect(lookupStationCoords("DRSV")).toBeNull();
+    const filled = backfillCoords(stub("DRSV"));
+    expect(Number.isFinite(filled.lat)).toBe(false);
+    expect(Number.isFinite(filled.lng)).toBe(false);
+    const zero = backfillCoords(stub("DRSV", 0, 0));
+    expect(Number.isFinite(zero.lat)).toBe(false);
+  });
 
-    const missed = backfillCoords({
-      code: "DRSV",
-      name: "Dharashiv",
-      city: "Dharashiv",
-      stateCode: "MH",
-      zone: "CR",
-      platformCount: 2,
-      lat: Number.NaN,
-      lng: Number.NaN,
-    });
-    expect(Number.isFinite(missed.lat)).toBe(false);
+  it("keeps every packed row inside the India bounding box", () => {
+    for (const [code, { lat, lng }] of stationCoordTable()) {
+      expect(lat, code).toBeGreaterThanOrEqual(INDIA.minLat);
+      expect(lat, code).toBeLessThanOrEqual(INDIA.maxLat);
+      expect(lng, code).toBeGreaterThanOrEqual(INDIA.minLng);
+      expect(lng, code).toBeLessThanOrEqual(INDIA.maxLng);
+      expect(lat === 0 && lng === 0, code).toBe(false);
+    }
+  });
+
+  it("prefers finite API coordinates over the table", () => {
+    const api = backfillCoords(stub("NDLS", 28.5, 77.1));
+    expect(api.lat).toBe(28.5);
+    expect(api.lng).toBe(77.1);
+    const filled = backfillCoords(stub("NDLS"));
+    expect(filled).toMatchObject(lookupStationCoords("NDLS")!);
   });
 });

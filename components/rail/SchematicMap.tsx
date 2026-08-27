@@ -82,7 +82,10 @@ export function SchematicMap({
           .join("")
       : null;
 
-  const livePoint = live ? project(live.position.lng, live.position.lat) : null;
+  const livePoint =
+    live && Number.isFinite(live.position.lng) && Number.isFinite(live.position.lat)
+      ? project(live.position.lng, live.position.lat)
+      : null;
   const scale = Math.max(view.w, view.h) / 320;
 
   return (

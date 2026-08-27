@@ -149,10 +149,8 @@ test.describe("search form layout", () => {
     await pickStation(page, 1, "mumbai");
 
     const after = await geometry(page);
-    // The date strip appears once a route is complete — that's new content, and
-    // it is meant to grow the form. What must not move is the pair of fields.
     expect(after.fromInput).toBe(before.fromInput);
     expect(after.toInput).toBe(before.toInput);
-    expect(after.formHeight).toBeGreaterThan(before.formHeight);
+    expect(after.formHeight).toBe(before.formHeight);
   });
 });

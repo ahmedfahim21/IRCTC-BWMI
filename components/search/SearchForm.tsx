@@ -76,15 +76,19 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
         />
       </div>
 
-      {canSearch && (
-        <div className="mt-5">
-          <div className="mb-2 flex items-baseline justify-between gap-3">
-            <span className="eyebrow">{t("search.date")}</span>
-            <QuotaPicker value={quota} onChange={setQuota} />
-          </div>
-          <DateStrip from={from!.token} to={to!.token} date={date} onPick={setDate} />
+      <div className="mt-5">
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <span className="eyebrow">{t("search.date")}</span>
+          <QuotaPicker value={quota} onChange={setQuota} disabled={!canSearch} />
         </div>
-      )}
+        <DateStrip
+          from={from?.token ?? ""}
+          to={to?.token ?? ""}
+          date={date}
+          onPick={setDate}
+          disabled={!canSearch}
+        />
+      </div>
 
       <button
         type="submit"

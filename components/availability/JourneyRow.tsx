@@ -19,11 +19,15 @@ export function JourneyRow({
   stations,
   date,
   quota,
+  selected = false,
+  onSelect,
 }: {
   journey: JourneyDto;
   stations: Record<string, Station>;
   date: string;
   quota: QuotaCode;
+  selected?: boolean;
+  onSelect?: () => void;
 }) {
   const router = useRouter();
   const [starting, setStarting] = useState<string | null>(null);
@@ -53,8 +57,14 @@ export function JourneyRow({
 
   return (
     <article
-      className={cn("card overflow-hidden transition-colors", !journey.runsToday && "opacity-55")}
+      className={cn(
+        "card overflow-hidden transition-colors",
+        !journey.runsToday && "opacity-55",
+        selected && "border-brand"
+      )}
       aria-label={`${train.number} ${train.name}`}
+      aria-current={selected ? "true" : undefined}
+      onClick={onSelect}
     >
       <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 p-4 pb-3">
         <Link
