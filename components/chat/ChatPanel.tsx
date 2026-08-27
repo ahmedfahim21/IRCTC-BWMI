@@ -62,7 +62,7 @@ export function ChatPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Open chat"
+          aria-label="Open booking chat"
           className="fixed bottom-[7.75rem] right-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-24 sm:right-6"
         >
           <MessageCircle className="size-5" aria-hidden />
@@ -151,7 +151,7 @@ export function ChatPanel() {
             <button
               type="submit"
               disabled={busy || !input.trim()}
-              aria-label="Send"
+              aria-label="Send message"
               className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
             >
               <Send className="size-4" aria-hidden />

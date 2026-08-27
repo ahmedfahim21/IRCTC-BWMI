@@ -14,7 +14,9 @@ async function openChat(page: import("@playwright/test").Page) {
 async function say(page: import("@playwright/test").Page, text: string) {
   const box = page.locator("#booking-chat-input");
   await box.fill(text);
-  await page.getByRole("button", { name: "Send message" }).click();
+  const send = page.getByRole("button", { name: "Send message" });
+  await expect(send).toBeEnabled({ timeout: 20_000 });
+  await send.click();
 }
 
 test("search → book → PNR through chat", async ({ page }) => {

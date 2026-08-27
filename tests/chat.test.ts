@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { planFromTranscript } from "@/lib/agent/scriptedChat";
 
 describe("scripted chat planner", () => {
+  it("resolves New Delhi to NDLS for search", () => {
+    const plan = planFromTranscript("from New Delhi to Mumbai tomorrow");
+    const search = plan.find((s) => s.kind === "tool" && s.name === "set_search");
+    expect(search).toMatchObject({ kind: "tool", name: "set_search", args: { from: "NDLS", to: "BCT" } });
+    expect(plan.some((s) => s.kind === "text" && /Searching NDLS/i.test(s.text))).toBe(true);
+  });
+
   it("searches a station pair and drives set_search", () => {
     const plan = planFromTranscript("trains from NDLS to MAS");
     expect(plan.some((s) => s.kind === "tool" && s.name === "search_trains")).toBe(true);
