@@ -34,4 +34,9 @@ describe("scripted chat planner", () => {
     expect(plan.some((s) => s.kind === "tool" && s.name === "start_booking")).toBe(true);
     expect(plan.some((s) => s.kind === "tool" && s.name === "confirm")).toBe(false);
   });
+
+  it("returns home on a change of mind", () => {
+    const plan = planFromTranscript("never mind, start over");
+    expect(plan[0]).toMatchObject({ kind: "tool", name: "navigate", args: { href: "/" } });
+  });
 });

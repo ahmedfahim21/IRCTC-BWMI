@@ -4,6 +4,7 @@ import type { Availability } from "@/lib/types";
 import { explainStatus, GLOSSARY } from "@/lib/glossary";
 import { ProbabilityBar } from "@/components/ui/StatusChip";
 import { cn } from "@/components/ui/cn";
+import { Armchair } from "lucide-react";
 
 const TONE = {
   available: { label: "text-ok", ring: "hover:border-ok/40" },
@@ -53,7 +54,10 @@ export function ClassCell({
       )}
     >
       <span className="flex items-baseline justify-between gap-1">
-        <span className="font-mono text-[0.75rem] text-dim">{availability.classCode}</span>
+        <span className="inline-flex items-center gap-1 font-mono text-[0.75rem] text-dim">
+          <Armchair className="size-3 text-faint" aria-hidden />
+          {availability.classCode}
+        </span>
         <span className="tnum text-[0.75rem] text-text">{formatRupees(availability.fare.total)}</span>
       </span>
 

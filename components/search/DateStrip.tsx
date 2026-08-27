@@ -7,6 +7,7 @@ import { addDays, daysBetween, formatDateShort, formatWeekday, todayIso } from "
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { DATE_CHIP_STRIDE_PX } from "@/lib/ui/dateChip";
 
 const TONE: Record<RouteDay["state"], { dot: string; text: string }> = {
   available: { dot: "bg-ok", text: "text-ok" },
@@ -17,9 +18,6 @@ const TONE: Record<RouteDay["state"], { dot: string; text: string }> = {
   departed: { dot: "bg-faint", text: "text-faint" },
   none: { dot: "bg-border-strong", text: "text-faint" },
 };
-
-/** Matches the rendered chip: w-[4.25rem] plus the 0.375rem gap, at 16px root. */
-const CHIP_STRIDE = 68 + 6;
 
 /**
  * Availability across the coming fortnight, shown before you commit to a date.
@@ -73,7 +71,7 @@ export function DateStrip({
     const index = data.days.findIndex((day) => day.date === date);
     if (index < 0) return;
     box.scrollTo({
-      left: Math.max(0, index * CHIP_STRIDE - box.clientWidth / 2 + CHIP_STRIDE / 2),
+      left: Math.max(0, index * DATE_CHIP_STRIDE_PX - box.clientWidth / 2 + DATE_CHIP_STRIDE_PX / 2),
       behavior: "smooth",
     });
   }, [date, data]);
@@ -116,7 +114,7 @@ export function DateStrip({
   if (isPending) {
     return (
       <div className="flex gap-1.5 overflow-hidden" aria-hidden>
-        {Array.from({ length: 8 }, (_, i) => (
+        {Array.from({ length: span }, (_, i) => (
           <Skeleton key={i} className="h-[4.5rem] w-[4.25rem] shrink-0 rounded-xl" />
         ))}
       </div>

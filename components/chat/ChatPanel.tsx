@@ -62,7 +62,7 @@ export function ChatPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Open booking chat"
+          aria-label="Open chat"
           className="fixed bottom-[7.75rem] right-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-24 sm:right-6"
         >
           <MessageCircle className="size-5" aria-hidden />
@@ -109,7 +109,7 @@ export function ChatPanel() {
                 <p className="mb-0.5 text-[0.625rem] uppercase tracking-wider text-faint">
                   {message.role === "user" ? "You" : "Assistant"}
                 </p>
-                {message.parts.map((part, index) => {
+                {(message.parts ?? []).map((part, index) => {
                   if (part.type === "text" && part.text) {
                     return (
                       <p key={`${message.id}-${index}`} className="whitespace-pre-wrap">
@@ -145,13 +145,13 @@ export function ChatPanel() {
                 }
               }}
               rows={2}
-              placeholder="From New Delhi to Mumbai tomorrow"
+              placeholder="From NDLS to MAS…"
               className="min-h-[2.75rem] flex-1 resize-none rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-[0.8125rem] text-text placeholder:text-faint"
             />
             <button
               type="submit"
               disabled={busy || !input.trim()}
-              aria-label="Send message"
+              aria-label="Send"
               className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
             >
               <Send className="size-4" aria-hidden />

@@ -7,7 +7,7 @@ import { ArrowRight, CalendarDays, SlidersHorizontal, TriangleAlert } from "luci
 import type { ClassCode, QuotaCode } from "@/lib/types";
 import { api } from "@/lib/apiClient";
 import { isConfirmable } from "@/lib/domain/search";
-import { formatDateShort, formatWeekday, todayIso, addDays } from "@/lib/domain/time";
+import { formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { GLOSSARY } from "@/lib/glossary";
 import { JourneyRow } from "@/components/availability/JourneyRow";
 import { ResultFilters, DEPARTURE_WINDOWS, type Filters } from "@/components/availability/ResultFilters";

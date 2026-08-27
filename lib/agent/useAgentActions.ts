@@ -61,10 +61,17 @@ export async function applyAgentTool(name: string, input: Record<string, unknown
       return "Contact filled";
     }
     case "confirm": {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const confirm = [...document.querySelectorAll("button")].find((el) => /Confirm and pay/i.test(el.textContent ?? ""));
-      confirm?.click();
-      return "Confirm clicked";
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const confirm = [...document.querySelectorAll("button")].find((el) =>
+          /Confirm and pay/i.test(el.textContent ?? "")
+        );
+        if (confirm && !confirm.disabled) {
+          confirm.click();
+          return "Confirm clicked";
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+      return "Confirm not ready";
     }
     case "highlight": {
       const trainNumber = String(input.trainNumber);

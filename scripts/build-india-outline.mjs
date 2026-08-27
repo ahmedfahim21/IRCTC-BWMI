@@ -123,7 +123,7 @@ const output = `/**
 /** The mainland ring. Used to frame the map, so offshore territory doesn't zoom it out. */
 export const INDIA_MAINLAND: Array<[number, number]> = ${fmt(mainland)} as Array<[number, number]>;
 
-/** Every landmass above a pixel in size: mainland, Andaman & Nicobar, Lakshadweep and the rest. */
+/** Every landmass above a pixel in size: mainland plus three Andaman & Nicobar rings (not Lakshadweep). */
 export const INDIA_RINGS: Array<Array<[number, number]>> = [
 ${simplified.map((r) => `  ${fmt(r.points)}`).join(",\n")}
 ] as Array<Array<[number, number]>>;

@@ -59,12 +59,12 @@ the live tracking screen has something to track.
 
 Worth a look:
 
-- `/` — search. The date strip shows which days are bookable before you commit to one
-- `/map` — every train running in India right now, ~2,800 of them
-- `/search?from=NDLS&to=MAS&date=…` — the availability matrix; a date 1–2 days out shows real waitlist odds
+- `/` — search beside a live map of India. The date strip shows which days are bookable before you commit to one
+- `/map` — tiled MapLibre view of every train running in India right now, with a list pane and a quota-safe bounding box
+- `/search?from=NDLS&to=MAS&date=…` — the availability matrix on the left, origin/destination and the selected train on the map
 - `/trains/12723` — a real train, live, with every stop including the ones it passes through
 - `/trips` — the seeded journeys; open the one running today
-- The mic button, bottom right — say *"trains from Delhi to Mumbai tomorrow"*, in any Indian language
+- The chat button, then the mic — type or say *"trains from New Delhi to Mumbai tomorrow"*
 
 On a phone the four destinations move to a bottom tab bar; four of them plus the logo and settings
 don't fit in a 360 px header, and thumbs reach the bottom of a phone far more easily than the top.
@@ -83,7 +83,10 @@ With `RAILRADAR_API_KEY` set, these come from the real network:
 | Coach composition | ✅ | The real rake, including per-station reversals |
 | Platform position | ✅ | Derived from the real formation |
 | Date availability strip | ✅ | One call returns a fortnight |
-| Live network map | ✅ | ~2,800 running trains in one snapshot |
+| Live network map | ✅ | ~2,800 running trains in one snapshot, clipped to the current map bbox |
+| Station coordinates | bundled | Wikidata P5696 + datameet, never invented as (0, 0) |
+| Map tiles | OSM / EOX | OpenFreeMap streets, Sentinel-2 satellite, OpenRailwayMap overlay |
+| India outline | bundled | Survey of India–derived datameet boundary, simplified. OSM tiles are not the legal boundary. |
 | Availability matrix | ❌ | Seats is per train **per class** — one busy route costs dozens of calls |
 | Confirmation odds | ❌ | No pre-booking prediction endpoint; theirs needs a real PNR |
 | Fares, berth map | ❌ | Fares are one call per class; berth inventory isn't exposed at all |
@@ -146,6 +149,9 @@ curl -s -X POST http://localhost:3277/api/mcp -H 'content-type: application/json
 `GET /api/mcp` returns a human-readable summary of the same. Bad arguments come back as tool-level
 errors so the agent can correct itself, rather than as protocol errors that break the connection.
 
+The in-app chat at `/api/chat` uses the same tools, then client actions move the UI. Set
+`ANTHROPIC_API_KEY` for a live model; without it the scripted replay still covers the booking life-cycle.
+
 ---
 
 ## Design
@@ -170,9 +176,10 @@ hierarchy — nothing above weight 450. Tabular numerals everywhere. The rail sp
 three densities: full height on the train page, a ribbon in results, compact in the trip card.
 Status colour is never the only signal.
 
-Maps are hand-drawn: an India outline as coordinate data, routes projected onto it, auto-framed.
-The national map renders ~2,800 trains to a **canvas**, not SVG — at that many nodes it's the
-difference between smooth and unusable on a cheap Android. No tiles, no API key, nothing to fetch.
+Maps are MapLibre: OpenFreeMap streets, Sentinel-2 cloudless satellite, and an OpenRailwayMap
+overlay. India's boundary is drawn from the datameet Survey of India–derived outline (mainland plus
+three Andaman rings) so OSM tiles do not get the last word on the border. The landing map polls
+slowly and clips to the viewport bbox so it cannot spend the RailRadar month.
 
 The barcode on the ticket is Code 39, written out in about forty lines. It genuinely encodes the PNR.
 

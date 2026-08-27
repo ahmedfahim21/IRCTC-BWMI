@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Mic, Square, Volume2, X } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
-import { useAgentChat } from "@/lib/agent/ChatProvider";
+import { emitVoiceTranscript } from "@/lib/agent/uiActions";
 
 type Phase = "idle" | "listening" | "thinking" | "answered" | "error";
 
@@ -31,7 +31,6 @@ const MAX_RECORDING_MS = 12_000;
  */
 export function VoiceButton() {
   const router = useRouter();
-  const chat = useAgentChat();
   const [phase, setPhase] = useState<Phase>("idle");
   const [level, setLevel] = useState(0);
   const [result, setResult] = useState<VoiceResult | null>(null);
@@ -86,8 +85,8 @@ export function VoiceButton() {
         }
 
         window.dispatchEvent(new Event("irctc:open-chat"));
-        if (chat) {
-          void chat.sendMessage({ text: voiceResult.transcript });
+        if (voiceResult.transcript) {
+          emitVoiceTranscript(voiceResult.transcript);
         } else if (voiceResult.intent.href) {
           timers.current.push(setTimeout(() => router.push(voiceResult.intent.href!), 700));
         }
@@ -96,7 +95,7 @@ export function VoiceButton() {
         setPhase("error");
       }
     },
-    [router, chat]
+    [router]
   );
 
   const stop = useCallback(() => {
