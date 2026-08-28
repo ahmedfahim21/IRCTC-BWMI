@@ -5,6 +5,7 @@ import { formatDateShort, formatMinute, formatWeekday } from "@/lib/domain/time"
 import { Barcode } from "./Barcode";
 import { explainStatus } from "@/lib/glossary";
 import { cn } from "@/components/ui/cn";
+import { Ticket } from "lucide-react";
 
 const STATUS_TONE = {
   confirmed: "text-ok",
@@ -32,7 +33,10 @@ export function TicketCard({
     <div className={cn("card overflow-hidden", booking.status === "cancelled" && "opacity-70")}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border px-4 py-3">
         <div>
-          <p className="eyebrow">PNR</p>
+          <p className="eyebrow inline-flex items-center gap-1.5">
+            <Ticket className="size-3 text-faint" aria-hidden />
+            PNR
+          </p>
           <p className="tnum text-[1.125rem] tracking-[0.14em] text-text">{booking.pnr}</p>
         </div>
         <div className="text-right">

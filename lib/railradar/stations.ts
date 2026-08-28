@@ -1,6 +1,9 @@
 import type { Station } from "@/lib/types";
 import { callRailRadar, isLive, TTL } from "./client";
 import { titleCase } from "./map";
+import { PRINCIPAL_TERMINAL, toLiveCode, toMockCode } from "./codes";
+
+export { PRINCIPAL_TERMINAL, STATION_ALIASES, toLiveCode, toMockCode } from "./codes";
 
 /**
  * The national station directory — all ten thousand of them — fetched once as a
@@ -10,29 +13,25 @@ import { titleCase } from "./map";
  */
 
 /**
- * Codes our generated timetable uses that the live network has moved on from.
- * Indian Railways renames and recodes stations; BCT and MMCT both still resolve
- * to "Mumbai Central" in the directory, but only MMCT has trains against it.
+ * A search-form token is either a station code or `city:Delhi`. The date strip
+ * and live train-between call need a single code the network recognises.
  */
-export const STATION_ALIASES: Record<string, string> = {
-  BCT: "MMCT", // Mumbai Central — BCT is a stale duplicate with no services
-  ALD: "PRYJ", // Allahabad Jn -> Prayagraj Jn
-  MGS: "DDU", // Mughalsarai -> Pt. Deen Dayal Upadhyaya Jn
-  JHS: "VGLJ", // Jhansi -> Veerangana Lakshmibai Jhansi
-  HBJ: "RKMP", // Habibganj -> Rani Kamalapati
-  GR: "KLBG", // Gulbarga -> Kalaburagi
-  PNK: "PHD", // Phaphund
-};
+export async function resolveLiveStationCode(token: string): Promise<string | null> {
+  const trimmed = token.trim();
+  if (!trimmed) return null;
 
-/** Map one of our codes onto whatever the live network calls it now. */
-export function toLiveCode(code: string): string {
-  return STATION_ALIASES[code.toUpperCase()] ?? code.toUpperCase();
+  if (trimmed.startsWith("city:")) {
+    const city = trimmed.slice(5).trim();
+    if (!city) return null;
+    const principal = PRINCIPAL_TERMINAL[city.toUpperCase()];
+    if (principal) return principal;
+    if (!isLive()) return null;
+    const matches = await searchDirectory(city, 1);
+    return matches?.[0]?.code ?? null;
+  }
+
+  return toLiveCode(trimmed);
 }
-
-/** Reverse of STATION_ALIASES, so a live code can be matched from ours too. */
-const FROM_LIVE: Record<string, string> = Object.fromEntries(
-  Object.entries(STATION_ALIASES).map(([ours, live]) => [live, ours])
-);
 
 /**
  * Find a stop by station code, tolerating the rename. A live timetable calls
@@ -41,7 +40,7 @@ const FROM_LIVE: Record<string, string> = Object.fromEntries(
  */
 export function findStop<T extends { stationCode: string }>(stops: T[], code: string): T | undefined {
   const wanted = code.toUpperCase();
-  const candidates = new Set([wanted, toLiveCode(wanted), FROM_LIVE[wanted]].filter(Boolean) as string[]);
+  const candidates = new Set([wanted, toLiveCode(wanted), toMockCode(wanted)]);
   return stops.find((stop) => candidates.has(stop.stationCode.toUpperCase()));
 }
 
@@ -72,44 +71,6 @@ export async function stationName(code: string): Promise<string | null> {
   const all = await loadDirectory();
   return all?.get(code.toUpperCase()) ?? null;
 }
-
-/**
- * When someone types a city they usually mean its principal terminal, and
- * ranking alone won't get there — "Delhi" matches a dozen suburban stations
- * whose codes begin DL before it reaches New Delhi.
- */
-export const PRINCIPAL_TERMINAL: Record<string, string> = {
-  DELHI: "NDLS",
-  "NEW DELHI": "NDLS",
-  MUMBAI: "CSMT",
-  BOMBAY: "CSMT",
-  KOLKATA: "HWH",
-  CALCUTTA: "HWH",
-  CHENNAI: "MAS",
-  MADRAS: "MAS",
-  BENGALURU: "SBC",
-  BANGALORE: "SBC",
-  HYDERABAD: "SC",
-  PUNE: "PUNE",
-  AHMEDABAD: "ADI",
-  JAIPUR: "JP",
-  LUCKNOW: "LKO",
-  PATNA: "PNBE",
-  BHOPAL: "BPL",
-  NAGPUR: "NGP",
-  KANPUR: "CNB",
-  SURAT: "ST",
-  INDORE: "INDB",
-  KOCHI: "ERS",
-  COCHIN: "ERS",
-  GUWAHATI: "GHY",
-  CHANDIGARH: "CDG",
-  VARANASI: "BSB",
-  AMRITSAR: "ASR",
-  JAMMU: "JAT",
-  TRIVANDRUM: "TVC",
-  THIRUVANANTHAPURAM: "TVC",
-};
 
 /**
  * Search the whole directory. An exact code wins, then the city's principal

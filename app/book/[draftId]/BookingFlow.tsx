@@ -281,8 +281,18 @@ export function BookingFlow({ draftId }: { draftId: string }) {
               </p>
             )}
 
-            {canChooseBerth && coachData ? (
+            {coachData ? (
               <>
+                {!canChooseBerth && (
+                  <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border bg-surface-2 p-3">
+                    <Info className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
+                    <p className="text-[0.8125rem] leading-relaxed text-dim">
+                      {availability?.state === "rac"
+                        ? "RAC tickets share a side berth, so you can't claim one yet. The diagram still shows the coach."
+                        : "This class is waitlisted, so you can't claim a berth yet. The diagram still shows the coach."}
+                    </p>
+                  </div>
+                )}
                 <CoachStrip
                   rake={coachData.coaches}
                   selectedCode={activeCoach}
@@ -294,19 +304,13 @@ export function BookingFlow({ draftId }: { draftId: string }) {
                     coach={coachData.coaches.find((c) => c.code === activeCoach)!}
                     selections={selections}
                     onToggle={toggleBerth}
-                    passengerCount={passengers.length}
+                    passengerCount={Math.max(1, passengers.length)}
+                    selectable={canChooseBerth}
                   />
                 )}
               </>
             ) : (
-              <div className="flex items-start gap-2.5 rounded-lg border border-border bg-surface-2 p-3">
-                <Info className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
-                <p className="text-[0.8125rem] leading-relaxed text-dim">
-                  {availability?.state === "rac"
-                    ? "RAC tickets share a side berth, so there's no berth to pick yet. You'll be allotted one when the chart is prepared."
-                    : "This class is on a waiting list, so no berth can be chosen yet. If it clears before the chart is prepared, a berth is allotted automatically."}
-                </p>
-              </div>
+              <SkeletonRows rows={3} />
             )}
           </section>
 
@@ -452,6 +456,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
       className="flex w-full items-start gap-2.5 rounded-lg py-1.5 text-left transition-colors hover:bg-surface-2"
     >

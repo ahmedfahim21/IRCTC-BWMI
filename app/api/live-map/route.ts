@@ -61,13 +61,22 @@ export const GET = handler(async (request: NextRequest) => {
     }
   }
 
+  const total = trains.length;
+  let clipped = trains;
+  if (bbox) {
+    const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
+    if ([minLng, minLat, maxLng, maxLat].every(Number.isFinite)) {
+      clipped = trains.filter(([, , lat, lng]) => lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng);
+    }
+  }
+
   return json({
     source: "generated",
     types: TRAIN_TYPES,
     updatedAt: now.toISOString(),
-    total: trains.length,
-    shown: trains.length,
-    trains,
+    total,
+    shown: Math.min(clipped.length, limit),
+    trains: clipped.slice(0, limit),
   });
 });
 

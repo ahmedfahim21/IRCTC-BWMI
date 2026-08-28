@@ -7,13 +7,14 @@ import { ArrowRight, CalendarDays, SlidersHorizontal, TriangleAlert } from "luci
 import type { ClassCode, QuotaCode } from "@/lib/types";
 import { api } from "@/lib/apiClient";
 import { isConfirmable } from "@/lib/domain/search";
-import { formatDateShort, formatWeekday, todayIso, addDays } from "@/lib/domain/time";
+import { formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { GLOSSARY } from "@/lib/glossary";
 import { JourneyRow } from "@/components/availability/JourneyRow";
 import { ResultFilters, DEPARTURE_WINDOWS, type Filters } from "@/components/availability/ResultFilters";
 import { AlternativesPanel } from "@/components/availability/AlternativesPanel";
 import { GlossaryLegend } from "@/components/availability/GlossaryLegend";
 import { DateStrip } from "@/components/search/DateStrip";
+import { SearchMap } from "@/components/map/SearchMap";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { cn } from "@/components/ui/cn";
@@ -26,6 +27,7 @@ export function SearchResults() {
   const to = params.get("to") ?? "";
   const date = params.get("date") ?? todayIso();
   const quota = (params.get("quota") ?? "GN") as QuotaCode;
+  const selectedTrain = params.get("train");
 
   const [showDates, setShowDates] = useState(false);
   const [filters, setFilters] = useState<Filters>({
@@ -92,8 +94,15 @@ export function SearchResults() {
   }, [data, filters]);
 
   const setDate = (next: string) => {
-    router.push(`/search?from=${from}&to=${to}&date=${next}&quota=${quota}`);
+    const nextParams = new URLSearchParams({ from, to, date: next, quota });
+    if (selectedTrain) nextParams.set("train", selectedTrain);
+    router.push(`/search?${nextParams}`);
     setShowDates(false);
+  };
+
+  const selectTrain = (number: string) => {
+    const nextParams = new URLSearchParams({ from, to, date, quota, train: number });
+    router.replace(`/search?${nextParams}`, { scroll: false });
   };
 
   if (!from || !to) {
@@ -108,7 +117,8 @@ export function SearchResults() {
   const destinationName = data?.stations[data.query.toCodes[0]]?.name ?? to.replace("city:", "");
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
+    <div className="lg:grid lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(22rem,36rem)_1fr]">
+      <div className="min-w-0 px-4 pb-20 pt-5 sm:px-6">
       {/* Journey summary, editable in place — the search is never a dead end you have to back out of. */}
       <div className="card mb-4 p-3.5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -209,6 +219,8 @@ export function SearchResults() {
                       stations={data.stations}
                       date={date}
                       quota={quota}
+                      selected={selectedTrain === journey.train.number}
+                      onSelect={() => selectTrain(journey.train.number)}
                     />
                   ))}
                 </div>
@@ -228,6 +240,15 @@ export function SearchResults() {
           )}
         </>
       )}
+      </div>
+      <div className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] min-h-[16rem] lg:block">
+        <SearchMap
+          origin={data?.stations[data.query.fromCodes[0]]}
+          destination={data?.stations[data.query.toCodes[0]]}
+          selectedTrain={selectedTrain}
+          date={date}
+        />
+      </div>
     </div>
   );
 }

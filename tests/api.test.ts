@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 import { GET as getStations } from "@/app/api/stations/route";
 import { GET as getSearch } from "@/app/api/search/route";
+import { GET as getRouteAvailability } from "@/app/api/route-availability/route";
 import { GET as getTrain } from "@/app/api/trains/[number]/route";
 import { GET as getLive } from "@/app/api/trains/[number]/live/route";
 import { GET as getDateStrip } from "@/app/api/trains/[number]/availability/route";
@@ -12,6 +13,7 @@ import { GET as getDraftRoute, PATCH as patchDraftRoute } from "@/app/api/bookin
 import { POST as confirmRoute } from "@/app/api/bookings/draft/[draftId]/confirm/route";
 import { GET as getBookings } from "@/app/api/bookings/route";
 import { GET as getPnr } from "@/app/api/pnr/[pnr]/route";
+import { GET as getStatus } from "@/app/api/status/route";
 import { GET as getRefundQuote } from "@/app/api/bookings/[pnr]/refund-quote/route";
 import { POST as postCancel } from "@/app/api/bookings/[pnr]/cancel/route";
 import { todayIso, addDays } from "@/lib/domain/time";
@@ -143,6 +145,33 @@ describe("GET /api/search", () => {
         expect(group.rationale.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("GET /api/route-availability", () => {
+  it("rejects a request missing stations", async () => {
+    const res = await getRouteAvailability(req(`/api/route-availability?from=NDLS&date=${TODAY}`));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns a day-by-day strip for a generated-world pair", async () => {
+    const res = await getRouteAvailability(req(`/api/route-availability?from=NDLS&to=BCT&date=${TODAY}&span=7`));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.days.length).toBe(7);
+    for (const day of body.days) {
+      expect(day.date >= TODAY).toBe(true);
+      expect(day.trainCount).toBeGreaterThan(0);
+      expect(day.label.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("accepts a live Mumbai Central code that the generated world spells BCT", async () => {
+    const res = await getRouteAvailability(req(`/api/route-availability?from=NDLS&to=MMCT&date=${TODAY}&span=5`));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.days.length).toBeGreaterThan(3);
+    expect(body.days.some((d: { trainCount: number }) => d.trainCount > 0)).toBe(true);
   });
 });
 
@@ -468,5 +497,12 @@ describe("booking lifecycle", () => {
     const second = await postCancel(post(`/api/bookings/${pnr}/cancel`, {}), params({ pnr }));
     expect(second.status).toBe(400);
     expect((await second.json()).error).toMatch(/already cancelled/);
+  });
+});
+
+describe("GET /api/status", () => {
+  it("reports scripted chat when no Anthropic key is set", async () => {
+    const body = await (await getStatus()).json();
+    expect(body.chatLive).toBe(false);
   });
 });

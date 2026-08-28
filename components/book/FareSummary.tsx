@@ -3,6 +3,7 @@
 import type { FareBreakdown, RefundQuote } from "@/lib/types";
 import { formatRupees } from "@/components/availability/ClassCell";
 import { cn } from "@/components/ui/cn";
+import { Receipt } from "lucide-react";
 
 const LINES: Array<{ key: keyof FareBreakdown; label: string; hint?: string }> = [
   { key: "baseFare", label: "Base fare" },
@@ -40,7 +41,8 @@ export function FareSummary({
         );
       })}
       <div className="flex items-baseline justify-between gap-3 border-t border-border pt-2">
-        <dt className="text-[0.875rem] text-text">
+        <dt className="flex items-center gap-1.5 text-[0.875rem] text-text">
+          <Receipt className="size-3.5 text-faint" aria-hidden />
           Total
           <span className="ml-1.5 text-[0.6875rem] text-faint">
             {passengerCount} passenger{passengerCount === 1 ? "" : "s"}

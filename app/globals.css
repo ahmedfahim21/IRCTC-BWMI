@@ -263,6 +263,45 @@ h1, h2, h3, h4, h5, h6, strong, b, th {
   );
 }
 
+.rail-station-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.rail-station-pin__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid var(--surface);
+  background: var(--brand);
+  box-shadow: var(--shadow-sm);
+}
+
+.rail-station-pin__dot[data-kind="destination"] {
+  background: var(--accent);
+}
+
+.rail-station-pin__dot[data-kind="stop"] {
+  background: var(--surface);
+  border-color: var(--brand);
+}
+
+.rail-station-pin__label {
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1px 6px;
+  font-size: 0.6875rem;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; border: 3px solid var(--bg); }

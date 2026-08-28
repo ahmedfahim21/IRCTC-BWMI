@@ -6,6 +6,7 @@ import { searchJourneys, resolveStationGroup, isConfirmable } from "@/lib/domain
 import { buildAlternatives } from "@/lib/domain/alternatives";
 import { todayIso } from "@/lib/domain/time";
 import { liveTrainsBetween, isLive } from "@/lib/railradar/source";
+import { resolveLiveStationCode } from "@/lib/railradar/stations";
 import { synthesizeTrain } from "@/lib/railradar/synthesize";
 import { handler, json, badRequest } from "@/lib/api/http";
 import { toJourneyDto, toTrainSummary, stationSidecar, type JourneyDto } from "@/lib/api/dto";
@@ -37,8 +38,8 @@ export const GET = handler(async (request: NextRequest) => {
 
   // Live first: the API knows the whole network, not just our eleven corridors.
   if (isLive()) {
-    const singleFrom = from.startsWith("city:") ? fromCodes[0] : from;
-    const singleTo = to.startsWith("city:") ? toCodes[0] : to;
+    const singleFrom = fromCodes[0] ?? (await resolveLiveStationCode(from));
+    const singleTo = toCodes[0] ?? (await resolveLiveStationCode(to));
     if (singleFrom && singleTo) {
       const upstream = await liveTrainsBetween(singleFrom, singleTo, date);
       if (upstream?.answered) {

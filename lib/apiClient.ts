@@ -20,6 +20,7 @@ import type { AlternativeGroup } from "@/lib/domain/alternatives";
 import type { StationResult } from "@/app/api/stations/route";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import type { RouteDay } from "@/app/api/route-availability/route";
+import type { PackedTrain } from "@/lib/railradar/liveMap";
 
 /**
  * The UI talks to the app's own HTTP API and never reaches into the mock data
@@ -159,8 +160,18 @@ export interface RouteAvailabilityResponse {
 export interface StatusResponse {
   live: boolean;
   voice: boolean;
+  chatLive: boolean;
   quota: { month: string; used: number; budget: number; remaining: number } | null;
   sources: Record<string, string>;
+}
+
+export interface LiveMapResponse {
+  source: "live" | "generated";
+  types: string[];
+  updatedAt: string;
+  total: number;
+  shown: number;
+  trains: PackedTrain[];
 }
 
 export const api = {
@@ -176,6 +187,9 @@ export const api = {
 
   search: (p: { from: string; to: string; date: string; quota?: QuotaCode; classes?: string }, signal?: AbortSignal) =>
     get<SearchResponse>(`/api/search?${qs(p)}`, signal),
+
+  liveMap: (p?: { bbox?: string; limit?: number }, signal?: AbortSignal) =>
+    get<LiveMapResponse>(`/api/live-map?${qs(p ?? {})}`, signal),
 
   train: (number: string, date?: string, signal?: AbortSignal) =>
     get<TrainResponse>(`/api/trains/${number}?${qs({ date })}`, signal),

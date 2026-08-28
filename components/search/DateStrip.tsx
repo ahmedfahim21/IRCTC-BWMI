@@ -6,7 +6,7 @@ import type { RouteDay } from "@/app/api/route-availability/route";
 import { addDays, daysBetween, formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { DATE_CHIP_STRIDE_PX } from "@/lib/ui/dateChip";
 
 const TONE: Record<RouteDay["state"], { dot: string; text: string }> = {
   available: { dot: "bg-ok", text: "text-ok" },
@@ -17,9 +17,6 @@ const TONE: Record<RouteDay["state"], { dot: string; text: string }> = {
   departed: { dot: "bg-faint", text: "text-faint" },
   none: { dot: "bg-border-strong", text: "text-faint" },
 };
-
-/** Matches the rendered chip: w-[4.25rem] plus the 0.375rem gap, at 16px root. */
-const CHIP_STRIDE = 68 + 6;
 
 /**
  * Availability across the coming fortnight, shown before you commit to a date.
@@ -37,12 +34,14 @@ export function DateStrip({
   date,
   onPick,
   span = 14,
+  disabled = false,
 }: {
   from: string;
   to: string;
   date: string;
   onPick: (date: string) => void;
   span?: number;
+  disabled?: boolean;
 }) {
   const today = todayIso();
   const scroller = useRef<HTMLDivElement>(null);
@@ -57,7 +56,7 @@ export function DateStrip({
     // window is a highlight change, not a new request.
     queryKey: ["routeAvailability", from, to, today, windowSpan],
     queryFn: ({ signal }) => api.routeAvailability({ from, to, date: today, span: windowSpan }, signal),
-    enabled: Boolean(from && to),
+    enabled: Boolean(from && to) && !disabled,
     staleTime: 60_000,
     // If the window does have to grow, keep showing the old strip rather than
     // collapsing to a skeleton underneath the user's cursor.
@@ -71,26 +70,51 @@ export function DateStrip({
     const index = data.days.findIndex((day) => day.date === date);
     if (index < 0) return;
     box.scrollTo({
-      left: Math.max(0, index * CHIP_STRIDE - box.clientWidth / 2 + CHIP_STRIDE / 2),
+      left: Math.max(0, index * DATE_CHIP_STRIDE_PX - box.clientWidth / 2 + DATE_CHIP_STRIDE_PX / 2),
       behavior: "smooth",
     });
   }, [date, data]);
 
-  if (!from || !to) return null;
+  const placeholderDays = Array.from({ length: windowSpan }, (_, i) => addDays(today, i));
+  const waiting = disabled || !from || !to || isPending;
 
-  if (isPending) {
+  if (!data) {
     return (
-      <div className="flex gap-1.5 overflow-hidden" aria-hidden>
-        {Array.from({ length: 8 }, (_, i) => (
-          <Skeleton key={i} className="h-[4.5rem] w-[4.25rem] shrink-0 rounded-xl" />
-        ))}
+      <div className={waiting ? "opacity-45" : undefined} aria-disabled={waiting || undefined}>
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Journey date">
+          {placeholderDays.map((day) => {
+            const selected = day === date;
+            const label = day === today ? "Today" : day === addDays(today, 1) ? "Tomorrow" : formatWeekday(day);
+            return (
+              <button
+                key={day}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                disabled
+                aria-label={`${formatDateShort(day)}, pick stations to see availability`}
+                className={cn(
+                  "flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl border px-2 py-2.5",
+                  selected ? "border-brand bg-brand-soft" : "border-border bg-surface"
+                )}
+              >
+                <span className="text-[0.625rem] uppercase tracking-wider text-faint">{label}</span>
+                <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
+                  {formatDateShort(day)}
+                </span>
+                <span className="flex h-4 items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-border-strong" aria-hidden />
+                  <span className="text-[0.625rem] text-faint">—</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 min-h-[2.75rem] px-0.5 text-[0.6875rem] leading-snug text-faint">
+          Pick origin and destination to see which days have seats.
+        </p>
       </div>
     );
-  }
-
-  // A failed strip must not masquerade as "no trains available".
-  if (isError) {
-    return <p className="text-[0.75rem] text-danger">Couldn&rsquo;t load availability for these dates.</p>;
   }
 
   return (
@@ -125,7 +149,7 @@ export function DateStrip({
               <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
                 {formatDateShort(day.date)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex h-4 items-center gap-1">
                 <span className={cn("size-1.5 rounded-full", tone.dot)} aria-hidden />
                 <span className={cn("text-[0.625rem]", tone.text)}>
                   {dead ? "None" : day.confirmableCount > 0 ? `${day.confirmableCount} open` : "Full"}
@@ -135,20 +159,26 @@ export function DateStrip({
           );
         })}
       </div>
-      <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-[0.6875rem] text-faint">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-ok" aria-hidden /> Seats free
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-warn" aria-hidden /> RAC only
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-danger" aria-hidden /> Waitlist only
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-border-strong" aria-hidden /> No trains
-        </span>
-      </p>
+      {isError ? (
+        <p className="mt-2 min-h-[2.75rem] px-0.5 text-[0.6875rem] leading-snug text-danger">
+          Couldn&rsquo;t load availability for these dates.
+        </p>
+      ) : (
+        <p className="mt-2 flex min-h-[2.75rem] flex-wrap items-center gap-x-3 gap-y-1 px-0.5 text-[0.6875rem] text-faint">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-ok" aria-hidden /> Seats free
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-warn" aria-hidden /> RAC only
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-danger" aria-hidden /> Waitlist only
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-border-strong" aria-hidden /> No trains
+          </span>
+        </p>
+      )}
     </div>
   );
 }

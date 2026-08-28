@@ -3,6 +3,7 @@
 import type { Coach, CoachType } from "@/lib/types";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import { cn } from "@/components/ui/cn";
+import { TrainFront } from "lucide-react";
 
 const COACH_TONE: Partial<Record<CoachType, string>> = {
   ENG: "bg-surface-3 text-faint border-border-strong",
@@ -53,7 +54,10 @@ export function CoachStrip({
                   interactive && "cursor-pointer hover:brightness-110"
                 )}
               >
-                <span className="text-[0.6875rem] leading-none">{coach.code}</span>
+                <span className="flex items-center gap-0.5 text-[0.6875rem] leading-none">
+                  {coach.type === "ENG" && <TrainFront className="size-2.5" aria-hidden />}
+                  {coach.code}
+                </span>
                 <span className="text-[0.5625rem] leading-none opacity-70">
                   {coach.type === "ENG" ? "loco" : coach.type}
                 </span>

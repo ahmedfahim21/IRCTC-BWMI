@@ -8,8 +8,9 @@ import { ArrowRight, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from 
 import { api } from "@/lib/apiClient";
 import { formatDuration, formatMinute, todayIso } from "@/lib/domain/time";
 import { RailSpine } from "@/components/rail/RailSpine";
-import { SchematicMap } from "@/components/rail/SchematicMap";
+import { TrainHeroMap } from "@/components/map/TrainHeroMap";
 import { CoachStrip, PlatformDiagram } from "@/components/coach/CoachStrip";
+import { BerthMap } from "@/components/coach/BerthMap";
 import { PunctualitySparkline } from "@/components/rail/PunctualitySparkline";
 import { CrossingsList } from "@/components/rail/CrossingsList";
 import { SkeletonRows } from "@/components/ui/Skeleton";
@@ -74,6 +75,8 @@ export function TrainDetail({ number }: { number: string }) {
   const first = train.schedule[0];
   const last = train.schedule[train.schedule.length - 1];
   const live = liveData?.live ?? null;
+  const selectedLayout =
+    coachData?.coaches.find((c) => c.code === selectedCoach) ?? coachData?.coaches[0] ?? null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
@@ -127,14 +130,14 @@ export function TrainDetail({ number }: { number: string }) {
         <Stat icon={Gauge} label="Fastest leg" value={`${train.maxSpeedKmph}`} sub="km/h" />
       </dl>
 
-      <SchematicMap
+      <TrainHeroMap
+        trainNumber={train.number}
         schedule={train.schedule}
         stations={stations}
         live={live}
         highlightFrom={from}
         highlightTo={to}
         className="mb-4 aspect-[3/2] w-full sm:aspect-[16/7]"
-        aspect={3 / 2}
       />
 
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border" role="tablist">
@@ -177,7 +180,7 @@ export function TrainDetail({ number }: { number: string }) {
                 onSelect={(coach) => setSelectedCoach(coach.code === selectedCoach ? null : coach.code)}
               />
               <p className="mt-2 text-[0.75rem] text-faint">
-                Tap a coach to see where it stops on the boarding platform.
+                Tap a coach to see its berths and where it stops on the boarding platform.
               </p>
             </div>
 
@@ -190,6 +193,19 @@ export function TrainDetail({ number }: { number: string }) {
               />
             ) : (
               <SkeletonRows rows={1} />
+            )}
+
+            {coachData && selectedLayout && (
+              <div>
+                <p className="eyebrow mb-2">Berths in {selectedLayout.code}</p>
+                <BerthMap
+                  coach={selectedLayout}
+                  selections={[]}
+                  onToggle={() => undefined}
+                  passengerCount={1}
+                  selectable={false}
+                />
+              </div>
             )}
           </div>
         )}

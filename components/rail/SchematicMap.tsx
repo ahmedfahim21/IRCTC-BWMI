@@ -37,8 +37,9 @@ export function SchematicMap({
       schedule
         .map((stop) => {
           const station = stations[stop.stationCode];
-          if (!station) return null;
+          if (!station || !Number.isFinite(station.lat) || !Number.isFinite(station.lng)) return null;
           const [x, y] = project(station.lng, station.lat);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
           return { x, y, stop, station };
         })
         .filter((p): p is NonNullable<typeof p> => p !== null),
@@ -81,7 +82,10 @@ export function SchematicMap({
           .join("")
       : null;
 
-  const livePoint = live ? project(live.position.lng, live.position.lat) : null;
+  const livePoint =
+    live && Number.isFinite(live.position.lng) && Number.isFinite(live.position.lat)
+      ? project(live.position.lng, live.position.lat)
+      : null;
   const scale = Math.max(view.w, view.h) / 320;
 
   return (

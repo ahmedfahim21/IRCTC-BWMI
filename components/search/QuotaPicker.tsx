@@ -9,13 +9,23 @@ import { cn } from "@/components/ui/cn";
 const QUOTAS: QuotaCode[] = ["GN", "TQ", "PT", "LD", "SS"];
 
 /** Quota, with each option explained inline instead of assumed knowledge. */
-export function QuotaPicker({ value, onChange }: { value: QuotaCode; onChange: (q: QuotaCode) => void }) {
+export function QuotaPicker({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: QuotaCode;
+  onChange: (q: QuotaCode) => void;
+  disabled?: boolean;
+}) {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[0.75rem] text-dim transition-colors hover:border-border-strong hover:text-text"
+          disabled={disabled}
+          aria-disabled={disabled}
+          className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[0.75rem] text-dim transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border"
         >
           <span className="text-faint">Quota</span>
           <span className="text-text">{GLOSSARY[value].short}</span>

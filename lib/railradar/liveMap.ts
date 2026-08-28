@@ -1,5 +1,8 @@
 import { callRailRadar, isLive } from "./client";
 import { titleCase } from "./map";
+import { TRAIN_TYPES } from "./trainTypes";
+
+export { TRAIN_TYPES };
 
 /** One running train, as the snapshot feed reports it. */
 interface RrLiveMapTrain {
@@ -19,23 +22,6 @@ interface RrLiveMapTrain {
   curr_distance?: number;
   next_distance?: number;
 }
-
-/**
- * Train types, indexed. The wire format sends an index rather than repeating
- * the word 2,800 times — this feed is the heaviest thing in the app and most
- * of its users are on a phone with a bad connection.
- */
-export const TRAIN_TYPES = [
-  "Rajdhani",
-  "Shatabdi",
-  "Vande Bharat",
-  "Duronto",
-  "Superfast",
-  "Express",
-  "Passenger",
-  "Special",
-  "Other",
-] as const;
 
 function typeIndex(type: string, name: string): number {
   const haystack = `${type} ${name}`.toLowerCase();

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { stubMapTiles } from "./stubTiles";
 
 const AUDIT = readFileSync(resolve(__dirname, "../scripts/contrast-audit.js"), "utf8");
 
@@ -21,6 +22,10 @@ const PAGES = [
 
 const resolvePath = (p: (typeof PAGES)[number]["path"]) => (typeof p === "function" ? p() : p);
 
+test.beforeEach(async ({ page }) => {
+  await stubMapTiles(page);
+});
+
 for (const theme of ["light", "dark"] as const) {
   for (const page_ of PAGES) {
     test(`${page_.name} meets WCAG AA contrast in ${theme}`, async ({ page }) => {
@@ -29,7 +34,7 @@ for (const theme of ["light", "dark"] as const) {
         [theme]
       );
       await page.goto(resolvePath(page_.path));
-      await page.waitForLoadState("networkidle").catch(() => {});
+      await page.waitForLoadState("domcontentloaded");
       await page.waitForTimeout(400);
 
       await page.evaluate(AUDIT);

@@ -15,14 +15,18 @@
     "test:all": "vitest run && playwright test"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.44",
+    "@ai-sdk/react": "^4.0.86",
     "@radix-ui/react-popover": "^1.1.6",
     "@tanstack/react-query": "^5.66.0",
+    "ai": "^7.0.83",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",
     "next": "^15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.1"
+    "tailwind-merge": "^3.0.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

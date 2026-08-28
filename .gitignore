@@ -19,3 +19,5 @@ playwright-report
 
 # Machine-specific dev launcher (absolute paths)
 .claude/launch.json
+
+.next-live

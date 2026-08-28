@@ -210,6 +210,9 @@ export function confirmDraft(draftId: string, now = new Date()): Booking {
   const s = store();
   const draft = s.drafts.get(draftId);
   if (!draft) throw new Error(`Unknown draft ${draftId}`);
+  if (Date.parse(draft.holdExpiresAt) <= now.getTime()) {
+    throw new Error("The seat hold has expired. Start a new booking to re-check availability.");
+  }
   if (draft.passengers.length === 0) throw new Error("Add at least one passenger before confirming");
 
   const world = getWorld();

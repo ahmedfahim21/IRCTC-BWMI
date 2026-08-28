@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Mic, Square, Volume2, X } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
+import { emitVoiceTranscript } from "@/lib/agent/uiActions";
 
 type Phase = "idle" | "listening" | "thinking" | "answered" | "error";
 
@@ -83,8 +84,10 @@ export function VoiceButton() {
           void audio.play().catch(() => {});
         }
 
-        // Give the reply a moment to start before the page changes under it.
-        if (voiceResult.intent.href) {
+        window.dispatchEvent(new Event("irctc:open-chat"));
+        if (voiceResult.transcript) {
+          emitVoiceTranscript(voiceResult.transcript);
+        } else if (voiceResult.intent.href) {
           timers.current.push(setTimeout(() => router.push(voiceResult.intent.href!), 700));
         }
       } catch (cause) {
