@@ -182,7 +182,7 @@ export function LiveMap() {
                   <span className="min-w-0">
                     <span className="flex items-baseline gap-2">
                       <span className="tnum text-[0.8125rem] text-brand">{item.number}</span>
-                      <span className="truncate text-[0.8125rem] text-text">{item.name}</span>
+                      <span className="truncate text-[0.8125rem] text-dim">{item.name}</span>
                     </span>
                     <span className="text-[0.6875rem] text-faint">{data?.types[item.type]}</span>
                   </span>

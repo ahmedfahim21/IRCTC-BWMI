@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, ChevronDown, X } from "lucide-react";
 import type { ScheduleStop, Station } from "@/lib/types";
 import { typeColourVar } from "@/lib/railradar/trainTypes";
 import { RailSpine } from "@/components/rail/RailSpine";
@@ -27,7 +28,9 @@ export function TrainCallout({
   dateIso?: string;
   className?: string;
 }) {
+  const [extrasOpen, setExtrasOpen] = useState(false);
   const originCode = schedule?.[0]?.stationCode ?? "";
+  const hasStations = Boolean(!compact && schedule && stations && dateIso);
 
   return (
     <div
@@ -50,12 +53,6 @@ export function TrainCallout({
             <span className="tnum text-[0.8125rem] text-brand">{train.number}</span>
             <span className="truncate text-[0.8125rem] text-dim">{train.name}</span>
           </p>
-          {typeName && (
-            <p className="mt-0.5 text-[0.6875rem] text-faint">
-              {typeName}
-              {!compact && " · moving now"}
-            </p>
-          )}
         </div>
         <button
           type="button"
@@ -67,9 +64,32 @@ export function TrainCallout({
         </button>
       </div>
 
-      {!compact && schedule && stations && dateIso && (
-        <div className="mb-3 max-h-48 overflow-y-auto">
-          <RailSpine schedule={schedule} stations={stations} dateIso={dateIso} />
+      {(typeName || hasStations) && (
+        <div className="mb-2">
+          <button
+            type="button"
+            aria-expanded={extrasOpen}
+            onClick={() => setExtrasOpen((value) => !value)}
+            className="flex w-full items-center gap-1 py-1 text-left text-[0.6875rem] text-faint hover:text-dim"
+          >
+            <ChevronDown className={cn("size-3 transition-transform", extrasOpen && "rotate-180")} aria-hidden />
+            {extrasOpen ? "Hide extras" : hasStations ? "Type, stations" : "Type"}
+          </button>
+          {extrasOpen && (
+            <div className="space-y-2">
+              {typeName && (
+                <p className="text-[0.6875rem] text-faint">
+                  {typeName}
+                  {!compact && " · moving now"}
+                </p>
+              )}
+              {hasStations && (
+                <div className="max-h-48 overflow-y-auto">
+                  <RailSpine schedule={schedule!} stations={stations!} dateIso={dateIso!} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

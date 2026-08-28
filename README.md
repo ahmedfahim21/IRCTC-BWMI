@@ -85,7 +85,7 @@ With `RAILRADAR_API_KEY` set, these come from the real network:
 | Date availability strip | ✅ | One call returns a fortnight |
 | Live network map | ✅ | ~2,800 running trains in one snapshot, clipped to the current map bbox |
 | Station coordinates | bundled | Wikidata P5696 + datameet, never invented as (0, 0) |
-| Map tiles | Esri / OSM / EOX | Esri streets (OSM if Esri fails), Sentinel-2 satellite |
+| Map tiles | Esri / OSM | Esri streets (OSM if Esri fails). Terrain/street only. |
 | India outline | bundled | Survey of India–derived datameet boundary, simplified. OSM tiles are not the legal boundary. |
 | Availability matrix | ❌ | Seats is per train **per class** — one busy route costs dozens of calls |
 | Confirmation odds | ❌ | No pre-booking prediction endpoint; theirs needs a real PNR |
@@ -177,8 +177,7 @@ hierarchy — nothing above weight 450. Tabular numerals everywhere. The rail sp
 three densities: full height on the train page, a ribbon in results, compact in the trip card.
 Status colour is never the only signal.
 
-Maps are a 2D canvas of raster tiles — Esri streets (OSM if those fail) or Sentinel-2 cloudless
-satellite. India's boundary is drawn from the datameet Survey of India–derived outline (mainland plus
+Maps are a 2D canvas of raster tiles — Esri streets, with OSM if those fail. India's boundary is drawn from the datameet Survey of India–derived outline (mainland plus
 three Andaman rings) so the tiles do not get the last word on the border. The landing map polls
 slowly and clips to the viewport bbox so it cannot spend the RailRadar month.
 

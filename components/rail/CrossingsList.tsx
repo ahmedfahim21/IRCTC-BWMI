@@ -27,8 +27,8 @@ export function CrossingsList({ crossings, stations }: { crossings: Crossing[]; 
             <span className="tnum w-11 shrink-0 text-right text-[0.75rem] text-dim">{formatMinute(crossing.atMinute)}</span>
             <Icon className={cn("size-3.5 shrink-0", tone)} aria-hidden />
             <span className="min-w-0 flex-1">
-              <Link href={`/trains/${crossing.trainNumber}`} className="text-[0.8125rem] text-text hover:text-brand">
-                <span className="tnum text-faint">{crossing.trainNumber}</span> {crossing.trainName}
+              <Link href={`/trains/${crossing.trainNumber}`} className="text-[0.8125rem] text-dim hover:text-brand">
+                <span className="tnum text-brand">{crossing.trainNumber}</span> {crossing.trainName}
               </Link>
               <span className="block text-[0.6875rem] text-faint">
                 {label} near {stations[crossing.stationCode]?.name ?? crossing.stationCode}
