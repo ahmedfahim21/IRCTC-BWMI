@@ -8,7 +8,7 @@ const Loaded = dynamic(() => import("./RailMap").then((mod) => mod.RailMap), {
   loading: () => <div className="size-full min-h-[12rem] bg-surface-2" aria-hidden />,
 });
 
-/** Client-only MapLibre mount. Safe to call from other client components. */
+/** Client-only map mount. Safe to call from other client components. */
 export function ClientRailMap(props: ComponentProps<typeof Loaded>) {
   return <Loaded {...props} />;
 }

@@ -1,14 +1,9 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { Map as MapLibreMap } from "maplibre-gl";
 import type { Basemap } from "./mapStyles";
 
-export type MapEngine = "gl" | "slippy";
-
 export interface RailMapApi {
-  map: MapLibreMap | null;
-  engine: MapEngine;
   ready: boolean;
   /** Increments on pan/zoom/resize so HTML overlays stay pinned to the view. */
   viewEpoch: number;

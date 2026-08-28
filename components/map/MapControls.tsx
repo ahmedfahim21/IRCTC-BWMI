@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Locate, Minus, Plus } from "lucide-react";
 import { cn } from "@/components/ui/cn";
 import { useRailMap } from "./mapContext";
@@ -9,14 +10,13 @@ import { useRailMap } from "./mapContext";
  * the thumbnail toggle in the Where Is My Train reference.
  */
 export function MapControls({ className }: { className?: string }) {
-  const { map, basemap, setBasemap, fitIndia, zoomBy, flyTo } = useRailMap();
+  const { basemap, setBasemap, fitIndia, zoomBy, flyTo } = useRailMap();
 
   const locate = () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const zoom = map ? Math.max(map.getZoom(), 10) : 10;
-        flyTo(pos.coords.longitude, pos.coords.latitude, zoom);
+        flyTo(pos.coords.longitude, pos.coords.latitude, 10);
       },
       () => undefined,
       { enableHighAccuracy: false, timeout: 8_000, maximumAge: 60_000 }
@@ -71,7 +71,7 @@ function ControlButton({
 }: {
   label: string;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button

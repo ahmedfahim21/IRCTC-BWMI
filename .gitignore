@@ -17,9 +17,6 @@ playwright-report
 .next-build
 .next-e2e
 
-# Copied at build time so MapLibre's worker is same-origin.
-public/maplibre
-
 # Machine-specific dev launcher (absolute paths)
 .claude/launch.json
 

@@ -60,7 +60,7 @@ the live tracking screen has something to track.
 Worth a look:
 
 - `/` — search beside a live map of India. The date strip shows which days are bookable before you commit to one
-- `/map` — tiled MapLibre view of every train running in India right now, with a list pane and a quota-safe bounding box
+- `/map` — 2D map of every train running in India right now, with a list pane and a quota-safe bounding box
 - `/search?from=NDLS&to=MAS&date=…` — the availability matrix on the left, origin/destination and the selected train on the map
 - `/trains/12723` — a real train, live, with every stop including the ones it passes through
 - `/trips` — the seeded journeys; open the one running today
@@ -85,7 +85,7 @@ With `RAILRADAR_API_KEY` set, these come from the real network:
 | Date availability strip | ✅ | One call returns a fortnight |
 | Live network map | ✅ | ~2,800 running trains in one snapshot, clipped to the current map bbox |
 | Station coordinates | bundled | Wikidata P5696 + datameet, never invented as (0, 0) |
-| Map tiles | OSM / EOX | OpenFreeMap streets, Sentinel-2 satellite, OpenRailwayMap overlay |
+| Map tiles | Esri / OSM / EOX | Esri streets (OSM if Esri fails), Sentinel-2 satellite |
 | India outline | bundled | Survey of India–derived datameet boundary, simplified. OSM tiles are not the legal boundary. |
 | Availability matrix | ❌ | Seats is per train **per class** — one busy route costs dozens of calls |
 | Confirmation odds | ❌ | No pre-booking prediction endpoint; theirs needs a real PNR |
@@ -177,9 +177,9 @@ hierarchy — nothing above weight 450. Tabular numerals everywhere. The rail sp
 three densities: full height on the train page, a ribbon in results, compact in the trip card.
 Status colour is never the only signal.
 
-Maps are MapLibre: OpenFreeMap streets, Sentinel-2 cloudless satellite, and an OpenRailwayMap
-overlay. India's boundary is drawn from the datameet Survey of India–derived outline (mainland plus
-three Andaman rings) so OSM tiles do not get the last word on the border. The landing map polls
+Maps are a 2D canvas of raster tiles — Esri streets (OSM if those fail) or Sentinel-2 cloudless
+satellite. India's boundary is drawn from the datameet Survey of India–derived outline (mainland plus
+three Andaman rings) so the tiles do not get the last word on the border. The landing map polls
 slowly and clips to the viewport bbox so it cannot spend the RailRadar month.
 
 The barcode on the ticket is Code 39, written out in about forty lines. It genuinely encodes the PNR.

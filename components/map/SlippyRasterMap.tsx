@@ -64,9 +64,7 @@ function tileUrl(
 }
 
 /**
- * 2D canvas slippy map. MapLibre 6 needs WebGL2; this environment (and some
- * locked-down browsers) only offer a 2D canvas, which left the landing map blank.
- * Trains, routes and pins are drawn by sibling overlays via `project`.
+ * 2D canvas of raster tiles. Trains, routes and pins are sibling overlays via `project`.
  */
 export function SlippyRasterMap({
   className,
@@ -322,8 +320,6 @@ export function SlippyRasterMap({
 
   const api = useMemo<RailMapApi>(
     () => ({
-      map: null,
-      engine: "slippy",
       ready,
       viewEpoch,
       basemap,

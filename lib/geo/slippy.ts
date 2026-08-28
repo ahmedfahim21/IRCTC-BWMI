@@ -1,4 +1,4 @@
-/** Web Mercator helpers for the WebGL-free raster fallback. */
+/** Web Mercator helpers for the 2D raster map. */
 
 export const TILE_SIZE = 256;
 
@@ -78,13 +78,3 @@ export function lngLatToViewPx(
   };
 }
 
-export function gpuCanRunMapLibre(): boolean {
-  if (typeof document === "undefined") return false;
-  try {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-    return Boolean(gl && gl.getParameter(gl.VERSION));
-  } catch {
-    return false;
-  }
-}

@@ -14,9 +14,8 @@ test.beforeEach(async ({ page }) => {
 test("the landing map paints India and running trains", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/");
-  const painted = page.getByRole("img", { name: "Map of India" }).or(page.locator(".maplibregl-canvas"));
-  await expect(painted.first()).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole("img", { name: "Running trains on the map" }).or(page.locator(".maplibregl-canvas"))).toBeVisible({
+  await expect(page.getByRole("img", { name: "Map of India" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("img", { name: "Running trains on the map" })).toBeVisible({
     timeout: 20_000,
   });
 });
@@ -31,7 +30,7 @@ test("search shows origin, destination, and a selected train's route", async ({ 
   await expect(firstTrain).toBeVisible();
   await firstTrain.click();
   await expect(page).toHaveURL(/train=\d{5}/);
-  await expect(page.getByTestId("map-route-overlay").or(page.locator(".maplibregl-canvas"))).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("map-route-overlay")).toBeVisible({ timeout: 20_000 });
 });
 
 test("the booking screen shows a coach berth layout", async ({ page }) => {

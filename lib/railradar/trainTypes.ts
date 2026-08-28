@@ -35,7 +35,7 @@ export function typeColourVar(index: number): string {
   return `var(${TYPE_COLOUR_VARS[index] ?? TYPE_COLOUR_VARS[8]})`;
 }
 
-/** Resolve token colours to paint values MapLibre can consume. */
+/** Resolve token colours to paint values the map canvas can consume. */
 export function resolveTypeColours(root: HTMLElement = document.documentElement): string[] {
   const style = getComputedStyle(root);
   return TYPE_COLOUR_VARS.map((name) => style.getPropertyValue(name).trim() || "#888888");
