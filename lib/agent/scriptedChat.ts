@@ -1,9 +1,11 @@
-import { createUIMessageStream, createUIMessageStreamResponse } from "ai";
+import { createUIMessageStream, createUIMessageStreamResponse, getToolName, isToolUIPart } from "ai";
 import { TOOLS, toolByName } from "@/lib/mcp/tools";
 import { todayIso, addDays } from "@/lib/domain/time";
 import { isUiAction } from "./uiActions";
 
-function lastUserText(body: { messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }>; content?: string }> }): string {
+function lastUserText(body: {
+  messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }>; content?: string }>;
+}): string {
   const messages = body.messages ?? [];
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
@@ -42,20 +44,66 @@ function parseDate(lower: string, fallback: string): string {
   return fallback;
 }
 
-type SearchSession = { from: string; to: string; date: string; quota: string };
+export type SearchSession = { from: string; to: string; date: string; quota: string };
 
 function defaultSession(): SearchSession {
   return { from: "NDLS", to: "BCT", date: addDays(todayIso(), 12), quota: "GN" };
 }
 
-let session: SearchSession = defaultSession();
+/** Derive the active search session from prior turns instead of module state. */
+export function deriveSessionFromMessages(
+  messages: Array<{ role: string; parts?: Array<Record<string, unknown>> }>
+): SearchSession {
+  let session = defaultSession();
 
+  for (const message of messages) {
+    if (message.role === "assistant") {
+      for (const part of message.parts ?? []) {
+        if (!isToolUIPart(part as Parameters<typeof isToolUIPart>[0])) continue;
+        const name = getToolName(part as Parameters<typeof getToolName>[0]);
+        if (name !== "set_search") continue;
+        const input = (part as { input?: Record<string, unknown> }).input;
+        if (!input?.from || !input?.to || !input?.date) continue;
+        session = {
+          from: String(input.from),
+          to: String(input.to),
+          date: String(input.date),
+          quota: String(input.quota ?? session.quota),
+        };
+      }
+      continue;
+    }
+
+    if (message.role !== "user") continue;
+    const text = (message.parts ?? [])
+      .filter((part) => part.type === "text")
+      .map((part) => String(part.text ?? ""))
+      .join(" ");
+    if (!text.trim()) continue;
+
+    const lower = text.toLowerCase();
+    const pair =
+      lower.match(/\bfrom\s+([a-z0-9 :]+?)\s+to\s+([a-z0-9 :]+?)(?:\s|$)/i) ??
+      lower.match(/\b([a-z]{2,6})\s+to\s+([a-z]{2,6})\b/i);
+    if (pair) {
+      session = {
+        ...session,
+        from: stationToken(pair[1]),
+        to: stationToken(pair[2]),
+        date: parseDate(lower, session.date),
+      };
+    }
+  }
+
+  return session;
+}
+
+/** @deprecated Tests may call this to reset — no-op now that session is stateless. */
 export function resetScriptedSession() {
-  session = defaultSession();
+  // Session is derived per request from message history.
 }
 
 function searchSteps(from: string, to: string, date: string, quota = "GN"): Step[] {
-  session = { from, to, date, quota };
   return [
     { kind: "tool", name: "lookup_station", args: { query: from } },
     { kind: "tool", name: "lookup_station", args: { query: to } },
@@ -77,7 +125,7 @@ type Step =
  * ANTHROPIC_API_KEY is absent or CHAT_FAKE=1 so Playwright can drive the
  * lifecycle without spending tokens or depending on the model.
  */
-export function planFromTranscript(text: string): Step[] {
+export function planFromTranscript(text: string, session: SearchSession = defaultSession()): Step[] {
   const raw = text.trim();
   const lower = raw.toLowerCase();
   const date = parseDate(lower, session.date);
@@ -90,7 +138,6 @@ export function planFromTranscript(text: string): Step[] {
   }
 
   if (/\b(never mind|change of mind|start over)\b/.test(lower)) {
-    resetScriptedSession();
     return [
       { kind: "tool", name: "navigate", args: { href: "/" } },
       { kind: "text", text: "Back to search." },
@@ -202,7 +249,7 @@ export function planFromTranscript(text: string): Step[] {
 
   if (/\bconfirm\b/.test(lower) || /\bcontact\b/.test(lower)) {
     return [
-      { kind: "tool", name: "set_contact", args: { phone: "9876543210" } },
+      { kind: "tool", name: "set_contact", args: { phone: "9876543210", email: "" } },
       { kind: "tool", name: "select_berth", args: { coach: "B1", berth: 1 } },
       { kind: "tool", name: "confirm", args: {} },
       { kind: "text", text: "Confirming." },
@@ -228,9 +275,9 @@ export function planFromTranscript(text: string): Step[] {
 }
 
 export async function scriptedChatResponse(body: unknown): Promise<Response> {
-  const payload = body as { messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }>; content?: string }> };
-  const userTurns = (payload.messages ?? []).filter((message) => message.role === "user");
-  if (userTurns.length <= 1) resetScriptedSession();
+  const payload = body as {
+    messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }>; content?: string }>;
+  };
   const last = payload.messages?.[payload.messages.length - 1];
   if (last && last.role !== "user") {
     const stream = createUIMessageStream({
@@ -242,7 +289,8 @@ export async function scriptedChatResponse(body: unknown): Promise<Response> {
     return createUIMessageStreamResponse({ stream });
   }
   const text = lastUserText(payload);
-  const plan = planFromTranscript(text);
+  const session = deriveSessionFromMessages(payload.messages ?? []);
+  const plan = planFromTranscript(text, session);
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -263,11 +311,6 @@ export async function scriptedChatResponse(body: unknown): Promise<Response> {
         writer.write({ type: "tool-input-available", toolCallId, toolName: step.name, input: step.args });
 
         if (isUiAction(step.name)) {
-          writer.write({
-            type: "tool-output-available",
-            toolCallId,
-            output: { ok: true, action: step.name, input: step.args },
-          });
           continue;
         }
 
@@ -283,17 +326,13 @@ export async function scriptedChatResponse(body: unknown): Promise<Response> {
             const draftId = (result.data as { draftId?: string } | undefined)?.draftId;
             if (draftId) {
               const navId = id();
+              const href = `/book/${draftId}`;
               writer.write({ type: "tool-input-start", toolCallId: navId, toolName: "navigate" });
               writer.write({
                 type: "tool-input-available",
                 toolCallId: navId,
                 toolName: "navigate",
-                input: { href: `/book/${draftId}` },
-              });
-              writer.write({
-                type: "tool-output-available",
-                toolCallId: navId,
-                output: { ok: true, action: "navigate", input: { href: `/book/${draftId}` } },
+                input: { href },
               });
             }
           }
@@ -301,17 +340,13 @@ export async function scriptedChatResponse(body: unknown): Promise<Response> {
             const pnr = (result.data as { pnr?: string } | undefined)?.pnr;
             if (pnr) {
               const navId = id();
+              const href = `/trips/${pnr}`;
               writer.write({ type: "tool-input-start", toolCallId: navId, toolName: "navigate" });
               writer.write({
                 type: "tool-input-available",
                 toolCallId: navId,
                 toolName: "navigate",
-                input: { href: `/trips/${pnr}` },
-              });
-              writer.write({
-                type: "tool-output-available",
-                toolCallId: navId,
-                output: { ok: true, action: "navigate", input: { href: `/trips/${pnr}` } },
+                input: { href },
               });
             }
           }

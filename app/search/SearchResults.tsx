@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CalendarDays, SlidersHorizontal, TriangleAlert } from "lucide-react";
@@ -9,6 +9,7 @@ import { api } from "@/lib/apiClient";
 import { isConfirmable } from "@/lib/domain/search";
 import { formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { GLOSSARY } from "@/lib/glossary";
+import { useAgentIntentDrain, useAgentPublish } from "@/lib/agent/agentStore";
 import { JourneyRow } from "@/components/availability/JourneyRow";
 import { ResultFilters, DEPARTURE_WINDOWS, type Filters } from "@/components/availability/ResultFilters";
 import { AlternativesPanel } from "@/components/availability/AlternativesPanel";
@@ -22,6 +23,7 @@ import { cn } from "@/components/ui/cn";
 export function SearchResults() {
   const params = useSearchParams();
   const router = useRouter();
+  const publish = useAgentPublish();
 
   const from = params.get("from") ?? "";
   const to = params.get("to") ?? "";
@@ -92,6 +94,60 @@ export function SearchResults() {
       }
     });
   }, [data, filters]);
+
+  useAgentIntentDrain(
+    Boolean(data && !isPending && from && to),
+    async (intent) => {
+      if (intent.name === "highlight") {
+        const trainNumber = String(intent.input.trainNumber ?? "");
+        const nextParams = new URLSearchParams({ from, to, date, quota, train: trainNumber });
+        router.replace(`/search?${nextParams}`, { scroll: false });
+        return { ok: true, detail: `Highlighted train ${trainNumber}` };
+      }
+      if (intent.name === "select_class") {
+        const classCode = String(intent.input.classCode ?? "") as ClassCode;
+        const trainNumber = selectedTrain ?? filtered[0]?.train.number;
+        const journey = filtered.find((item) => item.train.number === trainNumber) ?? filtered[0];
+        if (!journey) {
+          return { ok: false, error: "No trains on screen to book." };
+        }
+        const availability = journey.availability.find((entry) => entry.classCode === classCode);
+        if (!availability || !journey.runsToday) {
+          return { ok: false, error: `Class ${classCode} is not bookable on the visible train.` };
+        }
+        const { draft } = await api.createDraft({
+          trainNumber: journey.train.number,
+          journeyDate: date,
+          fromCode: journey.fromCode,
+          toCode: journey.toCode,
+          classCode,
+          quota,
+        });
+        router.push(`/book/${draft.draftId}`);
+        return { ok: true, detail: `Started booking ${journey.train.number} in ${classCode}` };
+      }
+      return { ok: false, error: `Unhandled intent ${intent.name}` };
+    },
+    (intent) => intent.name === "highlight" || intent.name === "select_class"
+  );
+
+  useEffect(() => {
+    if (!data || !from || !to) return;
+    publish.current({
+      searchResults: {
+        from,
+        to,
+        date,
+        quota,
+        highlightedTrain: selectedTrain,
+        trains: (data.journeys ?? []).map((journey) => ({
+          number: journey.train.number,
+          name: journey.train.name,
+          classes: journey.availability.map((entry) => entry.classCode),
+        })),
+      },
+    });
+  }, [data, from, to, date, quota, selectedTrain, publish]);
 
   const setDate = (next: string) => {
     const nextParams = new URLSearchParams({ from, to, date: next, quota });

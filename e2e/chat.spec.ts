@@ -111,3 +111,43 @@ test("unknown turns ask a clarifying question", async ({ page }) => {
   await say(page, "hello");
   await expect(page.getByLabel("Booking chat")).toContainText(/Which stations/i, { timeout: 15_000 });
 });
+
+test("transcript survives a hard reload", async ({ page }) => {
+  await openChat(page);
+  await say(page, "from New Delhi to Mumbai tomorrow");
+  await expect(page.getByLabel("Booking chat")).toContainText(/Searching NDLS/i, { timeout: 15_000 });
+  await page.reload();
+  await page.getByRole("button", { name: "Open booking chat" }).click();
+  await expect(page.getByLabel("Booking chat")).toContainText(/Searching NDLS/i);
+});
+
+test("new chat clears the transcript", async ({ page }) => {
+  await openChat(page);
+  await say(page, "from New Delhi to Mumbai tomorrow");
+  await expect(page.getByLabel("Booking chat")).toContainText(/Searching NDLS/i, { timeout: 15_000 });
+  await page.getByRole("button", { name: "New" }).click();
+  await expect(page.getByLabel("Booking chat")).not.toContainText(/Searching NDLS/i);
+  await expect(page.getByText("Ask for a train the way you would say it")).toBeVisible();
+});
+
+test("berth selection off the booking screen reports failure", async ({ page }) => {
+  await openChat(page);
+  await say(page, "pick a lower berth in coach B1");
+  await expect(page.getByTestId("chat-tool").filter({ hasText: /select berth/i })).toContainText(
+    /booking screen is not open|not open/i,
+    { timeout: 15_000 }
+  );
+});
+
+test("context is retained across navigation", async ({ page }) => {
+  await openChat(page);
+  await say(page, "from New Delhi to Mumbai tomorrow");
+  await page.waitForURL(/\/search\?/, { timeout: 20_000 });
+  await say(page, "book 12951 in 3A");
+  await page.waitForURL(/\/book\/dft_/, { timeout: 20_000 });
+  await say(page, "add meals please");
+  await expect(page.getByRole("switch", { name: "Add meals" })).toHaveAttribute("aria-checked", "true", {
+    timeout: 15_000,
+  });
+  await expect(page.getByLabel("Booking chat")).toContainText(/Searching NDLS/i);
+});

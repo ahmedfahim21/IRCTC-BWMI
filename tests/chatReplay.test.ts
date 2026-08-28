@@ -1,9 +1,21 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { planFromTranscript, resetScriptedSession } from "@/lib/agent/scriptedChat";
+import { describe, expect, it } from "vitest";
+import { planFromTranscript } from "@/lib/agent/scriptedChat";
+
+function sessionAfter(text: string) {
+  const plan = planFromTranscript(text);
+  const search = plan.find((step) => step.kind === "tool" && step.name === "set_search");
+  if (search?.kind === "tool") {
+    return {
+      from: String(search.args.from),
+      to: String(search.args.to),
+      date: String(search.args.date),
+      quota: String(search.args.quota ?? "GN"),
+    };
+  }
+  return { from: "NDLS", to: "BCT", date: "2026-09-12", quota: "GN" };
+}
 
 describe("scripted chat", () => {
-  beforeEach(() => resetScriptedSession());
-
   it("asks which Delhi station when the city is ambiguous", () => {
     const steps = planFromTranscript("I want to travel from Delhi to Mumbai");
     expect(steps.some((s) => s.kind === "text" && /more than one station/i.test(s.text))).toBe(true);
@@ -37,21 +49,21 @@ describe("scripted chat", () => {
   });
 
   it("changes destination mid-conversation without a new from-to pair", () => {
-    planFromTranscript("from New Delhi to Mumbai tomorrow");
-    const steps = planFromTranscript("change destination to Chennai");
+    const session = sessionAfter("from New Delhi to Mumbai tomorrow");
+    const steps = planFromTranscript("change destination to Chennai", session);
     const search = steps.find((s) => s.kind === "tool" && s.name === "set_search");
     expect(search).toMatchObject({ kind: "tool", name: "set_search", args: { from: "NDLS", to: "MAS" } });
   });
 
   it("changes origin mid-conversation", () => {
-    planFromTranscript("from New Delhi to Mumbai tomorrow");
-    const steps = planFromTranscript("change origin to NZM");
+    const session = sessionAfter("from New Delhi to Mumbai tomorrow");
+    const steps = planFromTranscript("change origin to NZM", session);
     const search = steps.find((s) => s.kind === "tool" && s.name === "set_search");
     expect(search).toMatchObject({ kind: "tool", name: "set_search", args: { from: "NZM", to: "BCT" } });
   });
 
   it("replaces the whole journey when a new pair is given", () => {
-    planFromTranscript("from New Delhi to Mumbai tomorrow");
+    sessionAfter("from New Delhi to Mumbai tomorrow");
     const steps = planFromTranscript("from Bangalore to Chennai tomorrow");
     const search = steps.find((s) => s.kind === "tool" && s.name === "set_search");
     expect(search).toMatchObject({ kind: "tool", name: "set_search", args: { from: "SBC", to: "MAS" } });
@@ -74,8 +86,8 @@ describe("scripted chat", () => {
   });
 
   it("changes the date of the current search", () => {
-    planFromTranscript("from New Delhi to Mumbai");
-    const steps = planFromTranscript("change the date to tomorrow");
+    const session = sessionAfter("from New Delhi to Mumbai");
+    const steps = planFromTranscript("change the date to tomorrow", session);
     const search = steps.find((s) => s.kind === "tool" && s.name === "set_search");
     expect(search?.kind === "tool" && String(search.args.date)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(search?.kind === "tool" && search.args.from).toBe("NDLS");

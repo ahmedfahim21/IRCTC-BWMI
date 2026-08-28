@@ -1,9 +1,10 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { planFromTranscript, useFakeChat, resetScriptedSession } from "@/lib/agent/scriptedChat";
+import { describe, expect, it } from "vitest";
+import { planFromTranscript, useFakeChat, deriveSessionFromMessages } from "@/lib/agent/scriptedChat";
+import { repairChatMessages } from "@/lib/agent/messageRepair";
+import { buildChatSystemPrompt } from "@/lib/agent/prompt";
+import type { AgentAppState } from "@/lib/agent/agentStore";
 
 describe("scripted chat planner", () => {
-  beforeEach(() => resetScriptedSession());
-
   it("uses the scripted path when the Anthropic key is absent", () => {
     expect(useFakeChat()).toBe(true);
   });
@@ -50,5 +51,58 @@ describe("scripted chat planner", () => {
   it("returns home on a change of mind", () => {
     const plan = planFromTranscript("never mind, start over");
     expect(plan[0]).toMatchObject({ kind: "tool", name: "navigate", args: { href: "/" } });
+  });
+
+  it("derives session from prior set_search tool output", () => {
+    const session = deriveSessionFromMessages([
+      {
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-set_search",
+            toolName: "set_search",
+            toolCallId: "1",
+            state: "output-available",
+            input: { from: "NDLS", to: "BCT", date: "2026-09-01", quota: "GN" },
+            output: { ok: true },
+          },
+        ],
+      },
+    ]);
+    expect(session).toMatchObject({ from: "NDLS", to: "BCT", date: "2026-09-01" });
+  });
+
+  it("repairs dangling UI tool calls", () => {
+    const repaired = repairChatMessages([
+      {
+        id: "m1",
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-select_berth",
+            toolName: "select_berth",
+            toolCallId: "tc1",
+            state: "input-available",
+            input: { coach: "B1", berth: 1 },
+          },
+        ],
+      },
+    ]);
+    const part = repaired[0]?.parts?.[0];
+    expect(part && "state" in part && part.state).toBe("output-available");
+    expect(part && "output" in part && (part.output as { ok: boolean }).ok).toBe(false);
+  });
+
+  it("renders app state into the system prompt", () => {
+    const appState: AgentAppState = {
+      route: "/search?from=NDLS&to=BCT",
+      search: { from: "NDLS", to: "BCT", date: "2026-09-01", quota: "GN" },
+      searchResults: null,
+      booking: null,
+      berths: null,
+    };
+    const prompt = buildChatSystemPrompt(appState);
+    expect(prompt).toContain("On screen right now");
+    expect(prompt).toContain("NDLS");
   });
 });

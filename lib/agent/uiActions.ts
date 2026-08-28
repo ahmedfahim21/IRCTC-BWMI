@@ -112,7 +112,6 @@ export function clientUiTools(): ToolSet {
   };
 }
 
-export const AGENT_EVENT = "irctc:agent-action";
 export const VOICE_TRANSCRIPT_EVENT = "irctc:voice-transcript";
 
 export function emitVoiceTranscript(transcript: string) {
