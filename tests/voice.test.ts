@@ -1,11 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAudioType } from "@/lib/voice/sarvam";
+import {
+  BULBUL_MODEL,
+  BULBUL_SPEAKER,
+  normalizeAudioType,
+  SAARAS_MODEL,
+  SAARAS_STT_MODE,
+  voiceModels,
+} from "@/lib/voice/sarvam";
 
 /**
  * Sarvam matches the upload's content type exactly, so a codec parameter — which
  * is what every browser's MediaRecorder attaches — gets a 400 back. These lock
  * in the normalisation that strips it.
  */
+describe("Sarvam voice models", () => {
+  it("pins STT to Saaras v3 transcribe and TTS to Bulbul v3", () => {
+    expect(SAARAS_MODEL).toBe("saaras:v3");
+    expect(SAARAS_STT_MODE).toBe("transcribe");
+    expect(BULBUL_MODEL).toBe("bulbul:v3");
+    expect(BULBUL_SPEAKER).toBe("shubh");
+    expect(voiceModels()).toEqual({
+      stt: "saaras:v3",
+      sttMode: "transcribe",
+      tts: "bulbul:v3",
+      ttsSpeaker: "shubh",
+    });
+  });
+});
+
 describe("audio type normalisation", () => {
   it("strips the codec parameter every browser attaches", () => {
     expect(normalizeAudioType("audio/webm;codecs=opus")).toEqual({ contentType: "audio/webm", extension: "webm" });

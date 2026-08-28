@@ -64,7 +64,7 @@ Worth a look:
 - `/search?from=NDLS&to=MAS&date=…` — the availability matrix on the left, origin/destination and the selected train on the map
 - `/trains/12723` — a real train, live, with every stop including the ones it passes through
 - `/trips` — the seeded journeys; open the one running today
-- The chat button, then the mic — type or say *"trains from New Delhi to Mumbai tomorrow"*
+- Open chat, then tap the mic — type or say *"trains from New Delhi to Mumbai tomorrow"*
 
 On a phone the four destinations move to a bottom tab bar; four of them plus the logo and settings
 don't fit in a 360 px header, and thumbs reach the bottom of a phone far more easily than the top.
@@ -112,23 +112,23 @@ stop lookups accept either form.
 
 ## Voice
 
-Speak to navigate, in any language Sarvam supports.
+Speak inside chat, in any language Sarvam supports.
 
-Audio goes to Sarvam's **speech-to-text-translate**, which returns English text *plus the language
-actually spoken*. That means one upstream call and **one parser** covers every Indian language — no
-per-language grammar. The reply is translated back and spoken in the language the user used.
+Open the chat panel and tap the mic next to Send. Audio goes to Sarvam **Saaras v3** in
+transcribe mode, which returns the user's words in **native script** plus the detected language.
+That text is sent to the booking agent like a typed message. Tap the speaker on any assistant
+reply to hear it read aloud (Sarvam Bulbul TTS).
 
 ```
 "दिल्ली से मुंबई की ट्रेनें दिखाओ"
-  → heard:  "Show trains from Delhi to Mumbai."   (hi-IN, 0.82)
-  → intent: search → /search?from=NDLS&to=CSMT&date=…
-  → spoken: "दिल्ली जंक्शन से आने वाली ट्रेनों की खोज कर रही हूँ।"
+  → transcript: "दिल्ली से मुंबई की ट्रेनें दिखाओ"   (hi-IN)
+  → agent reply in Hindi (Devanagari), tools in English
+  → optional spoken reply via Bulbul
 ```
 
-Intent parsing (`lib/voice/intent.ts`) is rule-based, not an LLM: instant, free, identical every
-time, and the vocabulary is genuinely small. It handles train numbers, PNRs, station pairs, relative
-and absolute dates, and dictated digits ("1 2 9 5 1"). Anything it can't place is echoed back rather
-than guessed at. Recording is WebM/Opus — about a fifth the size of WAV, which matters here.
+Recording is WebM/Opus — about a fifth the size of WAV. Requires `SARVAM_API_KEY`.
+The legacy rule-based intent parser (`lib/voice/intent.ts`) remains in the repo but is no longer
+on the listen path; the agent handles the turn.
 
 ---
 

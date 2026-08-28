@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
+  Loader2,
   MessageCircle,
+  Mic,
   PanelBottom,
   PanelLeft,
   PanelRight,
   RotateCcw,
   Send,
   Square,
+  Volume2,
   X,
 } from "lucide-react";
 import { getToolName, isToolUIPart } from "ai";
 import { cn } from "@/components/ui/cn";
+import { api } from "@/lib/apiClient";
 import { useAgentChat } from "@/lib/agent/ChatProvider";
 import { hasPendingUiToolCalls } from "@/lib/agent/resolveToolOutput";
+import { assistantMessageText, speakAssistantText } from "@/lib/voice/chatVoice";
+import { useMicRecorder } from "@/components/voice/useMicRecorder";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ToolCallCard } from "./ToolCallCard";
 import { isRecord } from "./toolCallDisplay";
@@ -46,8 +53,7 @@ function toolPartError(part: { errorText?: unknown }): string | undefined {
 }
 
 /**
- * Dockable agent panel. Shares the ChatProvider instance with voice so a spoken
- * turn lands in the same thread.
+ * Dockable agent panel with an in-composer mic and per-reply speak buttons.
  */
 export function ChatPanel() {
   const chat = useAgentChat();
@@ -56,7 +62,54 @@ export function ChatPanel() {
   const [dock, setDock] = useState<Dock>("left");
   const [input, setInput] = useState("");
   const [editingLast, setEditingLast] = useState(false);
+  const [voiceLanguageCode, setVoiceLanguageCode] = useState("en-IN");
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [loadingMessageId, setLoadingMessageId] = useState<string | null>(null);
+  const [speakError, setSpeakError] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const player = useRef<HTMLAudioElement | null>(null);
+
+  const { data: serverStatus } = useQuery({
+    queryKey: ["status"],
+    queryFn: ({ signal }) => api.status(signal),
+    staleTime: 5 * 60_000,
+  });
+  const voiceEnabled = Boolean(serverStatus?.voice);
+
+  const handleMicResult = useCallback(
+    (result: { transcript: string; languageCode: string }) => {
+      setVoiceLanguageCode(result.languageCode);
+      setOpen(true);
+      setInput("");
+      setEditingLast(false);
+      void chat?.sendMessage({ text: result.transcript });
+    },
+    [chat]
+  );
+
+  const mic = useMicRecorder(handleMicResult);
+
+  const speakMessage = useCallback(
+    async (messageId: string, text: string) => {
+      if (!voiceEnabled || !text.trim()) return;
+      player.current?.pause();
+      setSpeakingMessageId(null);
+      setSpeakError(null);
+      setLoadingMessageId(messageId);
+      try {
+        const audio = await speakAssistantText(text, voiceLanguageCode);
+        player.current = audio;
+        setSpeakingMessageId(messageId);
+        audio.onended = () => setSpeakingMessageId((current) => (current === messageId ? null : current));
+      } catch (cause) {
+        setSpeakingMessageId(null);
+        setSpeakError(cause instanceof Error ? cause.message : "Could not play that reply");
+      } finally {
+        setLoadingMessageId(null);
+      }
+    },
+    [voiceEnabled, voiceLanguageCode]
+  );
 
   useEffect(() => setDock(readDock(pathname)), [pathname]);
 
@@ -72,9 +125,17 @@ export function ChatPanel() {
 
   if (!chat) return null;
 
-  const { messages, sendMessage, status, error, stop, regenerate, clearError, newChat } = chat;
-  const busy = status === "submitted" || status === "streaming";
+  const { messages, sendMessage, status: chatStatus, error, stop, regenerate, clearError, newChat } = chat;
+  const busy = chatStatus === "submitted" || chatStatus === "streaming";
   const pendingTools = hasPendingUiToolCalls(messages);
+  const micBusy = mic.busy;
+
+  const startNewChat = () => {
+    player.current?.pause();
+    setSpeakingMessageId(null);
+    setLoadingMessageId(null);
+    newChat();
+  };
 
   const submit = (text: string) => {
     const trimmed = text.trim();
@@ -129,7 +190,7 @@ export function ChatPanel() {
             <p className="min-w-0 flex-1 text-[0.8125rem] text-text">Chat</p>
             <button
               type="button"
-              onClick={newChat}
+              onClick={startNewChat}
               className="rounded-md px-1.5 py-0.5 text-[0.6875rem] text-faint hover:text-text"
             >
               New
@@ -190,14 +251,38 @@ export function ChatPanel() {
             )}
             {messages.map((message) => {
               const isUser = message.role === "user";
+              const replyText = !isUser ? assistantMessageText(message) : "";
+              const isSpeaking = speakingMessageId === message.id;
+              const isLoadingSpeech = loadingMessageId === message.id;
               return (
                 <div key={message.id} className={cn(isUser && "flex justify-end")}>
                   <div className={cn("space-y-1.5", isUser && "max-w-[92%] rounded-lg bg-surface-2 px-2.5 py-2")}>
                     {!isUser && (
-                      <p className="flex items-center gap-1 text-[0.625rem] uppercase tracking-wider text-faint">
-                        <MessageCircle className="size-3" aria-hidden />
-                        Assistant
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-1 text-[0.625rem] uppercase tracking-wider text-faint">
+                          <MessageCircle className="size-3" aria-hidden />
+                          Assistant
+                        </p>
+                        {voiceEnabled && replyText && (
+                          <button
+                            type="button"
+                            aria-label={isSpeaking ? "Playing this reply" : "Play this reply"}
+                            aria-pressed={isSpeaking}
+                            disabled={isLoadingSpeech}
+                            onClick={() => void speakMessage(message.id, replyText)}
+                            className={cn(
+                              "rounded-md p-1 disabled:opacity-40",
+                              isSpeaking ? "text-brand" : "text-faint hover:text-text"
+                            )}
+                          >
+                            {isLoadingSpeech ? (
+                              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                            ) : (
+                              <Volume2 className="size-3.5" aria-hidden />
+                            )}
+                          </button>
+                        )}
+                      </div>
                     )}
                     {(message.parts ?? []).map((part, index) => {
                       if (part.type === "text" && part.text) {
@@ -268,17 +353,71 @@ export function ChatPanel() {
               }}
               rows={2}
               placeholder="From NDLS to MAS…"
-              className="min-h-[2.75rem] flex-1 resize-none rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-[0.8125rem] text-text placeholder:text-faint"
+              disabled={mic.listening || micBusy}
+              className="min-h-[2.75rem] flex-1 resize-none rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-[0.8125rem] text-text placeholder:text-faint disabled:opacity-60"
             />
+            {voiceEnabled && (
+              <button
+                type="button"
+                onClick={mic.toggle}
+                disabled={micBusy || (busy && !mic.listening)}
+                aria-label={mic.listening ? "Stop listening" : "Speak your message"}
+                className={cn(
+                  "relative flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-dim disabled:opacity-40",
+                  mic.listening && "border-danger/40 text-danger"
+                )}
+              >
+                {mic.listening && (
+                  <span
+                    className="absolute inset-1 rounded-md bg-danger/20"
+                    style={{ transform: `scale(${1 + mic.level * 0.35})`, transition: "transform 80ms linear" }}
+                    aria-hidden
+                  />
+                )}
+                <span className="relative">
+                  {micBusy ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : mic.listening ? (
+                    <Square className="size-3.5 fill-current" aria-hidden />
+                  ) : (
+                    <Mic className="size-4" aria-hidden />
+                  )}
+                </span>
+              </button>
+            )}
             <button
               type="submit"
-              disabled={busy || pendingTools || !input.trim()}
+              disabled={busy || pendingTools || micBusy || mic.listening || !input.trim()}
               aria-label="Send message"
               className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
             >
               <Send className="size-4" aria-hidden />
             </button>
           </form>
+          {speakError && (
+            <div className="flex items-start justify-between gap-2 border-t border-border px-2.5 py-1.5">
+              <p className="text-[0.75rem] text-danger">{speakError}</p>
+              <button
+                type="button"
+                onClick={() => setSpeakError(null)}
+                className="shrink-0 text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+          {mic.error && (
+            <div className="flex items-start justify-between gap-2 border-t border-border px-2.5 py-1.5">
+              <p className="text-[0.75rem] text-danger">{mic.error}</p>
+              <button
+                type="button"
+                onClick={mic.reset}
+                className="shrink-0 text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           {lastUserText && !busy && (
             <div className="border-t border-border px-2.5 py-1.5">
               <button

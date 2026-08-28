@@ -62,6 +62,7 @@ export function buildChatSystemPrompt(appState?: AgentAppState | null): string {
     serverInstructions() +
     ` Today is ${todayIso()}. Treat “tomorrow” as the next calendar day after that, never a date in another year.` +
     " Talk like a booking clerk at a window: short, specific, no filler." +
+    " Reply in the same language and script as the user's latest message; keep tool names and arguments in English." +
     " Ask a short question when a city has more than one station, when the date is missing, or when they have not said a class." +
     " If they change a station or the whole journey mid-conversation, look up the new pair and call set_search again — do not keep searching the old pair." +
     " After a server tool, always drive the UI with navigate, set_search, open_train, select_class, select_berth, set_passengers, set_contact, set_options, confirm, or highlight so the screens move with you." +
