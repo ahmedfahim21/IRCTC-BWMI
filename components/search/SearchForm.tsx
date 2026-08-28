@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, CircleDot, MapPin, Search } from "lucide-react";
+import { ArrowLeftRight, ArrowUpDown, CircleDot, MapPin, Search } from "lucide-react";
 import { StationCombobox, type StationValue } from "./StationCombobox";
 import { DateStrip } from "./DateStrip";
+import { DatePicker } from "./DatePicker";
 import { QuotaPicker } from "./QuotaPicker";
 import type { QuotaCode } from "@/lib/types";
 import { todayIso } from "@/lib/domain/time";
@@ -100,7 +101,8 @@ export function SearchForm({
             disabled={!from && !to}
             className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-faint transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <ArrowUpDown className="size-3.5" aria-hidden />
+            <ArrowUpDown className="size-3.5 lg:hidden" aria-hidden />
+            <ArrowLeftRight className="hidden size-3.5 lg:block" aria-hidden />
           </button>
           <div className="min-w-0 flex-1">
             <StationCombobox
@@ -113,14 +115,18 @@ export function SearchForm({
             />
           </div>
         </div>
-        <input
-          id="search-bar-date"
-          type="date"
-          value={date}
-          min={todayIso()}
-          aria-label={t("search.date")}
-          onChange={(event) => setDate(event.target.value)}
-          className="h-11 rounded-lg border border-border bg-surface px-3 text-[0.875rem] text-text"
+        <DatePicker
+          date={date}
+          from={from?.token ?? ""}
+          to={to?.token ?? ""}
+          disabled={!canSearch}
+          onPick={(next) => {
+            setDate(next);
+            if (!from || !to || from.token === to.token) return;
+            localStorage.setItem(LAST_KEY, JSON.stringify({ from, to, date: next, quota }));
+            const params = new URLSearchParams({ from: from.token, to: to.token, date: next, quota });
+            router.push(`/search?${params}`);
+          }}
         />
         <QuotaPicker value={quota} onChange={setQuota} disabled={!canSearch} />
         <button
