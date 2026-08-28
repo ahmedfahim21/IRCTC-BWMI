@@ -56,9 +56,12 @@
   --track-live: var(--ux4g-color-blue-800);
   --route: var(--ux4g-color-orange-600);
 
-  --shadow-sm: 0 1px 2px rgb(15 19 26 / 0.06);
-  --shadow-md: 0 4px 16px -4px rgb(15 19 26 / 0.1);
-  --shadow-lg: 0 16px 48px -12px rgb(15 19 26 / 0.18);
+  --shadow-sm: 0 1px 2px rgb(15 19 26 / 0.06), 0 1px 1px rgb(15 19 26 / 0.04);
+  --shadow-md: 0 2px 4px rgb(15 19 26 / 0.05), 0 8px 20px -6px rgb(15 19 26 / 0.12);
+  --shadow-lg: 0 4px 8px rgb(15 19 26 / 0.06), 0 24px 56px -16px rgb(15 19 26 / 0.22);
+  --shadow-xl: 0 8px 16px rgb(15 19 26 / 0.08), 0 40px 80px -24px rgb(15 19 26 / 0.3);
+  /* The edge a light would catch on a raised surface. */
+  --edge: inset 0 1px 0 rgb(255 255 255 / 0.7);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -93,9 +96,11 @@
     --track-live: var(--ux4g-color-blue-400);
     --route: var(--ux4g-color-orange-400);
 
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 16px 48px -12px rgb(0 0 0 / 0.65);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 1px rgb(0 0 0 / 0.35);
+    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.45), 0 8px 20px -6px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.5), 0 24px 56px -16px rgb(0 0 0 / 0.7);
+    --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.55), 0 40px 80px -24px rgb(0 0 0 / 0.8);
+    --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
   }
 }
 
@@ -130,9 +135,11 @@
   --track-live: var(--ux4g-color-blue-400);
   --route: var(--ux4g-color-orange-400);
 
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 16px 48px -12px rgb(0 0 0 / 0.65);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 1px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.45), 0 8px 20px -6px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.5), 0 24px 56px -16px rgb(0 0 0 / 0.7);
+  --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.55), 0 40px 80px -24px rgb(0 0 0 / 0.8);
+  --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 
 @theme inline {
@@ -225,6 +232,37 @@ h1, h2, h3, h4, h5, h6, strong, b, th {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm), var(--edge);
+}
+
+/* A surface meant to read as lifted off the page rather than drawn on it. */
+@utility card-raised {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg), var(--edge);
+}
+
+/* The search panel, floating over the hero photograph. */
+@utility card-floating {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  box-shadow: var(--shadow-xl), var(--edge);
+}
+
+/* Lifts on hover. Used by anything that is a link to somewhere else. */
+@utility lift {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease;
+}
+
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg), var(--edge);
+  border-color: var(--border-strong);
 }
 
 /* Skeletons, not spinners — content should never pop in from nothing. */
