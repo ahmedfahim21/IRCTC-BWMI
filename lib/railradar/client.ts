@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { createHash } from "node:crypto";
+import { retryAfterMs, sleep } from "@/lib/http/backoff";
 
 /**
  * RailRadar API client.
@@ -158,7 +159,8 @@ export class RailRadarError extends Error {
 export async function callRailRadar<T>(
   path: string,
   params: Record<string, string | number | undefined>,
-  ttl: number
+  ttl: number,
+  attempt = 0
 ): Promise<T | null> {
   const key = process.env.RAILRADAR_API_KEY;
   if (!key) return null;
@@ -198,6 +200,22 @@ export async function callRailRadar<T>(
       `RailRadar unreachable: ${cause instanceof Error ? cause.message : "network error"}`,
       "UNREACHABLE"
     );
+  }
+
+  if (response.status === 429 || response.status === 503) {
+    const stale = await readCache<T>(url, Number.POSITIVE_INFINITY);
+    if (stale !== null) return stale;
+    if (attempt < 3) {
+      await sleep(retryAfterMs(response.headers.get("retry-after"), attempt));
+      return callRailRadar(path, params, ttl, attempt + 1);
+    }
+    throw new RailRadarError("RailRadar is rate limiting requests.", "RATE_LIMITED");
+  }
+
+  if (!response.ok) {
+    const stale = await readCache<T>(url, Number.POSITIVE_INFINITY);
+    if (stale !== null) return stale;
+    throw new RailRadarError(`RailRadar returned ${response.status}`, "UPSTREAM_ERROR");
   }
 
   await bumpQuota();

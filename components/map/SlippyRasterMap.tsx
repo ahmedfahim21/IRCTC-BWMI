@@ -86,6 +86,8 @@ export function SlippyRasterMap({
   onMoveEndRef.current = onMoveEnd;
   const dragRef = useRef<{ x: number; y: number; lng: number; lat: number } | null>(null);
   const streetHostRef = useRef<"esri" | "osm">("esri");
+  const emitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const readyRef = useRef(false);
 
   const [theme, setTheme] = useState<"dark" | "light">(currentTheme);
   const [basemap, setBasemapState] = useState<Basemap>("terrain");
@@ -100,8 +102,21 @@ export function SlippyRasterMap({
     const el = wrapRef.current;
     if (!el) return;
     const { centerLng, centerLat, zoom } = viewRef.current;
-    onMoveEndRef.current?.(viewportBbox(centerLng, centerLat, zoom, el.clientWidth, el.clientHeight));
+    const raw = viewportBbox(centerLng, centerLat, zoom, el.clientWidth, el.clientHeight);
+    const rounded = raw
+      .split(",")
+      .map((part) => Number(part).toFixed(2))
+      .join(",");
+    onMoveEndRef.current?.(rounded);
   }, []);
+
+  const emitSoon = useCallback(() => {
+    if (emitTimerRef.current) clearTimeout(emitTimerRef.current);
+    emitTimerRef.current = setTimeout(() => {
+      emitTimerRef.current = null;
+      emit();
+    }, 200);
+  }, [emit]);
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -184,7 +199,10 @@ export function SlippyRasterMap({
     }
     ctx.stroke();
 
-    setReady(true);
+    if (!readyRef.current) {
+      readyRef.current = true;
+      setReady(true);
+    }
   }, [basemap, theme]);
 
   const setView = useCallback(
@@ -200,10 +218,10 @@ export function SlippyRasterMap({
         INDIA_BOUNDS
       );
       paint();
-      emit();
+      emitSoon();
       bumpView();
     },
-    [paint, emit, bumpView]
+    [paint, emitSoon, bumpView]
   );
 
   useEffect(() => {
@@ -247,7 +265,10 @@ export function SlippyRasterMap({
     apply(true);
     const observer = new ResizeObserver(() => apply(false));
     observer.observe(wrap);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (emitTimerRef.current) clearTimeout(emitTimerRef.current);
+    };
   }, [paint, emit, bumpView]);
 
   useEffect(() => {
@@ -385,6 +406,11 @@ export function SlippyRasterMap({
         }
         onPointerUp={() => {
           dragRef.current = null;
+          if (emitTimerRef.current) {
+            clearTimeout(emitTimerRef.current);
+            emitTimerRef.current = null;
+          }
+          emit();
         }}
         onWheel={
           interactive

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
 import { ClientRailMap } from "@/components/map/ClientRailMap";
 import { MapControls } from "@/components/map/MapControls";
@@ -24,6 +24,7 @@ export function LandingMap() {
   const { data } = useQuery({
     queryKey: ["liveMap", "landing", bbox],
     queryFn: ({ signal }) => api.liveMap({ bbox, limit: LANDING_LIMIT }, signal),
+    placeholderData: keepPreviousData,
     refetchInterval: LANDING_REFETCH_MS,
     refetchIntervalInBackground: false,
   });

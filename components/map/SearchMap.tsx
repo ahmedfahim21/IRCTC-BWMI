@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { Station } from "@/lib/types";
 import { api } from "@/lib/apiClient";
 import { lookupStationCoords } from "@/lib/geo/stationCoords";
@@ -49,6 +49,7 @@ export function SearchMap({
   const { data } = useQuery({
     queryKey: ["liveMap", "search", bbox],
     queryFn: ({ signal }) => api.liveMap({ bbox, limit: SEARCH_LIMIT }, signal),
+    placeholderData: keepPreviousData,
     refetchInterval: SEARCH_REFETCH_MS,
     refetchIntervalInBackground: false,
   });

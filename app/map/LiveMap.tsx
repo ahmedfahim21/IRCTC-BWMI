@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { RadioTower, Search } from "lucide-react";
 import type { PackedTrain } from "@/lib/railradar/liveMap";
 import { api } from "@/lib/apiClient";
@@ -44,6 +44,7 @@ export function LiveMap() {
   const { data, isPending, isError, error, refetch, isFetching } = useQuery<LiveMapResponse>({
     queryKey: ["liveMap", bbox],
     queryFn: ({ signal }) => api.liveMap({ bbox, limit: 4000 }, signal),
+    placeholderData: keepPreviousData,
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
   });

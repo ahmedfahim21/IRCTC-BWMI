@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { RailRadarError } from "@/lib/railradar/client";
 
 export function json<T>(data: T, init?: ResponseInit) {
   return NextResponse.json(data, init);
@@ -14,8 +15,7 @@ export function notFound(message: string) {
 
 /**
  * Wrap a handler so a thrown error becomes a 500 with its message rather than an
- * opaque failure. Nothing here swallows an error to keep a page rendering — a
- * broken endpoint should be visible.
+ * opaque failure. Rate-limit responses stay 429 so the client can back off.
  */
 export function handler<Args extends unknown[]>(fn: (...args: Args) => Promise<Response> | Response) {
   return async (...args: Args): Promise<Response> => {
@@ -24,6 +24,9 @@ export function handler<Args extends unknown[]>(fn: (...args: Args) => Promise<R
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       console.error("[api]", message);
+      if (error instanceof RailRadarError && error.code === "RATE_LIMITED") {
+        return NextResponse.json({ error: message }, { status: 429, headers: { "Retry-After": "5" } });
+      }
       return NextResponse.json({ error: message }, { status: 500 });
     }
   };
