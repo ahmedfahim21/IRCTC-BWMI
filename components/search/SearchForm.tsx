@@ -126,9 +126,6 @@ export function SearchForm({
           {stations}
           <DatePicker
             date={date}
-            from={from?.token ?? ""}
-            to={to?.token ?? ""}
-            disabled={!canSearch}
             onPick={(next) => {
               setDate(next);
               if (!from || !to || from.token === to.token) return;

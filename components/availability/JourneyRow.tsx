@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, Utensils } from "lucide-react";
+import { ChevronDown, ChevronRight, TrainFront, Utensils } from "lucide-react";
 import type { JourneyDto } from "@/lib/api/dto";
 import type { QuotaCode, Station } from "@/lib/types";
 import { formatDelay, formatDuration, formatMinute } from "@/lib/domain/time";
@@ -34,6 +34,7 @@ export function JourneyRow({
   const router = useRouter();
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const { train } = journey;
   const name = (code: string) => stations[code]?.name ?? code;
 
@@ -51,7 +52,6 @@ export function JourneyRow({
       });
       router.push(`/book/${draft.draftId}`);
     } catch (cause) {
-      // Surface it in place rather than leaving a dead button.
       setStarting(null);
       setError(cause instanceof Error ? cause.message : "Could not start this booking");
     }
@@ -69,44 +69,30 @@ export function JourneyRow({
       aria-current={selected ? "true" : undefined}
       onClick={onSelect}
     >
-      <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 p-4 pb-3">
+      <div className="flex items-center gap-2 px-4 pt-3">
+        <TrainFront className="size-3.5 shrink-0 text-brand" aria-hidden />
         <Link
           href={`/trains/${train.number}?date=${date}`}
           className="group flex min-w-0 items-baseline gap-2"
+          onClick={(event) => event.stopPropagation()}
         >
-          <span className="tnum text-[0.8125rem] text-faint">{train.number}</span>
-          <span className="truncate text-[0.9375rem] text-text group-hover:text-brand">{train.name}</span>
-          <ChevronRight className="size-3.5 shrink-0 text-faint transition-transform group-hover:translate-x-0.5" aria-hidden />
+          <span className="tnum text-[0.8125rem] text-brand">{train.number}</span>
+          <span className="truncate text-[0.8125rem] text-dim group-hover:text-brand">{train.name}</span>
+          <ChevronRight className="size-3 shrink-0 text-faint transition-transform group-hover:translate-x-0.5" aria-hidden />
         </Link>
-
-        <div className="ml-auto flex items-center gap-3">
-          {train.hasPantry && (
-            <span className="hidden items-center gap-1 text-[0.6875rem] text-faint sm:flex" title="Pantry car">
-              <Utensils className="size-3" aria-hidden />
-              Pantry
-            </span>
-          )}
-          <span
-            className={cn("tnum text-[0.6875rem]", train.avgDelayMins > 30 ? "text-warn" : "text-faint")}
-            title="Average arrival delay over the last 30 runs"
-          >
-            usually {formatDelay(train.avgDelayMins).toLowerCase()}
-          </span>
-        </div>
+        {!journey.runsToday && (
+          <span className="ml-auto text-[0.6875rem] text-warn">Doesn&rsquo;t run this date</span>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-4 pb-3">
-        <div className="flex items-baseline gap-2">
-          <span className="tnum text-xl leading-none text-text">{formatMinute(journey.departureMinute)}</span>
-          <span className="text-[0.75rem] text-faint">{journey.fromCode}</span>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+        <div className="min-w-[4.5rem]">
+          <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(journey.departureMinute)}</p>
+          <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{journey.fromCode}</p>
         </div>
 
-        <div className="min-w-[7rem] flex-1">
-          <p className="mb-0.5 text-center text-[0.625rem] text-faint">
-            {formatDuration(journey.durationMins)}
-            <span className="mx-1.5">·</span>
-            {journey.distanceKm} km
-          </p>
+        <div className="min-w-[6.5rem] flex-1">
+          <p className="mb-0.5 text-center text-[0.6875rem] text-faint">{formatDuration(journey.durationMins)}</p>
           <RouteRibbon
             originCode={train.originCode}
             destinationCode={train.destinationCode}
@@ -117,40 +103,70 @@ export function JourneyRow({
           />
         </div>
 
-        <div className="flex items-baseline gap-2">
-          <span className="tnum text-xl leading-none text-text">{formatMinute(journey.arrivalMinute)}</span>
-          <span className="text-[0.75rem] text-faint">{journey.toCode}</span>
-          {journey.daySpan > 1 && (
-            <span className="rounded bg-surface-3 px-1 py-0.5 text-[0.625rem] text-dim">+{journey.daySpan - 1}d</span>
-          )}
+        <div className="min-w-[4.5rem] text-right">
+          <p className="tnum text-[1.375rem] leading-none text-text">
+            {formatMinute(journey.arrivalMinute)}
+            {journey.daySpan > 1 && (
+              <span className="ml-1 align-top text-[0.625rem] text-dim">+{journey.daySpan - 1}</span>
+            )}
+          </p>
+          <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{journey.toCode}</p>
         </div>
       </div>
 
-      <p className="px-4 pb-3 text-[0.6875rem] text-faint">
-        {name(journey.fromCode)} → {name(journey.toCode)}
-        <span className="mx-2">·</span>
-        <span aria-label={`Runs on ${train.runsOn.length} days a week`}>
-          {DAY_LETTERS.map((letter, index) => (
-            <span
-              key={index}
-              className={cn("mr-0.5 inline-block w-2.5 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/40")}
-            >
-              {letter}
-            </span>
-          ))}
-        </span>
-        {!journey.runsToday && <span className="ml-2 text-warn">Doesn&rsquo;t run on this date</span>}
-      </p>
-
-      <div className="-mx-px flex gap-2 overflow-x-auto border-t border-border bg-surface-2 p-3">
+      <div className="-mx-px flex gap-1.5 overflow-x-auto border-t border-border px-3 py-2">
         {journey.availability.map((availability) => (
           <ClassCell
             key={availability.classCode}
+            compact
             availability={availability}
             selected={starting === availability.classCode}
             onSelect={journey.runsToday ? () => startBooking(availability.classCode) : undefined}
           />
         ))}
+      </div>
+
+      <div className="border-t border-border">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen((value) => !value);
+          }}
+          className="flex w-full items-center gap-1 px-4 py-1.5 text-[0.6875rem] text-faint hover:text-dim"
+        >
+          <ChevronDown className={cn("size-3 transition-transform", open && "rotate-180")} aria-hidden />
+          {open ? "Hide extras" : "Days, delay, stations"}
+        </button>
+        {open && (
+          <div className="space-y-1.5 px-4 pb-3 text-[0.6875rem] text-dim">
+            <p>
+              {name(journey.fromCode)} → {name(journey.toCode)}
+              <span className="mx-1.5 text-faint">·</span>
+              {journey.distanceKm} km
+            </p>
+            <p aria-label={`Runs on ${train.runsOn.length} days a week`}>
+              {DAY_LETTERS.map((letter, index) => (
+                <span
+                  key={index}
+                  className={cn("mr-0.5 inline-block w-2.5 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/40")}
+                >
+                  {letter}
+                </span>
+              ))}
+              <span className={cn("ml-2", train.avgDelayMins > 30 ? "text-warn" : "text-faint")}>
+                usually {formatDelay(train.avgDelayMins).toLowerCase()}
+              </span>
+            </p>
+            {train.hasPantry && (
+              <p className="flex items-center gap-1 text-faint">
+                <Utensils className="size-3" aria-hidden />
+                Pantry car
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {error && (

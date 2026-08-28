@@ -87,11 +87,14 @@ export function SlippyRasterMap({
   const dragRef = useRef<{ x: number; y: number; lng: number; lat: number } | null>(null);
   const streetHostRef = useRef<"esri" | "osm">("esri");
   const emitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animRef = useRef<number | null>(null);
   const readyRef = useRef(false);
 
   const [theme, setTheme] = useState<"dark" | "light">(currentTheme);
   const [basemap, setBasemapState] = useState<Basemap>("terrain");
   const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
   const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
   const [viewEpoch, setViewEpoch] = useState(0);
@@ -205,10 +208,18 @@ export function SlippyRasterMap({
     }
   }, [basemap, theme]);
 
+  const stopAnim = useCallback(() => {
+    if (animRef.current != null) {
+      cancelAnimationFrame(animRef.current);
+      animRef.current = null;
+    }
+  }, []);
+
   const setView = useCallback(
     (next: { centerLng: number; centerLat: number; zoom: number }) => {
       const wrap = wrapRef.current;
       if (!wrap) return;
+      stopAnim();
       viewRef.current = clampView(
         next.centerLng,
         next.centerLat,
@@ -221,7 +232,52 @@ export function SlippyRasterMap({
       emitSoon();
       bumpView();
     },
-    [paint, emitSoon, bumpView]
+    [paint, emitSoon, bumpView, stopAnim]
+  );
+
+  const animateView = useCallback(
+    (next: { centerLng: number; centerLat: number; zoom: number }) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const target = clampView(
+        next.centerLng,
+        next.centerLat,
+        next.zoom,
+        wrap.clientWidth,
+        wrap.clientHeight,
+        INDIA_BOUNDS
+      );
+      if (reducedMotionRef.current) {
+        setView(target);
+        return;
+      }
+      stopAnim();
+      const from = { ...viewRef.current };
+      const started = performance.now();
+      const duration = 520;
+      const step = (now: number) => {
+        const t = Math.min(1, (now - started) / duration);
+        const k = 1 - (1 - t) ** 3;
+        viewRef.current = clampView(
+          from.centerLng + (target.centerLng - from.centerLng) * k,
+          from.centerLat + (target.centerLat - from.centerLat) * k,
+          from.zoom + (target.zoom - from.zoom) * k,
+          wrap.clientWidth,
+          wrap.clientHeight,
+          INDIA_BOUNDS
+        );
+        paint();
+        bumpView();
+        if (t < 1) {
+          animRef.current = requestAnimationFrame(step);
+          return;
+        }
+        animRef.current = null;
+        emitSoon();
+      };
+      animRef.current = requestAnimationFrame(step);
+    },
+    [setView, stopAnim, paint, bumpView, emitSoon]
   );
 
   useEffect(() => {
@@ -268,6 +324,7 @@ export function SlippyRasterMap({
     return () => {
       observer.disconnect();
       if (emitTimerRef.current) clearTimeout(emitTimerRef.current);
+      if (animRef.current != null) cancelAnimationFrame(animRef.current);
     };
   }, [paint, emit, bumpView]);
 
@@ -314,9 +371,9 @@ export function SlippyRasterMap({
 
   const flyTo = useCallback(
     (lng: number, lat: number, zoom = 8) => {
-      setView({ centerLng: lng, centerLat: lat, zoom });
+      animateView({ centerLng: lng, centerLat: lat, zoom });
     },
-    [setView]
+    [animateView]
   );
 
   const fitIndia = useCallback(() => {
@@ -331,17 +388,17 @@ export function SlippyRasterMap({
       wrap.clientHeight,
       28
     );
-    setView(fitted);
-  }, [setView]);
+    animateView(fitted);
+  }, [animateView]);
 
   const fitBounds = useCallback(
     (west: number, south: number, east: number, north: number, padding = 48) => {
       const wrap = wrapRef.current;
       if (!wrap || wrap.clientWidth < 2 || wrap.clientHeight < 2) return;
       const fitted = zoomToFit(west, south, east, north, wrap.clientWidth, wrap.clientHeight, padding);
-      setView(fitted);
+      animateView(fitted);
     },
-    [setView]
+    [animateView]
   );
 
   const project = useCallback(
@@ -383,6 +440,7 @@ export function SlippyRasterMap({
         onPointerDown={
           interactive
             ? (event) => {
+                stopAnim();
                 dragRef.current = {
                   x: event.clientX,
                   y: event.clientY,

@@ -89,8 +89,12 @@ export function SearchResults() {
           return a.arrivalMinute - b.arrivalMinute;
         case "fare":
           return cheapest(a) - cheapest(b);
-        default:
+        case "departure":
           return a.departureMinute - b.departureMinute;
+        default: {
+          const _never: never = filters.sort;
+          return _never;
+        }
       }
     });
   }, [data, filters]);
