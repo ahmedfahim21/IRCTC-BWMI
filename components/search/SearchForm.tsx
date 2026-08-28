@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, CircleDot, MapPin, Search } from "lucide-react";
+import { ArrowUpDown, CircleDot, MapPin, Search } from "lucide-react";
 import { StationCombobox, type StationValue } from "./StationCombobox";
 import { DateStrip } from "./DateStrip";
 import { QuotaPicker } from "./QuotaPicker";
@@ -49,10 +49,9 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
   };
 
   return (
-    <form onSubmit={submit} className="card p-4 shadow-[var(--shadow-md)] sm:p-5">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:grid-rows-[auto_auto_auto] sm:items-end sm:gap-x-2 sm:gap-y-0">
+    <form onSubmit={submit} className="card p-5 shadow-[var(--shadow-md)] sm:p-6">
+      <div className="relative">
         <StationCombobox
-          column={1}
           label={t("search.from")}
           value={from}
           onChange={setFrom}
@@ -64,12 +63,11 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
           onClick={swap}
           aria-label={t("search.swap")}
           disabled={!from && !to}
-          className="flex size-10 shrink-0 items-center justify-center justify-self-center rounded-lg border border-border text-faint transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-40 sm:col-start-2 sm:row-start-2 sm:justify-self-auto"
+          className="absolute right-3 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-surface text-faint shadow-[var(--shadow-sm)] transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <ArrowLeftRight className="size-4" aria-hidden />
+          <ArrowUpDown className="size-4" aria-hidden />
         </button>
         <StationCombobox
-          column={3}
           label={t("search.to")}
           value={to}
           onChange={setTo}
@@ -78,8 +76,8 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
         />
       </div>
 
-      <div className="mt-5">
-        <div className="mb-2 flex items-baseline justify-between gap-3">
+      <div className="mt-6">
+        <div className="mb-2.5 flex items-baseline justify-between gap-3">
           <span className="eyebrow">{t("search.date")}</span>
           <QuotaPicker value={quota} onChange={setQuota} disabled={!canSearch} />
         </div>
@@ -95,7 +93,7 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
       <button
         type="submit"
         disabled={!canSearch}
-        className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[1rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Search className="size-4" aria-hidden />
         {t("search.submit")}

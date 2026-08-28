@@ -81,7 +81,7 @@ export function DateStrip({
   if (!data) {
     return (
       <div className={waiting ? "opacity-45" : undefined} aria-disabled={waiting || undefined}>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Journey date">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1.5" role="radiogroup" aria-label="Journey date">
           {placeholderDays.map((day) => {
             const selected = day === date;
             const label = day === today ? "Today" : day === addDays(today, 1) ? "Tomorrow" : formatWeekday(day);
@@ -94,17 +94,17 @@ export function DateStrip({
                 disabled
                 aria-label={`${formatDateShort(day)}, pick stations to see availability`}
                 className={cn(
-                  "flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl border px-2 py-2.5",
+                  "flex w-[5.5rem] shrink-0 flex-col items-center gap-1.5 rounded-xl border px-2 py-3",
                   selected ? "border-brand bg-brand-soft" : "border-border bg-surface"
                 )}
               >
-                <span className="text-[0.625rem] uppercase tracking-wider text-faint">{label}</span>
-                <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
+                <span className="text-[0.6875rem] uppercase tracking-wider text-faint">{label}</span>
+                <span className={cn("tnum text-[0.9375rem]", selected ? "text-brand" : "text-text")}>
                   {formatDateShort(day)}
                 </span>
-                <span className="flex h-4 items-center gap-1">
+                <span className="flex h-5 items-center gap-1">
                   <span className="size-1.5 rounded-full bg-border-strong" aria-hidden />
-                  <span className="text-[0.625rem] text-faint">—</span>
+                  <span className="text-[0.6875rem] text-faint">—</span>
                 </span>
               </button>
             );
@@ -121,7 +121,7 @@ export function DateStrip({
     <div>
       <div
         ref={scroller}
-        className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
+        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1.5"
         role="radiogroup"
         aria-label="Journey date"
       >
@@ -140,18 +140,18 @@ export function DateStrip({
               onClick={() => onPick(day.date)}
               aria-label={`${formatDateShort(day.date)}, ${dead ? "no trains" : `${day.trainCount} trains, best availability ${day.label}`}`}
               className={cn(
-                "flex w-[4.25rem] shrink-0 flex-col items-center gap-1 rounded-xl border px-2 py-2.5 transition-colors",
+                "flex w-[5.5rem] shrink-0 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 transition-colors",
                 selected ? "border-brand bg-brand-soft" : "border-border bg-surface hover:border-border-strong",
                 dead && "opacity-55"
               )}
             >
-              <span className="text-[0.625rem] uppercase tracking-wider text-faint">{label}</span>
-              <span className={cn("tnum text-[0.8125rem]", selected ? "text-brand" : "text-text")}>
+              <span className="text-[0.6875rem] uppercase tracking-wider text-faint">{label}</span>
+              <span className={cn("tnum text-[0.9375rem]", selected ? "text-brand" : "text-text")}>
                 {formatDateShort(day.date)}
               </span>
-              <span className="flex h-4 items-center gap-1">
+              <span className="flex h-5 items-center gap-1">
                 <span className={cn("size-1.5 rounded-full", tone.dot)} aria-hidden />
-                <span className={cn("text-[0.625rem]", tone.text)}>
+                <span className={cn("text-[0.6875rem]", tone.text)}>
                   {dead ? "None" : day.confirmableCount > 0 ? `${day.confirmableCount} open` : "Full"}
                 </span>
               </span>
