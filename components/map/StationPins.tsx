@@ -37,6 +37,7 @@ export function StationPins({
             className="rail-station-pin pointer-events-auto absolute"
             style={{ left: pt.x, top: pt.y, transform: "translate(-50%, -100%)" }}
             aria-label={`${label} ${pin.name} (${pin.code})`}
+            title={pin.name}
             onClick={(event) => {
               event.stopPropagation();
               onSelect?.(pin);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   MessageCircle,
   PanelBottom,
@@ -25,10 +26,11 @@ const STARTERS = [
   "Look up my PNR",
 ];
 
-function readDock(): Dock {
+function readDock(pathname: string): Dock {
   if (typeof window === "undefined") return "right";
   const stored = localStorage.getItem(DOCK_KEY);
   if (stored === "left" || stored === "right" || stored === "bottom") return stored;
+  if (pathname.startsWith("/search")) return "bottom";
   return "right";
 }
 
@@ -48,13 +50,14 @@ function formatToolOutput(output: unknown): string | null {
  */
 export function ChatPanel() {
   const chat = useAgentChat();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [dock, setDock] = useState<Dock>("right");
   const [input, setInput] = useState("");
   const [editingLast, setEditingLast] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setDock(readDock()), []);
+  useEffect(() => setDock(readDock(pathname)), [pathname]);
 
   useEffect(() => {
     const openChat = () => setOpen(true);

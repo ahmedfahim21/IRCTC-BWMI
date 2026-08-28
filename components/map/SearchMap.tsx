@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { Station } from "@/lib/types";
 import { api } from "@/lib/apiClient";
 import { lookupStationCoords } from "@/lib/geo/stationCoords";
 import { ClientRailMap } from "@/components/map/ClientRailMap";
 import { MapControls } from "@/components/map/MapControls";
-import { TrainLayer } from "@/components/map/TrainLayer";
-import { RouteLayer } from "@/components/map/RouteLayer";
+import { TrainLayer, type MapTrain } from "@/components/map/TrainLayer";
+import { RouteLayer, type RouteStop } from "@/components/map/RouteLayer";
 import { StationPins, type StationPin } from "@/components/map/StationPins";
+import { TrainCallout } from "@/components/map/TrainCallout";
+import { StationCallout } from "@/components/map/StationCallout";
 import { useRailMap } from "@/components/map/mapContext";
 import { TRAIN_TYPES } from "@/lib/railradar/trainTypes";
 
@@ -31,17 +33,23 @@ export function SearchMap({
   destination,
   selectedTrain,
   date,
+  mapOpen = true,
 }: {
   origin?: Station;
   destination?: Station;
   selectedTrain?: string | null;
   date: string;
+  mapOpen?: boolean;
 }) {
   const [bbox, setBbox] = useState<string | undefined>(undefined);
+  const [mapTrain, setMapTrain] = useState<MapTrain | null>(null);
+  const [stationPin, setStationPin] = useState<StationPin | null>(null);
+  const [routeStop, setRouteStop] = useState<RouteStop | null>(null);
 
   const { data } = useQuery({
     queryKey: ["liveMap", "search", bbox],
     queryFn: ({ signal }) => api.liveMap({ bbox, limit: SEARCH_LIMIT }, signal),
+    placeholderData: keepPreviousData,
     refetchInterval: SEARCH_REFETCH_MS,
     refetchIntervalInBackground: false,
   });
@@ -65,29 +73,77 @@ export function SearchMap({
           trains={data.trains}
           activeTypes={activeTypes}
           selectedNumber={selectedTrain}
-          onSelect={() => undefined}
+          dimmed={Boolean(selectedTrain)}
+          onSelect={(train) => {
+            setStationPin(null);
+            setRouteStop(null);
+            setMapTrain(train);
+          }}
         />
       )}
-      {selectedTrain && <RouteLayer trainNumber={selectedTrain} date={date} />}
-      {!selectedTrain && <FitStationPair pins={pins} />}
-      <StationPins pins={pins} />
+      {selectedTrain && (
+        <RouteLayer
+          key={`${selectedTrain}-${mapOpen ? "open" : "closed"}`}
+          trainNumber={selectedTrain}
+          date={date}
+          onSelectStop={(stop) => {
+            setMapTrain(null);
+            setStationPin(null);
+            setRouteStop(stop);
+          }}
+        />
+      )}
+      {!selectedTrain && <FitStationPair key={mapOpen ? "open" : "closed"} pins={pins} />}
+      <StationPins
+        pins={pins}
+        onSelect={(pin) => {
+          setMapTrain(null);
+          setRouteStop(null);
+          setStationPin(pin);
+        }}
+      />
+      {mapTrain && data && (
+        <TrainCallout
+          compact
+          train={mapTrain}
+          typeName={data.types[mapTrain.type]}
+          onClose={() => setMapTrain(null)}
+        />
+      )}
+      {stationPin && (
+        <StationCallout pin={stationPin} onClose={() => setStationPin(null)} />
+      )}
+      {routeStop && (
+        <StationCallout
+          pin={{
+            code: routeStop.code,
+            name: routeStop.name,
+            lat: routeStop.lat,
+            lng: routeStop.lng,
+            kind: routeStop.kind === "terminal" ? "origin" : "stop",
+          }}
+          arrivalMinute={routeStop.arrivalMinute}
+          departureMinute={routeStop.departureMinute}
+          onClose={() => setRouteStop(null)}
+        />
+      )}
     </ClientRailMap>
   );
 }
 
 function FitStationPair({ pins }: { pins: StationPin[] }) {
-  const { fitBounds } = useRailMap();
+  const { fitBounds, ready } = useRailMap();
   const fittedFor = useRef("");
 
   useEffect(() => {
-    if (pins.length < 2) return;
+    if (!ready || pins.length < 2) return;
     const key = pins.map((pin) => pin.code).join("-");
     if (fittedFor.current === key) return;
     fittedFor.current = key;
     const lngs = pins.map((pin) => pin.lng);
     const lats = pins.map((pin) => pin.lat);
-    fitBounds(Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats), 72);
-  }, [pins, fitBounds]);
+    fitBounds(Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats), 24);
+  }, [pins, fitBounds, ready]);
 
   return null;
 }

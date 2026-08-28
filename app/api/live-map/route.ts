@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { liveMapSnapshot, TRAIN_TYPES, type PackedTrain } from "@/lib/railradar/liveMap";
+import { liveMapSnapshot, TRAIN_TYPES, uniquePackedTrains, type PackedTrain } from "@/lib/railradar/liveMap";
 import { getWorld } from "@/lib/mock/seed";
 import { getLiveStatus } from "@/lib/mock/live";
 import { todayIso } from "@/lib/domain/time";
@@ -19,7 +19,7 @@ export const GET = handler(async (request: NextRequest) => {
 
   const snapshot = await liveMapSnapshot();
   if (snapshot) {
-    let trains = snapshot.trains;
+    let trains = uniquePackedTrains(snapshot.trains);
     if (bbox) {
       const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
       if ([minLng, minLat, maxLng, maxLat].every(Number.isFinite)) {
@@ -61,12 +61,13 @@ export const GET = handler(async (request: NextRequest) => {
     }
   }
 
-  const total = trains.length;
-  let clipped = trains;
+  const unique = uniquePackedTrains(trains);
+  const total = unique.length;
+  let clipped = unique;
   if (bbox) {
     const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
     if ([minLng, minLat, maxLng, maxLat].every(Number.isFinite)) {
-      clipped = trains.filter(([, , lat, lng]) => lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng);
+      clipped = unique.filter(([, , lat, lng]) => lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng);
     }
   }
 

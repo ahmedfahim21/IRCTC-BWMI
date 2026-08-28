@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from "lucide-react";
+import { ArrowRight, ChevronDown, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { formatDuration, formatMinute, todayIso } from "@/lib/domain/time";
 import { RailSpine } from "@/components/rail/RailSpine";
@@ -34,6 +34,7 @@ export function TrainDetail({ number }: { number: string }) {
   const to = params.get("to") ?? undefined;
   const [tab, setTab] = useState<Tab>("route");
   const [selectedCoach, setSelectedCoach] = useState<string | null>(null);
+  const [extrasOpen, setExtrasOpen] = useState(false);
 
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["train", number, date],
@@ -82,44 +83,63 @@ export function TrainDetail({ number }: { number: string }) {
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
       <header className="mb-4">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="tnum text-[1.0625rem] text-faint">{train.number}</span>
+          <span className="tnum text-[1.0625rem] text-brand">{train.number}</span>
           <h1 className="text-[1.25rem] tracking-[-0.01em] text-text">{train.name}</h1>
-          <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] capitalize text-dim">{train.type}</span>
-          {train.hasPantry && (
-            <span className="flex items-center gap-1 text-[0.6875rem] text-faint">
-              <Utensils className="size-3" aria-hidden /> Pantry
-            </span>
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-2">
+          <div>
+            <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(first.departureMinute)}</p>
+            <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{first.stationCode}</p>
+          </div>
+          <ArrowRight className="mb-4 size-3.5 text-faint" aria-hidden />
+          <div>
+            <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(last.arrivalMinute)}</p>
+            <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{last.stationCode}</p>
+          </div>
+        </div>
+
+        <div className="mt-2">
+          <button
+            type="button"
+            aria-expanded={extrasOpen}
+            onClick={() => setExtrasOpen((value) => !value)}
+            className="flex items-center gap-1 py-1 text-[0.6875rem] text-faint hover:text-dim"
+          >
+            <ChevronDown className={cn("size-3 transition-transform", extrasOpen && "rotate-180")} aria-hidden />
+            {extrasOpen ? "Hide extras" : "Days, pantry, stations"}
+          </button>
+          {extrasOpen && (
+            <div className="space-y-1.5 pb-1 text-[0.75rem] text-dim">
+              <p>
+                {stations[first.stationCode]?.name} → {stations[last.stationCode]?.name}
+              </p>
+              <p className="flex items-center gap-1.5 text-faint" aria-label="Days it runs">
+                {DAY_LETTERS.map((letter, index) => (
+                  <span
+                    key={index}
+                    className={cn("inline-block w-3 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/35")}
+                  >
+                    {letter}
+                  </span>
+                ))}
+              </p>
+              {train.hasPantry && (
+                <p className="flex items-center gap-1 text-faint">
+                  <Utensils className="size-3" aria-hidden /> Pantry car
+                </p>
+              )}
+            </div>
           )}
         </div>
 
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.875rem] text-dim">
-          <span>{stations[first.stationCode]?.name}</span>
-          <ArrowRight className="size-3.5 text-faint" aria-hidden />
-          <span>{stations[last.stationCode]?.name}</span>
-          <span className="tnum text-faint">
-            {formatMinute(first.departureMinute)} → {formatMinute(last.arrivalMinute)}
-          </span>
-        </p>
-
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-          <span className="flex items-center gap-1.5 text-[0.75rem] text-faint" aria-label="Days it runs">
-            {DAY_LETTERS.map((letter, index) => (
-              <span
-                key={index}
-                className={cn("inline-block w-3 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/35")}
-              >
-                {letter}
-              </span>
-            ))}
-          </span>
-          <Link
-            href={`/trains/${train.returnTrainNumber}`}
-            className="flex items-center gap-1.5 text-[0.75rem] text-faint transition-colors hover:text-brand"
-          >
-            <Repeat className="size-3" aria-hidden />
-            Return: <span className="tnum">{train.returnTrainNumber}</span>
-          </Link>
-        </div>
+        <Link
+          href={`/trains/${train.returnTrainNumber}`}
+          className="mt-1 inline-flex items-center gap-1.5 text-[0.75rem] text-faint transition-colors hover:text-brand"
+        >
+          <Repeat className="size-3" aria-hidden />
+          Return: <span className="tnum">{train.returnTrainNumber}</span>
+        </Link>
       </header>
 
       <dl className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">

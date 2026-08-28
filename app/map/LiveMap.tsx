@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, RadioTower, Search, X } from "lucide-react";
-import type { PackedTrain } from "@/lib/railradar/liveMap";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { RadioTower, Search } from "lucide-react";
+import { packedTrainKey, type PackedTrain } from "@/lib/railradar/packedTrain";
 import { api } from "@/lib/apiClient";
 import { typeColourVar } from "@/lib/railradar/trainTypes";
 import { TypeLegend } from "@/components/map/TypeLegend";
@@ -13,7 +12,7 @@ import { ClientRailMap } from "@/components/map/ClientRailMap";
 import { MapControls } from "@/components/map/MapControls";
 import { TrainLayer, unpackTrain, type MapTrain } from "@/components/map/TrainLayer";
 import { RouteLayer } from "@/components/map/RouteLayer";
-import { RailSpine } from "@/components/rail/RailSpine";
+import { TrainCallout } from "@/components/map/TrainCallout";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { todayIso } from "@/lib/domain/time";
@@ -45,6 +44,7 @@ export function LiveMap() {
   const { data, isPending, isError, error, refetch, isFetching } = useQuery<LiveMapResponse>({
     queryKey: ["liveMap", bbox],
     queryFn: ({ signal }) => api.liveMap({ bbox, limit: 4000 }, signal),
+    placeholderData: keepPreviousData,
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
   });
@@ -159,12 +159,12 @@ export function LiveMap() {
                 <ErrorState error={error} onRetry={() => refetch()} />
               </div>
             )}
-            {listed.map((train) => {
+            {listed.map((train, index) => {
               const item = unpackTrain(train);
               const active = item.number === selectedNumber;
               return (
                 <button
-                  key={item.number}
+                  key={packedTrainKey(train, index)}
                   type="button"
                   role="option"
                   aria-selected={active}
@@ -181,8 +181,8 @@ export function LiveMap() {
                   />
                   <span className="min-w-0">
                     <span className="flex items-baseline gap-2">
-                      <span className="tnum text-[0.75rem] text-faint">{item.number}</span>
-                      <span className="truncate text-[0.8125rem] text-text">{item.name}</span>
+                      <span className="tnum text-[0.8125rem] text-brand">{item.number}</span>
+                      <span className="truncate text-[0.8125rem] text-dim">{item.name}</span>
                     </span>
                     <span className="text-[0.6875rem] text-faint">{data?.types[item.type]}</span>
                   </span>
@@ -212,56 +212,14 @@ export function LiveMap() {
           </ClientRailMap>
 
           {selected && (
-            <div className="absolute inset-x-2.5 bottom-2.5 z-20 max-h-[45%] overflow-y-auto rounded-xl border border-border bg-surface p-3.5 shadow-[var(--shadow-lg)] sm:left-2.5 sm:right-auto sm:w-[22rem]">
-              <div className="mb-1.5 flex items-start gap-2">
-                <span
-                  className="mt-1.5 size-2 shrink-0 rounded-full"
-                  style={{ background: typeColourVar(selected.type) }}
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-baseline gap-2">
-                    <span className="tnum text-[0.8125rem] text-faint">{selected.number}</span>
-                    <span className="truncate text-[0.9375rem] text-text">{selected.name}</span>
-                  </p>
-                  <p className="mt-0.5 text-[0.6875rem] text-faint">{data?.types[selected.type]} · moving now</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => selectTrain(null)}
-                  aria-label="Close"
-                  className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
-                >
-                  <X className="size-3.5" aria-hidden />
-                </button>
-              </div>
-              {trainDetail && (
-                <div className="mb-3 max-h-48 overflow-y-auto">
-                  <RailSpine
-                    schedule={trainDetail.train.schedule}
-                    stations={trainDetail.stations}
-                    dateIso={todayIso()}
-                  />
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Link
-                  href={`/trains/${selected.number}`}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand py-2 text-[0.8125rem] text-on-brand transition-opacity hover:opacity-90"
-                >
-                  Full route
-                  <ArrowRight className="size-3.5" aria-hidden />
-                </Link>
-                {trainDetail && (
-                  <Link
-                    href={`/?from=${trainDetail.train.schedule[0]?.stationCode ?? ""}`}
-                    className="flex items-center justify-center rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim hover:text-text"
-                  >
-                    Search from here
-                  </Link>
-                )}
-              </div>
-            </div>
+            <TrainCallout
+              train={selected}
+              typeName={data?.types[selected.type]}
+              onClose={() => selectTrain(null)}
+              schedule={trainDetail?.train.schedule}
+              stations={trainDetail?.stations}
+              dateIso={todayIso()}
+            />
           )}
         </div>
       </div>

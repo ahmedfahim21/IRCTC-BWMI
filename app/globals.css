@@ -54,6 +54,7 @@
 
   --track: var(--ux4g-color-neutral-300);
   --track-live: var(--ux4g-color-blue-800);
+  --route: var(--ux4g-color-orange-600);
 
   --shadow-sm: 0 1px 2px rgb(15 19 26 / 0.06);
   --shadow-md: 0 4px 16px -4px rgb(15 19 26 / 0.1);
@@ -90,6 +91,7 @@
 
     --track: var(--ux4g-color-neutral-700);
     --track-live: var(--ux4g-color-blue-400);
+    --route: var(--ux4g-color-orange-400);
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);
@@ -126,6 +128,7 @@
 
   --track: var(--ux4g-color-neutral-700);
   --track-live: var(--ux4g-color-blue-400);
+  --route: var(--ux4g-color-orange-400);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.5);

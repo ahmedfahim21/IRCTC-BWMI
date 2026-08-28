@@ -29,10 +29,12 @@ export function ClassCell({
   availability,
   onSelect,
   selected,
+  compact = false,
 }: {
   availability: Availability;
   onSelect?: () => void;
   selected?: boolean;
+  compact?: boolean;
 }) {
   const tone = TONE[availability.state];
   const bookable =
@@ -48,30 +50,36 @@ export function ClassCell({
       title={entry ? `${entry.short} — ${entry.full}` : undefined}
       aria-label={`${entry?.short ?? availability.classCode}, ${availability.label}, ${reading}, ${formatRupees(availability.fare.total)}${bookable && onSelect ? ". Book this" : ""}`}
       className={cn(
-        "flex w-[8.5rem] shrink-0 flex-col gap-1.5 rounded-xl border bg-surface-2 p-2.5 text-left transition-colors",
+        "flex shrink-0 flex-col text-left transition-colors",
+        compact
+          ? "w-[6.25rem] gap-0.5 rounded-lg border bg-surface px-2 py-1.5"
+          : "w-[8.5rem] gap-1.5 rounded-xl border bg-surface-2 p-2.5",
         selected ? "border-brand bg-brand-soft" : "border-border",
         bookable && onSelect ? cn("cursor-pointer", tone.ring) : "cursor-default opacity-60"
       )}
     >
       <span className="flex items-baseline justify-between gap-1">
         <span className="inline-flex items-center gap-1 font-mono text-[0.75rem] text-dim">
-          <Armchair className="size-3 text-faint" aria-hidden />
+          {!compact && <Armchair className="size-3 text-faint" aria-hidden />}
           {availability.classCode}
         </span>
         <span className="tnum text-[0.75rem] text-text">{formatRupees(availability.fare.total)}</span>
       </span>
 
-      <span className={cn("tnum text-[0.9375rem] leading-none", tone.label)}>{availability.label}</span>
+      <span className={cn("tnum leading-none", compact ? "text-[0.8125rem]" : "text-[0.9375rem]", tone.label)}>
+        {availability.label}
+      </span>
 
-      <span className="text-[0.625rem] leading-tight text-faint">{reading}</span>
+      {!compact && <span className="text-[0.625rem] leading-tight text-faint">{reading}</span>}
 
-      {availability.state === "waitlist" && availability.confirmProbability !== null ? (
-        <ProbabilityBar probability={availability.confirmProbability} sampleSize={availability.sampleSize} />
-      ) : availability.state === "rac" ? (
-        <span className="text-[0.625rem] text-ok">Almost always confirms</span>
-      ) : (
-        <span className="h-3.5" aria-hidden />
-      )}
+      {!compact &&
+        (availability.state === "waitlist" && availability.confirmProbability !== null ? (
+          <ProbabilityBar probability={availability.confirmProbability} sampleSize={availability.sampleSize} />
+        ) : availability.state === "rac" ? (
+          <span className="text-[0.625rem] text-ok">Almost always confirms</span>
+        ) : (
+          <span className="h-3.5" aria-hidden />
+        ))}
     </button>
   );
 }

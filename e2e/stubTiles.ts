@@ -6,7 +6,7 @@ const EMPTY_PNG = Buffer.from(
 );
 
 /**
- * Raster tiles come from Esri, OSM, or EOX. Stub them so the suite cannot hang
+ * Raster tiles come from Esri or OSM. Stub them so the suite cannot hang
  * on map state when the CI browser has no egress.
  */
 export async function stubMapTiles(page: Page) {

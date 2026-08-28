@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { PackedTrain } from "@/lib/railradar/liveMap";
+import type { PackedTrain } from "@/lib/railradar/packedTrain";
 import { resolveToken, resolveTypeColours } from "@/lib/railradar/trainTypes";
+import { cn } from "@/components/ui/cn";
 import { useRailMap } from "./mapContext";
 
 export interface MapTrain {
@@ -32,11 +33,13 @@ export function TrainLayer({
   activeTypes,
   selectedNumber,
   onSelect,
+  dimmed = false,
 }: {
   trains: PackedTrain[];
   activeTypes: Set<number>;
   selectedNumber?: string | null;
   onSelect: (train: MapTrain | null) => void;
+  dimmed?: boolean;
 }) {
   const { project, viewEpoch, theme } = useRailMap();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -106,7 +109,10 @@ export function TrainLayer({
     <canvas
       ref={canvasRef}
       data-testid="map-train-overlay"
-      className="absolute inset-0 z-[4] size-full cursor-grab"
+      className={cn(
+        "absolute inset-0 z-[4] size-full cursor-grab transition-opacity",
+        dimmed && "opacity-30"
+      )}
       role="img"
       aria-label="Running trains on the map"
       onPointerDown={(event) => {

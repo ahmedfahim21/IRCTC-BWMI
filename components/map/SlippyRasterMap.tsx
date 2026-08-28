@@ -5,9 +5,11 @@ import { cn } from "@/components/ui/cn";
 import { INDIA_BOUNDS } from "./indiaOverlay";
 import { INDIA_RINGS } from "@/components/rail/indiaOutline";
 import { RailMapContext, type RailMapApi } from "./mapContext";
-import { EOX_SATELLITE_TILES, type Basemap } from "./mapStyles";
 import {
   TILE_SIZE,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  clampView,
   latToWorldY,
   lngLatToViewPx,
   lngToWorldX,
@@ -17,8 +19,6 @@ import {
   zoomToFit,
 } from "@/lib/geo/slippy";
 
-const MAX_ZOOM = 12;
-const MIN_ZOOM = 3;
 
 function currentTheme(): "dark" | "light" {
   if (typeof document === "undefined") return "dark";
@@ -40,27 +40,8 @@ function osmStreet(z: number, x: number, y: number): string {
   return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
 
-function satelliteTileUrl(z: number, x: number, y: number): string {
-  return EOX_SATELLITE_TILES.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y));
-}
-
-function tileUrl(
-  basemap: Basemap,
-  z: number,
-  x: number,
-  y: number,
-  streetHost: "esri" | "osm"
-): string {
-  switch (basemap) {
-    case "satellite":
-      return satelliteTileUrl(z, x, y);
-    case "terrain":
-      return streetHost === "osm" ? osmStreet(z, x, y) : esriStreet(z, x, y);
-    default: {
-      const _never: never = basemap;
-      return _never;
-    }
-  }
+function tileUrl(z: number, x: number, y: number, streetHost: "esri" | "osm"): string {
+  return streetHost === "osm" ? osmStreet(z, x, y) : esriStreet(z, x, y);
 }
 
 /**
@@ -85,10 +66,14 @@ export function SlippyRasterMap({
   onMoveEndRef.current = onMoveEnd;
   const dragRef = useRef<{ x: number; y: number; lng: number; lat: number } | null>(null);
   const streetHostRef = useRef<"esri" | "osm">("esri");
+  const emitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animRef = useRef<number | null>(null);
+  const readyRef = useRef(false);
 
   const [theme, setTheme] = useState<"dark" | "light">(currentTheme);
-  const [basemap, setBasemapState] = useState<Basemap>("terrain");
   const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
   const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
   const [viewEpoch, setViewEpoch] = useState(0);
@@ -99,8 +84,21 @@ export function SlippyRasterMap({
     const el = wrapRef.current;
     if (!el) return;
     const { centerLng, centerLat, zoom } = viewRef.current;
-    onMoveEndRef.current?.(viewportBbox(centerLng, centerLat, zoom, el.clientWidth, el.clientHeight));
+    const raw = viewportBbox(centerLng, centerLat, zoom, el.clientWidth, el.clientHeight);
+    const rounded = raw
+      .split(",")
+      .map((part) => Number(part).toFixed(2))
+      .join(",");
+    onMoveEndRef.current?.(rounded);
   }, []);
+
+  const emitSoon = useCallback(() => {
+    if (emitTimerRef.current) clearTimeout(emitTimerRef.current);
+    emitTimerRef.current = setTimeout(() => {
+      emitTimerRef.current = null;
+      emit();
+    }, 200);
+  }, [emit]);
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -143,7 +141,7 @@ export function SlippyRasterMap({
       const wrappedX = ((x % n) + n) % n;
       for (let y = y0; y < y1; y++) {
         if (y < 0 || y >= n) continue;
-        const url = tileUrl(basemap, z, wrappedX, y, streetHostRef.current);
+        const url = tileUrl(z, wrappedX, y, streetHostRef.current);
         const cached = imagesRef.current.get(url);
         const dx = x * tilePx - originX;
         const dy = y * tilePx - originY;
@@ -159,7 +157,7 @@ export function SlippyRasterMap({
           };
           img.onerror = () => {
             imagesRef.current.set(url, "error");
-            if (basemap === "terrain" && streetHostRef.current === "esri") {
+            if (streetHostRef.current === "esri") {
               streetHostRef.current = "osm";
               imagesRef.current.clear();
               setTick((t) => t + 1);
@@ -183,32 +181,130 @@ export function SlippyRasterMap({
     }
     ctx.stroke();
 
-    setReady(true);
-  }, [basemap, theme]);
+    if (!readyRef.current) {
+      readyRef.current = true;
+      setReady(true);
+    }
+  }, [theme]);
+
+  const stopAnim = useCallback(() => {
+    if (animRef.current != null) {
+      cancelAnimationFrame(animRef.current);
+      animRef.current = null;
+    }
+  }, []);
+
+  const setView = useCallback(
+    (next: { centerLng: number; centerLat: number; zoom: number }) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      stopAnim();
+      viewRef.current = clampView(
+        next.centerLng,
+        next.centerLat,
+        next.zoom,
+        wrap.clientWidth,
+        wrap.clientHeight,
+        INDIA_BOUNDS
+      );
+      paint();
+      emitSoon();
+      bumpView();
+    },
+    [paint, emitSoon, bumpView, stopAnim]
+  );
+
+  const animateView = useCallback(
+    (next: { centerLng: number; centerLat: number; zoom: number }) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const target = clampView(
+        next.centerLng,
+        next.centerLat,
+        next.zoom,
+        wrap.clientWidth,
+        wrap.clientHeight,
+        INDIA_BOUNDS
+      );
+      if (reducedMotionRef.current) {
+        setView(target);
+        return;
+      }
+      stopAnim();
+      const from = { ...viewRef.current };
+      const started = performance.now();
+      const duration = 520;
+      const step = (now: number) => {
+        const t = Math.min(1, (now - started) / duration);
+        const k = 1 - (1 - t) ** 3;
+        viewRef.current = clampView(
+          from.centerLng + (target.centerLng - from.centerLng) * k,
+          from.centerLat + (target.centerLat - from.centerLat) * k,
+          from.zoom + (target.zoom - from.zoom) * k,
+          wrap.clientWidth,
+          wrap.clientHeight,
+          INDIA_BOUNDS
+        );
+        paint();
+        bumpView();
+        if (t < 1) {
+          animRef.current = requestAnimationFrame(step);
+          return;
+        }
+        animRef.current = null;
+        emitSoon();
+      };
+      animRef.current = requestAnimationFrame(step);
+    },
+    [setView, stopAnim, paint, bumpView, emitSoon]
+  );
 
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
-    const fitted = zoomToFit(
-      INDIA_BOUNDS[0][0],
-      INDIA_BOUNDS[0][1],
-      INDIA_BOUNDS[1][0],
-      INDIA_BOUNDS[1][1],
-      wrap.clientWidth || 800,
-      wrap.clientHeight || 600,
-      28
-    );
-    viewRef.current = { centerLng: fitted.centerLng, centerLat: fitted.centerLat, zoom: fitted.zoom };
-    paint();
-    emit();
-    bumpView();
-    const observer = new ResizeObserver(() => {
+    const apply = (fitIndiaFirst: boolean) => {
+      if (wrap.clientWidth < 2 || wrap.clientHeight < 2) return;
+      if (fitIndiaFirst) {
+        const fitted = zoomToFit(
+          INDIA_BOUNDS[0][0],
+          INDIA_BOUNDS[0][1],
+          INDIA_BOUNDS[1][0],
+          INDIA_BOUNDS[1][1],
+          wrap.clientWidth,
+          wrap.clientHeight,
+          20
+        );
+        viewRef.current = clampView(
+          fitted.centerLng,
+          fitted.centerLat,
+          fitted.zoom,
+          wrap.clientWidth,
+          wrap.clientHeight,
+          INDIA_BOUNDS
+        );
+      } else {
+        const current = viewRef.current;
+        viewRef.current = clampView(
+          current.centerLng,
+          current.centerLat,
+          current.zoom,
+          wrap.clientWidth,
+          wrap.clientHeight,
+          INDIA_BOUNDS
+        );
+      }
       paint();
       emit();
       bumpView();
-    });
+    };
+    apply(true);
+    const observer = new ResizeObserver(() => apply(false));
     observer.observe(wrap);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (emitTimerRef.current) clearTimeout(emitTimerRef.current);
+      if (animRef.current != null) cancelAnimationFrame(animRef.current);
+    };
   }, [paint, emit, bumpView]);
 
   useEffect(() => {
@@ -238,35 +334,25 @@ export function SlippyRasterMap({
   const panByPx = (dx: number, dy: number) => {
     const { centerLng, centerLat, zoom } = viewRef.current;
     const z = zoom;
-    viewRef.current = {
+    setView({
       centerLng: worldXToLng(lngToWorldX(centerLng, z) - dx / TILE_SIZE, z),
       centerLat: worldYToLat(latToWorldY(centerLat, z) - dy / TILE_SIZE, z),
       zoom,
-    };
-    paint();
-    emit();
-    bumpView();
+    });
   };
 
   const zoomBy = useCallback(
     (delta: number) => {
-      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, viewRef.current.zoom + delta));
-      viewRef.current = { ...viewRef.current, zoom: next };
-      paint();
-      emit();
-      bumpView();
+      setView({ ...viewRef.current, zoom: viewRef.current.zoom + delta });
     },
-    [paint, emit, bumpView]
+    [setView]
   );
 
   const flyTo = useCallback(
     (lng: number, lat: number, zoom = 8) => {
-      viewRef.current = { centerLng: lng, centerLat: lat, zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)) };
-      paint();
-      emit();
-      bumpView();
+      animateView({ centerLng: lng, centerLat: lat, zoom });
     },
-    [paint, emit, bumpView]
+    [animateView]
   );
 
   const fitIndia = useCallback(() => {
@@ -281,27 +367,17 @@ export function SlippyRasterMap({
       wrap.clientHeight,
       28
     );
-    viewRef.current = { centerLng: fitted.centerLng, centerLat: fitted.centerLat, zoom: fitted.zoom };
-    paint();
-    emit();
-    bumpView();
-  }, [paint, emit, bumpView]);
+    animateView(fitted);
+  }, [animateView]);
 
   const fitBounds = useCallback(
     (west: number, south: number, east: number, north: number, padding = 48) => {
       const wrap = wrapRef.current;
-      if (!wrap) return;
+      if (!wrap || wrap.clientWidth < 2 || wrap.clientHeight < 2) return;
       const fitted = zoomToFit(west, south, east, north, wrap.clientWidth, wrap.clientHeight, padding);
-      viewRef.current = {
-        centerLng: fitted.centerLng,
-        centerLat: fitted.centerLat,
-        zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fitted.zoom)),
-      };
-      paint();
-      emit();
-      bumpView();
+      animateView(fitted);
     },
-    [paint, emit, bumpView]
+    [animateView]
   );
 
   const project = useCallback(
@@ -316,14 +392,10 @@ export function SlippyRasterMap({
     [viewEpoch]
   );
 
-  const setBasemap = useCallback((next: Basemap) => setBasemapState(next), []);
-
   const api = useMemo<RailMapApi>(
     () => ({
       ready,
       viewEpoch,
-      basemap,
-      setBasemap,
       theme,
       reducedMotion,
       project,
@@ -332,7 +404,7 @@ export function SlippyRasterMap({
       fitBounds,
       zoomBy,
     }),
-    [ready, viewEpoch, basemap, setBasemap, theme, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
+    [ready, viewEpoch, theme, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
   );
 
   return (
@@ -343,6 +415,7 @@ export function SlippyRasterMap({
         onPointerDown={
           interactive
             ? (event) => {
+                stopAnim();
                 dragRef.current = {
                   x: event.clientX,
                   y: event.clientY,
@@ -366,6 +439,11 @@ export function SlippyRasterMap({
         }
         onPointerUp={() => {
           dragRef.current = null;
+          if (emitTimerRef.current) {
+            clearTimeout(emitTimerRef.current);
+            emitTimerRef.current = null;
+          }
+          emit();
         }}
         onWheel={
           interactive
@@ -378,11 +456,7 @@ export function SlippyRasterMap({
       >
         <canvas ref={canvasRef} className="absolute inset-0 size-full cursor-grab" role="img" aria-label="Map of India" />
         <p className="pointer-events-none absolute bottom-1 left-1 z-[5] text-[0.5625rem] text-faint">
-          {basemap === "satellite"
-            ? "Sentinel-2 cloudless · EOX"
-            : streetHostRef.current === "osm"
-              ? "© OpenStreetMap"
-              : "Tiles © Esri"}
+          {streetHostRef.current === "osm" ? "© OpenStreetMap" : "Tiles © Esri"}
         </p>
         {children}
       </div>

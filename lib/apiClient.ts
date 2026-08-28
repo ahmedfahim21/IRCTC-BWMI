@@ -20,7 +20,7 @@ import type { AlternativeGroup } from "@/lib/domain/alternatives";
 import type { StationResult } from "@/app/api/stations/route";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import type { RouteDay } from "@/app/api/route-availability/route";
-import type { PackedTrain } from "@/lib/railradar/liveMap";
+import type { PackedTrain } from "@/lib/railradar/packedTrain";
 
 /**
  * The UI talks to the app's own HTTP API and never reaches into the mock data
@@ -32,6 +32,8 @@ import type { PackedTrain } from "@/lib/railradar/liveMap";
  * was unreachable. More trustworthy than navigator.onLine, which also reports
  * "online" behind captive portals and on a train with no actual connectivity.
  */
+import { retryAfterMs } from "@/lib/http/backoff";
+
 export const STALE_EVENT = "irctc:stale";
 
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -41,7 +43,7 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   }
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: response.statusText }));
-    throw new ApiError(body.error ?? `Request failed: ${response.status}`, response.status);
+    throw new ApiError(body.error ?? `Request failed: ${response.status}`, response.status, response.headers.get("retry-after"));
   }
   return response.json() as Promise<T>;
 }
@@ -54,7 +56,7 @@ async function send<T>(path: string, method: "POST" | "PATCH", body?: unknown): 
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new ApiError(payload.error ?? `Request failed: ${response.status}`, response.status);
+    throw new ApiError(payload.error ?? `Request failed: ${response.status}`, response.status, response.headers.get("retry-after"));
   }
   return response.json() as Promise<T>;
 }
@@ -62,11 +64,23 @@ async function send<T>(path: string, method: "POST" | "PATCH", body?: unknown): 
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly status: number
+    readonly status: number,
+    readonly retryAfter: string | null = null
   ) {
     super(message);
     this.name = "ApiError";
   }
+}
+
+export function queryRetry(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && error.status === 404) return false;
+  if (error instanceof ApiError && error.status === 429) return failureCount < 4;
+  return failureCount < 2;
+}
+
+export function queryRetryDelay(attempt: number, error: unknown): number {
+  const header = error instanceof ApiError ? error.retryAfter : null;
+  return retryAfterMs(header, attempt);
 }
 
 export interface SearchResponse {

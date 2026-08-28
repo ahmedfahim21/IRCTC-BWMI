@@ -21,7 +21,7 @@ export function TypeLegend({
         if (!counts[index]) return null;
         return (
           <button
-            key={label}
+            key={`${index}-${label}`}
             type="button"
             onClick={() => onToggle(index)}
             aria-pressed={active}

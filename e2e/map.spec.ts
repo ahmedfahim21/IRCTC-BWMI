@@ -18,6 +18,7 @@ test("the landing map paints India and running trains", async ({ page }) => {
   await expect(page.getByRole("img", { name: "Running trains on the map" })).toBeVisible({
     timeout: 20_000,
   });
+  await expect(page.getByRole("button", { name: /satellite/i })).toHaveCount(0);
 });
 
 test("search shows origin, destination, and a selected train's route", async ({ page }) => {
@@ -30,6 +31,38 @@ test("search shows origin, destination, and a selected train's route", async ({ 
   await expect(firstTrain).toBeVisible();
   await firstTrain.click();
   await expect(page).toHaveURL(/train=\d{5}/);
+  await expect(page.getByTestId("map-route-overlay")).toBeVisible({ timeout: 20_000 });
+});
+
+test("search map pins and callouts are interactive", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`/search?from=NDLS&to=MAS&date=${inTwelveDays()}&quota=GN`);
+  const fromPin = page.getByRole("button", { name: /From .+ \(NDLS\)/ });
+  await expect(fromPin).toBeVisible({ timeout: 20_000 });
+
+  await fromPin.click();
+  await expect(page.getByRole("dialog", { name: /\(NDLS\)/ })).toBeVisible();
+
+  const trainCanvas = page.getByRole("img", { name: "Running trains on the map" });
+  await expect(trainCanvas).toBeVisible();
+  const box = await trainCanvas.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  }
+  const trainDialog = page.getByRole("dialog").filter({ hasText: /\d{5}/ });
+  await expect(trainDialog.first()).toBeVisible({ timeout: 10_000 });
+});
+
+test("search map card collapse unmounts the canvas", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`/search?from=NDLS&to=MAS&date=${inTwelveDays()}&quota=GN&train=12621`);
+  await expect(page.getByRole("img", { name: "Map of India" })).toBeVisible({ timeout: 20_000 });
+
+  await page.getByRole("button", { name: /Route map/i }).click();
+  await expect(page.getByRole("img", { name: "Map of India" })).toBeHidden();
+
+  await page.getByRole("button", { name: /Route map/i }).click();
+  await expect(page.getByRole("img", { name: "Map of India" })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("map-route-overlay")).toBeVisible({ timeout: 20_000 });
 });
 

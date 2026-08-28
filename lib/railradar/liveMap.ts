@@ -1,8 +1,11 @@
 import { callRailRadar, isLive } from "./client";
 import { titleCase } from "./map";
 import { TRAIN_TYPES } from "./trainTypes";
+import { uniquePackedTrains, type PackedTrain } from "./packedTrain";
 
 export { TRAIN_TYPES };
+export type { PackedTrain } from "./packedTrain";
+export { packedTrainKey, uniquePackedTrains } from "./packedTrain";
 
 /** One running train, as the snapshot feed reports it. */
 interface RrLiveMapTrain {
@@ -36,12 +39,6 @@ function typeIndex(type: string, name: string): number {
   return 8;
 }
 
-/**
- * Packed tuple: [number, name, lat, lng, typeIndex, headingLat, headingLng].
- * Roughly a fifth the size of the object form, which matters at 2,800 entries.
- */
-export type PackedTrain = [string, string, number, number, number, number, number];
-
 export interface LiveMapSnapshot {
   updatedAt: string;
   total: number;
@@ -74,5 +71,6 @@ export async function liveMapSnapshot(): Promise<LiveMapSnapshot | null> {
     ]);
   }
 
-  return { updatedAt: new Date().toISOString(), total: trains.length, trains };
+  const unique = uniquePackedTrains(trains);
+  return { updatedAt: new Date().toISOString(), total: unique.length, trains: unique };
 }

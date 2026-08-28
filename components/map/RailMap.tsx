@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { SlippyRasterMap } from "./SlippyRasterMap";
 
 /**
- * The map is a 2D canvas of Esri/OSM streets or Sentinel-2 satellite tiles.
+ * The map is a 2D canvas of Esri street tiles, with OSM as a fallback.
  */
 export function RailMap({
   className,
