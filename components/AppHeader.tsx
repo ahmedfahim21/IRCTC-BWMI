@@ -29,9 +29,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-bg">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 text-text" aria-label={t("nav.homeLabel")}>
-          <span className="text-brand">
-            <Logo className="size-[22px]" />
-          </span>
+          <Logo className="size-[26px] shrink-0" />
           <span className="flex items-baseline gap-1.5">
             <span className="text-[0.95rem] tracking-[-0.01em]">IRCTC</span>
             {/*
