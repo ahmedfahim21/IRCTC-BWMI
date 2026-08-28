@@ -4,9 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "dev": "next dev -p 3277",
-    "build": "next build",
-    "build:isolated": "NEXT_DIST_DIR=.next-build next build",
+    "maplibre:worker": "node scripts/copy-maplibre-worker.mjs",
+    "dev": "node scripts/copy-maplibre-worker.mjs && next dev -p 3277",
+    "build": "node scripts/copy-maplibre-worker.mjs && next build",
+    "build:isolated": "node scripts/copy-maplibre-worker.mjs && NEXT_DIST_DIR=.next-build next build",
     "start": "next start -p 3277",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

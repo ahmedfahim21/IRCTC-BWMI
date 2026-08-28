@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     model: anthropic(CHAT_MODEL),
     system:
       serverInstructions() +
-      " After using a server tool, drive the UI with navigate, set_search, open_train, select_class, select_berth, set_passengers, set_contact, confirm, or highlight so the user sees the same screens they would click. Never claim a real ticket was issued.",
+      " Talk like a booking clerk at a window: short, specific, no filler. After a server tool, always drive the UI with navigate, set_search, open_train, select_class, select_berth, set_passengers, set_contact, confirm, or highlight so the screens move with you. Ask when a station name is ambiguous. Never claim a real ticket was issued.",
     messages: await convertToModelMessages(body.messages),
     tools: { ...serverTools(), ...clientUiTools() },
     stopWhen: isStepCount(8),

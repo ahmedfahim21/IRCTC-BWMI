@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, MapPin, X } from "lucide-react";
 import { api } from "@/lib/apiClient";
@@ -53,16 +54,40 @@ export function StationCombobox({
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const listId = useId();
+  const [menuBox, setMenuBox] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useEffect(() => setRecents(readRecents()), []);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
-      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!wrapRef.current?.contains(event.target as Node)) {
+        const menu = document.getElementById(listId);
+        if (menu?.contains(event.target as Node)) return;
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, []);
+  }, [listId]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuBox(null);
+      return;
+    }
+    const place = () => {
+      const box = wrapRef.current?.getBoundingClientRect();
+      if (!box) return;
+      setMenuBox({ top: box.bottom + 6, left: box.left, width: box.width });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
   const trimmed = query.trim();
   const { data, isFetching } = useQuery({
@@ -106,7 +131,7 @@ export function StationCombobox({
   };
 
   return (
-    <div ref={wrapRef} className="relative flex-1">
+    <div ref={wrapRef} className="relative min-w-0 w-full">
       <label className="eyebrow mb-1.5 block px-0.5" htmlFor={`${listId}-input`}>
         {label}
       </label>
@@ -171,43 +196,54 @@ export function StationCombobox({
         {value?.sublabel ?? ""}
       </p>
 
-      {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-lg)]">
-          {showRecents && <p className="eyebrow px-3 pb-1 pt-2.5">Recent</p>}
-          <ul id={listId} role="listbox" aria-label={label} className="max-h-72 overflow-y-auto py-1">
-            {options.length === 0 && (
-              <li className="px-3 py-6 text-center text-[0.8125rem] text-faint">
-                {isFetching ? "Searching…" : trimmed ? `No station matching “${trimmed}”` : "Type a city or station code"}
-              </li>
-            )}
-            {options.map((option, index) => {
-              const isCity = option.token.startsWith("city:");
-              return (
-                <li key={option.token} id={`${listId}-opt-${index}`} role="option" aria-selected={index === highlight}>
-                  <button
-                    type="button"
-                    onMouseEnter={() => setHighlight(index)}
-                    onClick={() => commit(option)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors",
-                      index === highlight ? "bg-surface-2" : ""
-                    )}
-                  >
-                    <span className={cn("shrink-0", isCity ? "text-brand" : "text-faint")} aria-hidden>
-                      {isCity ? <Building2 className="size-4" /> : <MapPin className="size-4" />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[0.875rem] text-text">{option.label}</span>
-                      <span className="block truncate text-[0.6875rem] text-faint">{option.sublabel}</span>
-                    </span>
-                    {isCity && <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-[0.625rem] text-brand">All stations</span>}
-                  </button>
+      {open &&
+        menuBox &&
+        createPortal(
+          <div
+            id={listId}
+            role="listbox"
+            aria-label={label}
+            style={{ top: menuBox.top, left: menuBox.left, width: menuBox.width }}
+            className="fixed z-[60] overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-lg)]"
+          >
+            {showRecents && <p className="eyebrow px-3 pb-1 pt-2.5">Recent</p>}
+            <ul className="max-h-72 overflow-y-auto py-1">
+              {options.length === 0 && (
+                <li className="px-3 py-6 text-center text-[0.8125rem] text-faint">
+                  {isFetching ? "Searching…" : trimmed ? `No station matching “${trimmed}”` : "Type a city or station code"}
                 </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+              )}
+              {options.map((option, index) => {
+                const isCity = option.token.startsWith("city:");
+                return (
+                  <li key={option.token} id={`${listId}-opt-${index}`} role="option" aria-selected={index === highlight}>
+                    <button
+                      type="button"
+                      onMouseEnter={() => setHighlight(index)}
+                      onClick={() => commit(option)}
+                      className={cn(
+                        "flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors",
+                        index === highlight ? "bg-surface-2" : ""
+                      )}
+                    >
+                      <span className={cn("shrink-0", isCity ? "text-brand" : "text-faint")} aria-hidden>
+                        {isCity ? <Building2 className="size-4" /> : <MapPin className="size-4" />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[0.875rem] text-text">{option.label}</span>
+                        <span className="block truncate text-[0.6875rem] text-faint">{option.sublabel}</span>
+                      </span>
+                      {isCity && (
+                        <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-[0.625rem] text-brand">All stations</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

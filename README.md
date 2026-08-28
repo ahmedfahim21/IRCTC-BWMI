@@ -150,7 +150,8 @@ curl -s -X POST http://localhost:3277/api/mcp -H 'content-type: application/json
 errors so the agent can correct itself, rather than as protocol errors that break the connection.
 
 The in-app chat at `/api/chat` uses the same tools, then client actions move the UI. Set
-`ANTHROPIC_API_KEY` for a live model; without it the scripted replay still covers the booking life-cycle.
+`ANTHROPIC_API_KEY` to talk to **Claude Haiku 4.5** (hardcoded — no picker). Without a key, or with
+`CHAT_FAKE=1`, a scripted replay still covers the booking life-cycle for Playwright.
 
 ---
 

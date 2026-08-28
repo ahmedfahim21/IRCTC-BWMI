@@ -13,6 +13,7 @@ import { GET as getDraftRoute, PATCH as patchDraftRoute } from "@/app/api/bookin
 import { POST as confirmRoute } from "@/app/api/bookings/draft/[draftId]/confirm/route";
 import { GET as getBookings } from "@/app/api/bookings/route";
 import { GET as getPnr } from "@/app/api/pnr/[pnr]/route";
+import { GET as getStatus } from "@/app/api/status/route";
 import { GET as getRefundQuote } from "@/app/api/bookings/[pnr]/refund-quote/route";
 import { POST as postCancel } from "@/app/api/bookings/[pnr]/cancel/route";
 import { todayIso, addDays } from "@/lib/domain/time";
@@ -496,5 +497,12 @@ describe("booking lifecycle", () => {
     const second = await postCancel(post(`/api/bookings/${pnr}/cancel`, {}), params({ pnr }));
     expect(second.status).toBe(400);
     expect((await second.json()).error).toMatch(/already cancelled/);
+  });
+});
+
+describe("GET /api/status", () => {
+  it("reports scripted chat when no Anthropic key is set", async () => {
+    const body = await (await getStatus()).json();
+    expect(body.chatLive).toBe(false);
   });
 });

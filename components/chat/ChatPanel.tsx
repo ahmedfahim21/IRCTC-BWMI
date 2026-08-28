@@ -2,11 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, PanelBottom, PanelLeft, PanelRight, Send, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getToolName, isToolUIPart } from "ai";
 import { cn } from "@/components/ui/cn";
+import { api } from "@/lib/apiClient";
 import { useAgentChat } from "@/lib/agent/ChatProvider";
 
 type Dock = "right" | "left" | "bottom";
 const DOCK_KEY = "irctc.chatDock";
+
+const STARTERS = [
+  "Trains from New Delhi to Mumbai tomorrow",
+  "Book 12951 from BCT to NDLS in 3A",
+  "Look up my PNR",
+];
 
 function readDock(): Dock {
   if (typeof window === "undefined") return "right";
@@ -21,6 +30,11 @@ function readDock(): Dock {
  */
 export function ChatPanel() {
   const chat = useAgentChat();
+  const { isFetched: statusKnown } = useQuery({
+    queryKey: ["status"],
+    queryFn: ({ signal }) => api.status(signal),
+    staleTime: 5 * 60_000,
+  });
   const [open, setOpen] = useState(false);
   const [dock, setDock] = useState<Dock>("right");
   const [input, setInput] = useState("");
@@ -100,9 +114,24 @@ export function ChatPanel() {
 
           <div ref={scroller} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
             {messages.length === 0 && (
-              <p className="text-[0.8125rem] leading-relaxed text-dim">
-                Ask for a train the way you would say it. The form and the map move with the answer.
-              </p>
+              <div className="space-y-3">
+                <p className="text-[0.8125rem] leading-relaxed text-dim">
+                  Ask for a train the way you would say it. The form and the map move with the answer.
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  {STARTERS.map((starter) => (
+                    <button
+                      key={starter}
+                      type="button"
+                      disabled={!statusKnown}
+                      onClick={() => submit(starter)}
+                      className="rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-left text-[0.75rem] text-text hover:border-brand/40 disabled:opacity-40"
+                    >
+                      {starter}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
             {messages.map((message) => (
               <div key={message.id} className={cn("text-[0.8125rem] leading-relaxed", message.role === "user" ? "text-text" : "text-dim")}>
@@ -117,10 +146,19 @@ export function ChatPanel() {
                       </p>
                     );
                   }
+                  if (isToolUIPart(part)) {
+                    const name = getToolName(part);
+                    return (
+                      <p key={`${message.id}-${index}`} className="text-[0.6875rem] text-faint">
+                        {name.replaceAll("_", " ")}
+                      </p>
+                    );
+                  }
                   return null;
                 })}
               </div>
             ))}
+            {busy && <p className="text-[0.75rem] text-faint">Working…</p>}
             {error && <p className="text-[0.8125rem] text-danger">{error.message}</p>}
           </div>
 
@@ -150,7 +188,7 @@ export function ChatPanel() {
             />
             <button
               type="submit"
-              disabled={busy || !input.trim()}
+              disabled={busy || !statusKnown || !input.trim()}
               aria-label="Send message"
               className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
             >

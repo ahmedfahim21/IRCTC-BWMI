@@ -13,6 +13,7 @@ export const GET = handler(async () => {
   return json({
     live,
     voice: isVoiceEnabled(),
+    chatLive: Boolean(process.env.ANTHROPIC_API_KEY) && process.env.CHAT_FAKE !== "1",
     quota,
     sources: {
       stationSearch: live ? "live" : "generated",

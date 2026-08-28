@@ -16,7 +16,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "node ./node_modules/next/dist/bin/next build && node ./node_modules/next/dist/bin/next start -p 3288",
+    command: "node scripts/copy-maplibre-worker.mjs && node ./node_modules/next/dist/bin/next build && node ./node_modules/next/dist/bin/next start -p 3288",
     url: "http://localhost:3288",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

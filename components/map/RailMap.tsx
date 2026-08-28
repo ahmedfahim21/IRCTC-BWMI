@@ -7,7 +7,13 @@ import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 import { addIndiaBoundary, applyPlaceLabels, INDIA_BOUNDS, paintIndiaBoundary } from "./indiaOverlay";
 import { RailMapContext, type RailMapApi } from "./mapContext";
-import { SATELLITE_STYLE, streetStyleUrl, type Basemap } from "./mapStyles";
+import { SATELLITE_STYLE, RASTER_STREET_STYLE, streetStyleUrl, type Basemap } from "./mapStyles";
+
+function installMapWorker() {
+  if (typeof window === "undefined") return;
+  if (maplibregl.getWorkerUrl()) return;
+  maplibregl.setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);
+}
 
 function currentTheme(): "dark" | "light" {
   if (typeof document === "undefined") return "dark";
@@ -73,6 +79,8 @@ export function RailMap({
     const container = containerRef.current;
     if (!container || mapRef.current) return;
 
+    installMapWorker();
+
     const instance = new maplibregl.Map({
       container,
       style: streetStyleUrl(currentTheme()),
@@ -95,6 +103,21 @@ export function RailMap({
       emitBbox(instance);
     };
     instance.once("idle", onIdle);
+    let fellBack = false;
+    const failSafe = window.setTimeout(() => {
+      if (fellBack || instance.isStyleLoaded()) return;
+      fellBack = true;
+      instance.setStyle(RASTER_STREET_STYLE);
+    }, 4000);
+    instance.once("idle", () => window.clearTimeout(failSafe));
+    instance.on("error", (event) => {
+      const message = event.error?.message ?? "";
+      if (fellBack) return;
+      if (!/worker|module script|failed to fetch worker|404/i.test(message)) return;
+      fellBack = true;
+      window.clearTimeout(failSafe);
+      instance.setStyle(RASTER_STREET_STYLE);
+    });
     instance.on("styledata", () => {
       if (!instance.isStyleLoaded()) return;
       applyOverlaysRef.current(instance);
@@ -107,6 +130,7 @@ export function RailMap({
 
     return () => {
       observer.disconnect();
+      window.clearTimeout(failSafe);
       instance.remove();
       mapRef.current = null;
       setMap(null);

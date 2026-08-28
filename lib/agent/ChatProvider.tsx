@@ -1,8 +1,15 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
+import {
+  DefaultChatTransport,
+  getToolName,
+  isToolUIPart,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
+import { api } from "@/lib/apiClient";
 import { applyAgentTool, useAgentNavigation } from "@/lib/agent/useAgentActions";
 import { isUiAction, VOICE_TRANSCRIPT_EVENT } from "@/lib/agent/uiActions";
 
@@ -17,15 +24,35 @@ export function useAgentChat(): ChatApi | null {
 export function ChatProvider({ children }: { children: ReactNode }) {
   useAgentNavigation();
   const applied = useRef(new Set<string>());
+  const output = useRef<ChatApi["addToolOutput"] | null>(null);
+  const live = useRef(false);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+
+  const { data: status } = useQuery({
+    queryKey: ["status"],
+    queryFn: ({ signal }) => api.status(signal),
+    staleTime: 5 * 60_000,
+  });
+  live.current = Boolean(status?.chatLive);
 
   const chat = useChat({
     transport,
+    sendAutomaticallyWhen: (options) => {
+      if (!live.current) return false;
+      return lastAssistantMessageIsCompleteWithToolCalls(options);
+    },
     onToolCall: ({ toolCall }) => {
       if (!isUiAction(toolCall.toolName)) return;
       void applyAgentTool(toolCall.toolName, (toolCall.input ?? {}) as Record<string, unknown>);
+      if (!live.current) return;
+      output.current?.({
+        tool: toolCall.toolName,
+        toolCallId: toolCall.toolCallId,
+        output: { ok: true, action: toolCall.toolName },
+      });
     },
   });
+  output.current = chat.addToolOutput;
 
   useEffect(() => {
     for (const message of chat.messages) {

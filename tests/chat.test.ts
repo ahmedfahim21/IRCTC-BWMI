@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { planFromTranscript } from "@/lib/agent/scriptedChat";
+import { planFromTranscript, useFakeChat } from "@/lib/agent/scriptedChat";
 
 describe("scripted chat planner", () => {
+  it("uses the scripted path when the Anthropic key is absent", () => {
+    expect(useFakeChat()).toBe(true);
+  });
   it("resolves New Delhi to NDLS for search", () => {
     const plan = planFromTranscript("from New Delhi to Mumbai tomorrow");
     const search = plan.find((s) => s.kind === "tool" && s.name === "set_search");

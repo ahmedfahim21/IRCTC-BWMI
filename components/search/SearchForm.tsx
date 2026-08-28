@@ -50,7 +50,7 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
 
   return (
     <form onSubmit={submit} className="card p-4 shadow-[var(--shadow-md)] sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-start sm:gap-2">
         <StationCombobox
           label={t("search.from")}
           value={from}
@@ -63,7 +63,7 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
           onClick={swap}
           aria-label={t("search.swap")}
           disabled={!from && !to}
-          className="mb-0.5 hidden size-10 shrink-0 items-center justify-center self-end rounded-lg border border-border text-faint transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-40 sm:flex"
+          className="hidden size-10 shrink-0 items-center justify-center rounded-lg border border-border text-faint transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-40 sm:mt-[1.625rem] sm:flex"
         >
           <ArrowLeftRight className="size-4" aria-hidden />
         </button>
