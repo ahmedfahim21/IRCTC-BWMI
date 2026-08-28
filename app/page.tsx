@@ -8,25 +8,23 @@ import { NextTripCard } from "@/components/trip/NextTripCard";
 import { SearchForm } from "@/components/search/SearchForm";
 
 /**
- * Map-first booking: the search is the first thing a thumb reaches; the live
- * network sits beside it as a framed card, not a full-bleed rail.
+ * Book: a compact search panel beside a live map that fills the rest of the
+ * screen, matching the search-results split rather than a tall stacked form.
  */
 export default function HomePage() {
   const { t } = useLocale();
 
   return (
-    <div className="px-4 pb-8 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-      <header className="mb-6 max-w-3xl">
-        <p className="eyebrow mb-2">Indian Railways</p>
-        <h1 className="text-balance text-[1.625rem] leading-tight tracking-[-0.02em] text-text sm:text-[1.875rem]">
-          {t("home.heading")}
-        </h1>
-        <p className="mt-2 max-w-md text-[0.9375rem] leading-relaxed text-dim">{t("home.sub")}</p>
+    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:overflow-hidden">
+      <header className="shrink-0 px-4 pt-5 sm:px-6 lg:px-8">
+        <p className="eyebrow mb-1">Indian Railways</p>
+        <h1 className="text-[1.375rem] tracking-[-0.02em] text-text sm:text-[1.5rem]">{t("home.heading")}</h1>
+        <p className="mt-1 max-w-xl text-[0.875rem] text-dim">{t("home.sub")}</p>
       </header>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 max-w-3xl space-y-4">
-          <SearchForm />
+      <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(26rem,0.95fr)] lg:px-8">
+        <div className="flex min-w-0 flex-col gap-4 lg:overflow-y-auto lg:pb-8">
+          <SearchForm variant="panel" />
           <NextTripCard />
           <p className="text-[0.6875rem] leading-relaxed text-faint">
             An independent redesign concept. This is not the official IRCTC service, is not affiliated
@@ -44,12 +42,13 @@ export default function HomePage() {
           </p>
         </div>
 
-        <aside className="lg:sticky lg:top-20">
+        <aside className="min-h-[16rem] lg:min-h-0">
           <MapCanvasCard
             label="Live map"
+            className="flex h-full min-h-[16rem] flex-col lg:min-h-0"
             expandLabel={t("home.mapExpand")}
             collapseLabel={t("home.mapCollapse")}
-            bodyClassName="h-[20rem] min-h-[16rem]"
+            bodyClassName="h-[20rem] min-h-[16rem] lg:h-auto lg:min-h-0 lg:flex-1"
           >
             <LandingMap />
           </MapCanvasCard>
