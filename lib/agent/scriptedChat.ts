@@ -167,6 +167,13 @@ export function planFromTranscript(text: string, session: SearchSession = defaul
     ];
   }
 
+  if (/\b(insurance|travel insurance)\b/.test(lower) && /\b(remove|without|no|drop|disable|turn off)\b/.test(lower)) {
+    return [
+      { kind: "tool", name: "set_options", args: { travelInsurance: false } },
+      { kind: "text", text: "Travel insurance is off." },
+    ];
+  }
+
   if (/\b(insurance)\b/.test(lower) && /\b(add|with|include|on)\b/.test(lower)) {
     return [
       { kind: "tool", name: "set_options", args: { travelInsurance: true } },

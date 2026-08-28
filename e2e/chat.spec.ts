@@ -96,6 +96,17 @@ test("add meals toggles the booking switch", async ({ page }) => {
   await expect(page.getByTestId("chat-tool").filter({ hasText: /set options/i })).toBeVisible();
 });
 
+test("remove travel insurance toggles the switch off", async ({ page }) => {
+  await openChat(page);
+  await say(page, "book 12951 in 3A");
+  await page.waitForURL(/\/book\/dft_/, { timeout: 20_000 });
+  await expect(page.getByRole("switch", { name: "Travel insurance" })).toHaveAttribute("aria-checked", "true");
+  await say(page, "remove travel insurance");
+  await expect(page.getByRole("switch", { name: "Travel insurance" })).toHaveAttribute("aria-checked", "false", {
+    timeout: 15_000,
+  });
+});
+
 test("asking for seats shows the coach diagram and picks a berth", async ({ page }) => {
   await openChat(page);
   await say(page, "book 12951 in 3A");

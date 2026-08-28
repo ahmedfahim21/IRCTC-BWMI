@@ -71,6 +71,7 @@ let state = defaultState();
 let snapshotVersion = 0;
 let intentVersion = 0;
 let pending: PendingIntent[] = [];
+const inFlight = new Set<string>();
 
 const snapshotListeners = new Set<() => void>();
 const intentListeners = new Set<() => void>();
@@ -243,10 +244,22 @@ export function useAgentIntentDrain(
 
     const drain = () => {
       for (const intent of agentStore.getPendingIntents()) {
+        if (inFlight.has(intent.id)) continue;
         if (!filterRef.current(intent)) continue;
-        void Promise.resolve(handlerRef.current(intent)).then((result) => {
-          agentStore.ack(intent.id, result);
-        });
+        inFlight.add(intent.id);
+        void Promise.resolve(handlerRef.current(intent))
+          .then((result) => {
+            agentStore.ack(intent.id, result);
+          })
+          .catch((error) => {
+            agentStore.ack(intent.id, {
+              ok: false,
+              error: error instanceof Error ? error.message : "Intent handler failed.",
+            });
+          })
+          .finally(() => {
+            inFlight.delete(intent.id);
+          });
       }
     };
 

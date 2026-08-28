@@ -74,6 +74,13 @@ describe("scripted chat", () => {
     expect(steps.some((s) => s.kind === "tool" && s.name === "set_options" && s.args.addMeals === true)).toBe(true);
   });
 
+  it("turns travel insurance off when asked to remove it", () => {
+    const steps = planFromTranscript("remove travel insurance");
+    expect(
+      steps.some((s) => s.kind === "tool" && s.name === "set_options" && s.args.travelInsurance === false)
+    ).toBe(true);
+  });
+
   it("picks a berth when asked for seats", () => {
     const steps = planFromTranscript("show me the seat layout");
     expect(steps.some((s) => s.kind === "tool" && s.name === "select_berth")).toBe(true);

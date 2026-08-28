@@ -19,6 +19,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { formatRupees } from "@/components/availability/ClassCell";
 import { cn } from "@/components/ui/cn";
 import { useAgentIntentDrain, useAgentPublish } from "@/lib/agent/agentStore";
+import { applyBookingOptionsPatch, normalizeSetOptionsInput } from "@/lib/agent/normalizeToolInput";
 import type { BerthType } from "@/lib/types";
 
 export function BookingFlow({ draftId }: { draftId: string }) {
@@ -227,10 +228,13 @@ export function BookingFlow({ draftId }: { draftId: string }) {
   };
 
   useAgentIntentDrain(
-    Boolean(draft && coachData && hydrated.current && !isPending),
+    Boolean(draft && hydrated.current && !isPending),
     async (intent) => {
       switch (intent.name) {
         case "select_berth": {
+          if (!coachData) {
+            return { ok: false, error: "Coach layout still loading — try again in a moment." };
+          }
           const coachCode = String(intent.input.coach ?? activeCoach ?? "");
           const wantedType = typeof intent.input.berthType === "string" ? (intent.input.berthType as BerthType) : null;
           const wantedNumber = Number(intent.input.berth);
@@ -287,28 +291,17 @@ export function BookingFlow({ draftId }: { draftId: string }) {
           return { ok: true, detail: `Contact updated (${phone}${email ? `, ${email}` : ""})` };
         }
         case "set_options": {
-          const next = { ...options };
-          const flipped: string[] = [];
-          if (typeof intent.input.addMeals === "boolean") {
-            next.addMeals = intent.input.addMeals;
-            flipped.push("meals");
-          }
-          if (typeof intent.input.travelInsurance === "boolean") {
-            next.travelInsurance = intent.input.travelInsurance;
-            flipped.push("insurance");
-          }
-          if (typeof intent.input.keepTogether === "boolean") {
-            next.keepTogether = intent.input.keepTogether;
-            flipped.push("keep-together");
-          }
-          if (typeof intent.input.autoUpgrade === "boolean") {
-            next.autoUpgrade = intent.input.autoUpgrade;
-            flipped.push("auto-upgrade");
+          const patch = normalizeSetOptionsInput(intent.input);
+          const { next, changed } = applyBookingOptionsPatch(options, patch);
+          if (!changed.length) {
+            return {
+              ok: false,
+              error:
+                "No matching options in the request. Pass addMeals, travelInsurance, keepTogether, or autoUpgrade as booleans.",
+            };
           }
           setOptions(next);
-          return flipped.length
-            ? { ok: true, detail: `Updated ${flipped.join(", ")}` }
-            : { ok: false, error: "No matching options in the request." };
+          return { ok: true, detail: `Updated ${changed.join(", ")}` };
         }
         case "confirm": {
           if (!bookingReady) {
