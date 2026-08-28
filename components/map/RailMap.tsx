@@ -8,6 +8,8 @@ import { cn } from "@/components/ui/cn";
 import { addIndiaBoundary, applyPlaceLabels, INDIA_BOUNDS, paintIndiaBoundary } from "./indiaOverlay";
 import { RailMapContext, type RailMapApi } from "./mapContext";
 import { SATELLITE_STYLE, RASTER_STREET_STYLE, streetStyleUrl, type Basemap } from "./mapStyles";
+import { SlippyRasterMap } from "./SlippyRasterMap";
+import { gpuCanRunMapLibre } from "@/lib/geo/slippy";
 
 function installMapWorker() {
   if (typeof window === "undefined") return;
@@ -46,6 +48,47 @@ export function RailMap({
   onMoveEnd?: (bbox: string) => void;
   interactive?: boolean;
 }) {
+  const [engine, setEngine] = useState<"pending" | "gl" | "slippy">("pending");
+
+  useEffect(() => {
+    setEngine(gpuCanRunMapLibre() ? "gl" : "slippy");
+  }, []);
+
+  if (engine === "pending") {
+    return <div className={cn("relative size-full min-h-[12rem] bg-surface-2", className)} aria-hidden />;
+  }
+  if (engine === "slippy") {
+    return (
+      <SlippyRasterMap className={className} onMoveEnd={onMoveEnd} interactive={interactive}>
+        {children}
+      </SlippyRasterMap>
+    );
+  }
+  return (
+    <MapLibreEngine
+      className={className}
+      onMoveEnd={onMoveEnd}
+      interactive={interactive}
+      onNeedSlippy={() => setEngine("slippy")}
+    >
+      {children}
+    </MapLibreEngine>
+  );
+}
+
+function MapLibreEngine({
+  className,
+  children,
+  onMoveEnd,
+  interactive,
+  onNeedSlippy,
+}: {
+  className?: string;
+  children?: React.ReactNode;
+  onMoveEnd?: (bbox: string) => void;
+  interactive: boolean;
+  onNeedSlippy: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const onMoveEndRef = useRef(onMoveEnd);
@@ -75,25 +118,33 @@ export function RailMap({
   const applyOverlaysRef = useRef(applyOverlays);
   applyOverlaysRef.current = applyOverlays;
 
+  const onNeedSlippyRef = useRef(onNeedSlippy);
+  onNeedSlippyRef.current = onNeedSlippy;
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container || mapRef.current) return;
 
     installMapWorker();
 
-    const instance = new maplibregl.Map({
-      container,
-      style: streetStyleUrl(currentTheme()),
-      bounds: INDIA_BOUNDS,
-      fitBoundsOptions: { padding: 24 },
-      attributionControl: { compact: true },
-      interactive,
-      fadeDuration: prefersReducedMotion() ? 0 : 300,
-      // Don't wait on missing glyphs in CI; labels simply don't draw.
-      localIdeographFontFamily: "Noto Sans, sans-serif",
-    });
-    instance.dragRotate.disable();
-    instance.touchZoomRotate.disableRotation();
+    let instance: maplibregl.Map;
+    try {
+      instance = new maplibregl.Map({
+        container,
+        style: streetStyleUrl(currentTheme()),
+        bounds: INDIA_BOUNDS,
+        fitBoundsOptions: { padding: 24 },
+        attributionControl: { compact: true },
+        interactive,
+        fadeDuration: prefersReducedMotion() ? 0 : 300,
+        localIdeographFontFamily: "Noto Sans, sans-serif",
+      });
+      instance.dragRotate.disable();
+      instance.touchZoomRotate.disableRotation();
+    } catch {
+      onNeedSlippyRef.current();
+      return;
+    }
     mapRef.current = instance;
     setMap(instance);
 
@@ -111,7 +162,18 @@ export function RailMap({
     }, 4000);
     instance.once("idle", () => window.clearTimeout(failSafe));
     instance.on("error", (event) => {
-      const message = event.error?.message ?? "";
+      const message = event.error?.message ?? String(event.error ?? "");
+      if (/WebGL2|GPUInitialization|webgl/i.test(message)) {
+        window.clearTimeout(failSafe);
+        try {
+          instance.remove();
+        } catch {
+          // Painter never started; remove still throws on some builds.
+        }
+        mapRef.current = null;
+        onNeedSlippyRef.current();
+        return;
+      }
       if (fellBack) return;
       if (!/worker|module script|failed to fetch worker|404/i.test(message)) return;
       fellBack = true;
@@ -131,7 +193,11 @@ export function RailMap({
     return () => {
       observer.disconnect();
       window.clearTimeout(failSafe);
-      instance.remove();
+      try {
+        instance.remove();
+      } catch {
+        // Already torn down after a GPU fallback.
+      }
       mapRef.current = null;
       setMap(null);
       setReady(false);
@@ -195,11 +261,17 @@ export function RailMap({
     instance.fitBounds(INDIA_BOUNDS, { padding: 28, duration: reducedMotion ? 0 : 600 });
   }, [reducedMotion]);
 
+  const zoomBy = useCallback((delta: number) => {
+    const instance = mapRef.current;
+    if (!instance) return;
+    instance.zoomTo(instance.getZoom() + delta, { duration: reducedMotion ? 0 : 200 });
+  }, [reducedMotion]);
+
   const setBasemap = useCallback((next: Basemap) => setBasemapState(next), []);
 
   const api = useMemo<RailMapApi>(
-    () => ({ map, ready, basemap, setBasemap, theme, reducedMotion, flyTo, fitIndia }),
-    [map, ready, basemap, setBasemap, theme, reducedMotion, flyTo, fitIndia]
+    () => ({ map, ready, basemap, setBasemap, theme, reducedMotion, flyTo, fitIndia, zoomBy }),
+    [map, ready, basemap, setBasemap, theme, reducedMotion, flyTo, fitIndia, zoomBy]
   );
 
   return (

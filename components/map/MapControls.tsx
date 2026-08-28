@@ -9,22 +9,14 @@ import { useRailMap } from "./mapContext";
  * the thumbnail toggle in the Where Is My Train reference.
  */
 export function MapControls({ className }: { className?: string }) {
-  const { map, basemap, setBasemap, fitIndia } = useRailMap();
-
-  const zoomBy = (delta: number) => {
-    if (!map) return;
-    map.zoomTo(map.getZoom() + delta, { duration: 200 });
-  };
+  const { map, basemap, setBasemap, fitIndia, zoomBy, flyTo } = useRailMap();
 
   const locate = () => {
-    if (!navigator.geolocation || !map) return;
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        map.flyTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
-          zoom: Math.max(map.getZoom(), 10),
-          duration: 700,
-        });
+        const zoom = map ? Math.max(map.getZoom(), 10) : 10;
+        flyTo(pos.coords.longitude, pos.coords.latitude, zoom);
       },
       () => undefined,
       { enableHighAccuracy: false, timeout: 8_000, maximumAge: 60_000 }

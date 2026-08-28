@@ -13,6 +13,7 @@ export interface RailMapApi {
   reducedMotion: boolean;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
   fitIndia: () => void;
+  zoomBy: (delta: number) => void;
 }
 
 export const RailMapContext = createContext<RailMapApi | null>(null);
