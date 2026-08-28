@@ -3,6 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { TOOLS, serverInstructions } from "@/lib/mcp/tools";
 import { clientUiTools } from "@/lib/agent/uiActions";
 import { scriptedChatResponse, useFakeChat } from "@/lib/agent/scriptedChat";
+import { todayIso } from "@/lib/domain/time";
 
 /** Hardcoded. No picker. Haiku, not Sonnet/Opus. */
 const CHAT_MODEL = "claude-haiku-4-5" as const;
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     model: anthropic(CHAT_MODEL),
     system:
       serverInstructions() +
+      ` Today is ${todayIso()}. Treat “tomorrow” as the next calendar day after that, never a date in another year.` +
       " Talk like a booking clerk at a window: short, specific, no filler. After a server tool, always drive the UI with navigate, set_search, open_train, select_class, select_berth, set_passengers, set_contact, confirm, or highlight so the screens move with you. Ask when a station name is ambiguous. Never claim a real ticket was issued.",
     messages: await convertToModelMessages(body.messages),
     tools: { ...serverTools(), ...clientUiTools() },
