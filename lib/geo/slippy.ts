@@ -134,3 +134,21 @@ export function lngLatToViewPx(
   };
 }
 
+/** Pixel-mode travel that equals one zoom level. Trackpads fire many tiny events. */
+export const WHEEL_PIXELS_PER_ZOOM = 80;
+const WHEEL_ZOOM_CLAMP = 0.6;
+
+/**
+ * Map a wheel/trackpad event to a zoom delta. Scaled by how far the fingers
+ * moved, with a cap so one spike cannot jump several levels.
+ */
+export function zoomDeltaFromWheel(deltaY: number, deltaMode: number): number {
+  if (deltaY === 0) return 0;
+  if (deltaMode === 1) return deltaY > 0 ? -0.4 : 0.4;
+  if (deltaMode === 2) return deltaY > 0 ? -0.6 : 0.6;
+  const delta = -deltaY / WHEEL_PIXELS_PER_ZOOM;
+  if (delta > WHEEL_ZOOM_CLAMP) return WHEEL_ZOOM_CLAMP;
+  if (delta < -WHEEL_ZOOM_CLAMP) return -WHEEL_ZOOM_CLAMP;
+  return delta;
+}
+

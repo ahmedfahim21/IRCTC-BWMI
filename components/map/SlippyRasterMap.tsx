@@ -17,6 +17,7 @@ import {
   worldXToLng,
   worldYToLat,
   zoomToFit,
+  zoomDeltaFromWheel,
 } from "@/lib/geo/slippy";
 
 
@@ -449,7 +450,7 @@ export function SlippyRasterMap({
           interactive
             ? (event) => {
                 event.preventDefault();
-                zoomBy(event.deltaY > 0 ? -0.4 : 0.4);
+                zoomBy(zoomDeltaFromWheel(event.deltaY, event.deltaMode));
               }
             : undefined
         }

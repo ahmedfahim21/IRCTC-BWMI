@@ -8,6 +8,7 @@ import {
   viewportBbox,
   worldXToLng,
   worldYToLat,
+  zoomDeltaFromWheel,
   zoomToFit,
 } from "@/lib/geo/slippy";
 
@@ -70,6 +71,20 @@ describe("clampView", () => {
     expect(clamped.centerLng).toBeCloseTo(view.centerLng, 6);
     expect(clamped.centerLat).toBeCloseTo(view.centerLat, 6);
     expect(clamped.zoom).toBe(view.zoom);
+  });
+
+  it("treats a trackpad pixel tick as a fraction of a zoom level", () => {
+    expect(zoomDeltaFromWheel(8, 0)).toBeCloseTo(-0.1);
+    expect(Math.abs(zoomDeltaFromWheel(8, 0))).toBeLessThan(0.2);
+  });
+
+  it("keeps a mouse-wheel notch under a full zoom level", () => {
+    expect(Math.abs(zoomDeltaFromWheel(120, 0))).toBeLessThanOrEqual(0.6);
+  });
+
+  it("clamps a single huge wheel spike", () => {
+    expect(zoomDeltaFromWheel(8000, 0)).toBe(-0.6);
+    expect(zoomDeltaFromWheel(-8000, 0)).toBe(0.6);
   });
 
   it("raises zoom below MIN_ZOOM", () => {
