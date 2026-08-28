@@ -44,7 +44,8 @@ export async function applyAgentTool(name: string, input: Record<string, unknown
       const byNumber = Number.isFinite(wantedNumber)
         ? buttons.find((el) => (el.getAttribute("aria-label") ?? "").startsWith(`Berth ${wantedNumber}`))
         : undefined;
-      (byType ?? byNumber ?? buttons[0])?.click();
+      const target = byType ?? byNumber ?? buttons[0];
+      if (target && target.getAttribute("aria-pressed") !== "true") target.click();
       return "Berth selected";
     }
     case "set_passengers": {

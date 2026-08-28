@@ -43,6 +43,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     },
     onToolCall: ({ toolCall }) => {
       if (!isUiAction(toolCall.toolName)) return;
+      applied.current.add(toolCall.toolCallId);
       void applyAgentTool(toolCall.toolName, (toolCall.input ?? {}) as Record<string, unknown>);
       if (!live.current) return;
       output.current?.({
