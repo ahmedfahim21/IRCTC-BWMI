@@ -3,7 +3,13 @@
 import type { ReactNode } from "react";
 import { Locate, Minus, Plus } from "lucide-react";
 import { cn } from "@/components/ui/cn";
+import { INDIA_BOUNDS } from "./indiaOverlay";
 import { useRailMap } from "./mapContext";
+
+function isInIndia(lng: number, lat: number): boolean {
+  const [[west, south], [east, north]] = INDIA_BOUNDS;
+  return lng >= west && lng <= east && lat >= south && lat <= north;
+}
 
 /**
  * Zoom, fit-India, geolocate, and a Terrain / Satellite switcher modelled on
@@ -16,7 +22,9 @@ export function MapControls({ className }: { className?: string }) {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        flyTo(pos.coords.longitude, pos.coords.latitude, 10);
+        const { longitude, latitude } = pos.coords;
+        if (!isInIndia(longitude, latitude)) return;
+        flyTo(longitude, latitude, 10);
       },
       () => undefined,
       { enableHighAccuracy: false, timeout: 8_000, maximumAge: 60_000 }

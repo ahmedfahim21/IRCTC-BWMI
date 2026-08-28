@@ -16,6 +16,7 @@ import { AlternativesPanel } from "@/components/availability/AlternativesPanel";
 import { GlossaryLegend } from "@/components/availability/GlossaryLegend";
 import { DateStrip } from "@/components/search/DateStrip";
 import { SearchMap } from "@/components/map/SearchMap";
+import { MapCanvasCard } from "@/components/map/MapCanvasCard";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { cn } from "@/components/ui/cn";
@@ -32,6 +33,7 @@ export function SearchResults() {
   const selectedTrain = params.get("train");
 
   const [showDates, setShowDates] = useState(false);
+  const [mapOpen, setMapOpen] = useState(true);
   const [filters, setFilters] = useState<Filters>({
     departureWindows: [],
     classes: [],
@@ -173,8 +175,9 @@ export function SearchResults() {
   const destinationName = data?.stations[data.query.toCodes[0]]?.name ?? to.replace("city:", "");
 
   return (
-    <div className="lg:grid lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(22rem,36rem)_1fr]">
+    <div className="lg:grid lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0 px-4 pb-20 pt-5 sm:px-6">
+      <div className="max-w-3xl">
       {/* Journey summary, editable in place — the search is never a dead end you have to back out of. */}
       <div className="card mb-4 p-3.5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -297,14 +300,22 @@ export function SearchResults() {
         </>
       )}
       </div>
-      <div className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] min-h-[16rem] lg:block">
-        <SearchMap
-          origin={data?.stations[data.query.fromCodes[0]]}
-          destination={data?.stations[data.query.toCodes[0]]}
-          selectedTrain={selectedTrain}
-          date={date}
-        />
       </div>
+      <aside className="sticky top-14 hidden self-start px-4 pb-4 pt-5 lg:block">
+        <MapCanvasCard
+          label="Route map"
+          bodyClassName="h-[20rem] min-h-[16rem]"
+          onOpenChange={setMapOpen}
+        >
+          <SearchMap
+            origin={data?.stations[data.query.fromCodes[0]]}
+            destination={data?.stations[data.query.toCodes[0]]}
+            selectedTrain={selectedTrain}
+            date={date}
+            mapOpen={mapOpen}
+          />
+        </MapCanvasCard>
+      </aside>
     </div>
   );
 }

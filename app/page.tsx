@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { SearchForm } from "@/components/search/SearchForm";
-import { NextTripCard } from "@/components/trip/NextTripCard";
-import { LandingMap } from "@/components/map/LandingMap";
 import { useLocale } from "@/lib/i18n/useLocale";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/components/ui/cn";
+import { LandingMap } from "@/components/map/LandingMap";
+import { MapCanvasCard } from "@/components/map/MapCanvasCard";
+import { NextTripCard } from "@/components/trip/NextTripCard";
+import { SearchForm } from "@/components/search/SearchForm";
 
 /**
  * Map-first booking: the search is the first thing a thumb reaches; the live
@@ -15,10 +13,9 @@ import { cn } from "@/components/ui/cn";
  */
 export default function HomePage() {
   const { t } = useLocale();
-  const [mapOpen, setMapOpen] = useState(false);
 
   return (
-    <div className="lg:grid lg:h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(24rem,38rem)_1fr]">
+    <div className="lg:grid lg:h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(24rem,38rem)_minmax(18rem,22rem)]">
       <div className="flex min-h-0 flex-col overflow-y-auto px-4 pb-8 pt-6 sm:px-6 lg:pt-10">
         <header className="mb-6">
           <p className="eyebrow mb-2">Indian Railways</p>
@@ -50,20 +47,16 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="lg:min-h-0">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between border-y border-border px-4 py-2.5 text-[0.8125rem] text-dim lg:hidden"
-          aria-expanded={mapOpen}
-          onClick={() => setMapOpen((open) => !open)}
+      <aside className="px-4 pb-4 pt-4 lg:sticky lg:top-14 lg:min-h-0 lg:self-start lg:px-6 lg:py-6">
+        <MapCanvasCard
+          label="Live map"
+          expandLabel={t("home.mapExpand")}
+          collapseLabel={t("home.mapCollapse")}
+          bodyClassName="h-[20rem] min-h-[16rem] lg:h-[calc(100dvh-3.5rem-3rem)]"
         >
-          {mapOpen ? t("home.mapCollapse") : t("home.mapExpand")}
-          <ChevronDown className={cn("size-4 transition-transform", mapOpen && "rotate-180")} aria-hidden />
-        </button>
-        <div className={cn("relative bg-surface-2", mapOpen ? "h-[40vh]" : "h-28", "lg:h-full lg:min-h-0")}>
           <LandingMap />
-        </div>
-      </div>
+        </MapCanvasCard>
+      </aside>
     </div>
   );
 }

@@ -8,6 +8,9 @@ import { RailMapContext, type RailMapApi } from "./mapContext";
 import { EOX_SATELLITE_TILES, type Basemap } from "./mapStyles";
 import {
   TILE_SIZE,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  clampView,
   latToWorldY,
   lngLatToViewPx,
   lngToWorldX,
@@ -17,8 +20,6 @@ import {
   zoomToFit,
 } from "@/lib/geo/slippy";
 
-const MAX_ZOOM = 12;
-const MIN_ZOOM = 3;
 
 function currentTheme(): "dark" | "light" {
   if (typeof document === "undefined") return "dark";
@@ -186,6 +187,25 @@ export function SlippyRasterMap({
     setReady(true);
   }, [basemap, theme]);
 
+  const setView = useCallback(
+    (next: { centerLng: number; centerLat: number; zoom: number }) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      viewRef.current = clampView(
+        next.centerLng,
+        next.centerLat,
+        next.zoom,
+        wrap.clientWidth,
+        wrap.clientHeight,
+        INDIA_BOUNDS
+      );
+      paint();
+      emit();
+      bumpView();
+    },
+    [paint, emit, bumpView]
+  );
+
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
@@ -238,35 +258,25 @@ export function SlippyRasterMap({
   const panByPx = (dx: number, dy: number) => {
     const { centerLng, centerLat, zoom } = viewRef.current;
     const z = zoom;
-    viewRef.current = {
+    setView({
       centerLng: worldXToLng(lngToWorldX(centerLng, z) - dx / TILE_SIZE, z),
       centerLat: worldYToLat(latToWorldY(centerLat, z) - dy / TILE_SIZE, z),
       zoom,
-    };
-    paint();
-    emit();
-    bumpView();
+    });
   };
 
   const zoomBy = useCallback(
     (delta: number) => {
-      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, viewRef.current.zoom + delta));
-      viewRef.current = { ...viewRef.current, zoom: next };
-      paint();
-      emit();
-      bumpView();
+      setView({ ...viewRef.current, zoom: viewRef.current.zoom + delta });
     },
-    [paint, emit, bumpView]
+    [setView]
   );
 
   const flyTo = useCallback(
     (lng: number, lat: number, zoom = 8) => {
-      viewRef.current = { centerLng: lng, centerLat: lat, zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom)) };
-      paint();
-      emit();
-      bumpView();
+      setView({ centerLng: lng, centerLat: lat, zoom });
     },
-    [paint, emit, bumpView]
+    [setView]
   );
 
   const fitIndia = useCallback(() => {
@@ -281,27 +291,17 @@ export function SlippyRasterMap({
       wrap.clientHeight,
       28
     );
-    viewRef.current = { centerLng: fitted.centerLng, centerLat: fitted.centerLat, zoom: fitted.zoom };
-    paint();
-    emit();
-    bumpView();
-  }, [paint, emit, bumpView]);
+    setView(fitted);
+  }, [setView]);
 
   const fitBounds = useCallback(
     (west: number, south: number, east: number, north: number, padding = 48) => {
       const wrap = wrapRef.current;
       if (!wrap) return;
       const fitted = zoomToFit(west, south, east, north, wrap.clientWidth, wrap.clientHeight, padding);
-      viewRef.current = {
-        centerLng: fitted.centerLng,
-        centerLat: fitted.centerLat,
-        zoom: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, fitted.zoom)),
-      };
-      paint();
-      emit();
-      bumpView();
+      setView(fitted);
     },
-    [paint, emit, bumpView]
+    [setView]
   );
 
   const project = useCallback(

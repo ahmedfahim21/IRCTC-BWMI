@@ -1,6 +1,8 @@
 /** Web Mercator helpers for the 2D raster map. */
 
 export const TILE_SIZE = 256;
+export const MIN_ZOOM = 4;
+export const MAX_ZOOM = 12;
 
 export function lngToWorldX(lng: number, zoom: number): number {
   return ((lng + 180) / 360) * 2 ** zoom;
@@ -36,11 +38,65 @@ export function zoomToFit(
   const ySpan = Math.max(1e-6, latToWorldY(south, 0) - latToWorldY(north, 0));
   const zW = Math.log2(innerW / (xSpan * TILE_SIZE));
   const zH = Math.log2(innerH / (ySpan * TILE_SIZE));
-  const zoom = Math.min(12, Math.max(3, Math.min(zW, zH)));
+  const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(zW, zH)));
   return {
     centerLng: (west + east) / 2,
     centerLat: (south + north) / 2,
     zoom,
+  };
+}
+
+/**
+ * Keep the viewport inside geographic bounds. When the viewport is wider or
+ * taller than the bounds on an axis, pin the center to the bounds midpoint
+ * instead of edge-clamping (which would judder on a small card at MIN_ZOOM).
+ */
+export function clampView(
+  centerLng: number,
+  centerLat: number,
+  zoom: number,
+  width: number,
+  height: number,
+  bounds: [[number, number], [number, number]]
+): { centerLng: number; centerLat: number; zoom: number } {
+  const clampedZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+  const [[west, south], [east, north]] = bounds;
+
+  const halfW = width / 2 / TILE_SIZE;
+  const halfH = height / 2 / TILE_SIZE;
+
+  let centerX = lngToWorldX(centerLng, clampedZoom);
+  let centerY = latToWorldY(centerLat, clampedZoom);
+
+  const boundsWestX = lngToWorldX(west, clampedZoom);
+  const boundsEastX = lngToWorldX(east, clampedZoom);
+  const boundsNorthY = latToWorldY(north, clampedZoom);
+  const boundsSouthY = latToWorldY(south, clampedZoom);
+
+  const viewSpanX = halfW * 2;
+  const boundsSpanX = boundsEastX - boundsWestX;
+  if (viewSpanX >= boundsSpanX) {
+    centerX = (boundsWestX + boundsEastX) / 2;
+  } else {
+    const minX = boundsWestX + halfW;
+    const maxX = boundsEastX - halfW;
+    centerX = Math.min(maxX, Math.max(minX, centerX));
+  }
+
+  const viewSpanY = halfH * 2;
+  const boundsSpanY = boundsSouthY - boundsNorthY;
+  if (viewSpanY >= boundsSpanY) {
+    centerY = (boundsNorthY + boundsSouthY) / 2;
+  } else {
+    const minY = boundsNorthY + halfH;
+    const maxY = boundsSouthY - halfH;
+    centerY = Math.min(maxY, Math.max(minY, centerY));
+  }
+
+  return {
+    centerLng: worldXToLng(centerX, clampedZoom),
+    centerLat: worldYToLat(centerY, clampedZoom),
+    zoom: clampedZoom,
   };
 }
 
