@@ -10,8 +10,8 @@ the journey is.** IRCTC ends at payment. That's where the interesting half of th
 
 It runs on real Indian Railways data via the [RailRadar API](https://railradar.in/docs), speaks and
 listens in Indian languages via [Sarvam](https://sarvam.ai), exposes itself to agents over MCP, and
-is built on the [UX4G](https://www.ux4g.gov.in) government design tokens in IRCTC's own navy and
-saffron. The header badge says, source by source, which data is live and which is modelled.
+is built on shadcn/ui with a neutral palette. The header badge says, source by source, which data is
+live and which is modelled.
 
 ---
 
@@ -157,25 +157,17 @@ The in-app chat at `/api/chat` uses the same tools, then client actions move the
 
 ## Design
 
-Built on the **UX4G design tokens** — the Government of India design system (MeitY). Colour ramps,
-type scale, the 4 px spacing grid, radii and elevations all resolve to `--ux4g-*` primitives, and
-the typeface is Noto Sans, self-hosted with a Devanagari subset.
+Built on **shadcn/ui** with the stock neutral palette. Noto Sans (latin + Devanagari) is the sole
+typeface — self-hosted via `next/font` with a Devanagari subset. Semantic colours (`success`,
+`warning`, `info`, chart ramp) extend the base theme for availability states and map train types.
+WCAG 2.1 AA contrast is enforced by `e2e/a11y.spec.ts` against `scripts/contrast-audit.js`.
 
-The brand is IRCTC's own — the navy of their masthead (`#213D77` / `#082B71`) and the saffron they
-use for emphasis (`#FB792B`) — expressed through the nearest UX4G ramp steps that clear AA rather
-than dropped in as raw hex. `--info` moved off blue onto the tertiary ramp so a chart-prepared chip
-can't read as a brand element now that the brand is blue.
+The previous UX4G / IRCTC navy/saffron token layer was retired in favour of this neutral system.
 
-Only the token layer is vendored. The full UX4G bundle is **7.9 MB (3.9 MB gzipped)** because it
-ships 53 components and 3,188 utility classes this app doesn't use — twenty-four times the size of
-the entire application, and it would break the one requirement that matters most here. The tokens
-give the same visual language for **3.6 KB gzipped**. Regenerate with
-`node scripts/extract-ux4g-tokens.mjs`.
-
-On top of that: dark-first, because half of train travel happens at night. Typography carries
-hierarchy — nothing above weight 450. Tabular numerals everywhere. The rail spine is one motif at
-three densities: full height on the train page, a ribbon in results, compact in the trip card.
-Status colour is never the only signal.
+Dark mode uses `data-theme` on `<html>` (light / dark / system). Typography uses shadcn weight
+conventions (`font-medium`, `font-semibold`). Tabular numerals everywhere. The rail spine is one
+motif at three densities: full height on the train page, a ribbon in results, compact in the trip
+card. Status colour is never the only signal.
 
 Maps are a 2D canvas of raster tiles — Esri streets (OSM if those fail) or Sentinel-2 cloudless
 satellite. India's boundary is drawn from the datameet Survey of India–derived outline (mainland plus

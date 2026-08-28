@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { CalendarSearch, Map, Ticket, TicketCheck } from "lucide-react";
 import { Logo } from "./ui/Logo";
 import { ThemeToggle } from "./ui/ThemeToggle";
 import { LanguageSetting } from "./ui/LanguageSetting";
 import { DataSourceBadge } from "./ui/DataSourceBadge";
+import { Sheet, SheetContent } from "./ui/sheet";
 import { cn } from "./ui/cn";
 import { useLocale } from "@/lib/i18n/useLocale";
 import type { StringKey } from "@/lib/i18n/strings";
@@ -26,10 +28,10 @@ export function AppHeader() {
   const { t } = useLocale();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg">
+    <header className="sticky top-0 z-40 border-b border-border bg-background">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2 text-text" aria-label={t("nav.homeLabel")}>
-          <span className="text-brand">
+        <Link href="/" className="flex shrink-0 items-center gap-2 text-foreground" aria-label={t("nav.homeLabel")}>
+          <span className="text-primary">
             <Logo className="size-[22px]" />
           </span>
           <span className="flex items-baseline gap-1.5">
@@ -38,7 +40,7 @@ export function AppHeader() {
              * This uses IRCTC's own name and colours, so it says plainly and
              * permanently what it is. Never hidden at any breakpoint.
              */}
-            <span className="text-[0.5625rem] uppercase tracking-[0.1em] text-faint">redesign</span>
+            <span className="text-[0.5625rem] uppercase tracking-[0.1em] text-muted-foreground">redesign</span>
           </span>
         </Link>
 
@@ -51,7 +53,7 @@ export function AppHeader() {
               aria-current={isActive(pathname, item.href) ? "page" : undefined}
               className={cn(
                 "whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[0.8125rem] transition-colors",
-                isActive(pathname, item.href) ? "bg-surface-2 text-text" : "text-faint hover:text-dim"
+                isActive(pathname, item.href) ? "bg-muted text-foreground" : "text-muted-foreground hover:text-muted-foreground"
               )}
             >
               {t(item.key)}
@@ -77,33 +79,49 @@ export function AppHeader() {
 export function MobileNav() {
   const pathname = usePathname();
   const { t } = useLocale();
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setShow(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  if (!show) return null;
 
   return (
-    <nav
-      aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] sm:hidden"
-    >
-      <ul className="mx-auto flex max-w-md">
-        {NAV.map((item) => {
-          const active = isActive(pathname, item.href);
-          const Icon = item.icon;
-          return (
-            <li key={item.href} className="flex-1">
-              <Link
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 transition-colors",
-                  active ? "text-brand" : "text-faint"
-                )}
-              >
-                <Icon className="size-[18px]" aria-hidden />
-                <span className="text-[0.625rem] leading-none">{t(item.key)}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <Sheet open modal={false}>
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        className="inset-x-0 bottom-0 h-auto border-t p-0 pb-[env(safe-area-inset-bottom)] sm:hidden"
+      >
+        <nav aria-label="Main">
+          <ul className="mx-auto flex max-w-md">
+            {NAV.map((item) => {
+              const active = isActive(pathname, item.href);
+              const Icon = item.icon;
+              return (
+                <li key={item.href} className="flex-1">
+                  <Link
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 transition-colors",
+                      active ? "text-primary" : "text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="size-[18px]" aria-hidden />
+                    <span className="text-[0.625rem] leading-none">{t(item.key)}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }

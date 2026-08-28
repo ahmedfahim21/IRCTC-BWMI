@@ -8,10 +8,10 @@ import { cn } from "@/components/ui/cn";
 import { Ticket } from "lucide-react";
 
 const STATUS_TONE = {
-  confirmed: "text-ok",
-  rac: "text-warn",
-  waitlist: "text-danger",
-  cancelled: "text-faint",
+  confirmed: "text-success",
+  rac: "text-warning",
+  waitlist: "text-destructive",
+  cancelled: "text-muted-foreground",
 } as const;
 
 /**
@@ -30,18 +30,18 @@ export function TicketCard({
   alightingStop: ScheduleStop;
 }) {
   return (
-    <div className={cn("card overflow-hidden", booking.status === "cancelled" && "opacity-70")}>
+    <div className={cn("rounded-xl border bg-card overflow-hidden", booking.status === "cancelled" && "opacity-70")}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border px-4 py-3">
         <div>
           <p className="eyebrow inline-flex items-center gap-1.5">
-            <Ticket className="size-3 text-faint" aria-hidden />
+            <Ticket className="size-3 text-muted-foreground" aria-hidden />
             PNR
           </p>
-          <p className="tnum text-[1.125rem] tracking-[0.14em] text-text">{booking.pnr}</p>
+          <p className="tnum text-[1.125rem] tracking-[0.14em] text-foreground">{booking.pnr}</p>
         </div>
         <div className="text-right">
           <p className="eyebrow">{booking.classCode} · {booking.quota}</p>
-          <p className={cn("text-[0.8125rem] capitalize", booking.status === "cancelled" ? "text-faint" : booking.status === "waitlist" ? "text-danger" : "text-ok")}>
+          <p className={cn("text-[0.8125rem] capitalize", booking.status === "cancelled" ? "text-muted-foreground" : booking.status === "waitlist" ? "text-destructive" : "text-success")}>
             {booking.status === "partiallyConfirmed" ? "Partly confirmed" : booking.status}
           </p>
         </div>
@@ -49,9 +49,9 @@ export function TicketCard({
 
       <div className="grid gap-3 px-4 py-3.5 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
         <div>
-          <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(booking.boardingMinute)}</p>
-          <p className="mt-1 text-[0.875rem] text-dim">{stations[booking.fromCode]?.name}</p>
-          <p className="text-[0.6875rem] text-faint">
+          <p className="tnum text-[1.375rem] leading-none text-foreground">{formatMinute(booking.boardingMinute)}</p>
+          <p className="mt-1 text-[0.875rem] text-muted-foreground">{stations[booking.fromCode]?.name}</p>
+          <p className="text-[0.6875rem] text-muted-foreground">
             <span className="font-mono">{booking.fromCode}</span>
             {boardingStop.platform !== null && <> · Platform {boardingStop.platform}</>}
           </p>
@@ -60,33 +60,33 @@ export function TicketCard({
         <div className="hidden h-px w-10 bg-border sm:block" aria-hidden />
 
         <div className="sm:text-right">
-          <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(booking.alightingMinute)}</p>
-          <p className="mt-1 text-[0.875rem] text-dim">{stations[booking.toCode]?.name}</p>
-          <p className="text-[0.6875rem] text-faint">
+          <p className="tnum text-[1.375rem] leading-none text-foreground">{formatMinute(booking.alightingMinute)}</p>
+          <p className="mt-1 text-[0.875rem] text-muted-foreground">{stations[booking.toCode]?.name}</p>
+          <p className="text-[0.6875rem] text-muted-foreground">
             <span className="font-mono">{booking.toCode}</span>
             {alightingStop.platform !== null && <> · Platform {alightingStop.platform}</>}
           </p>
         </div>
       </div>
 
-      <p className="border-t border-border px-4 py-2.5 text-[0.8125rem] text-dim">
-        <span className="tnum text-faint">{booking.trainNumber}</span> {booking.trainName}
-        <span className="mx-2 text-faint">·</span>
+      <p className="border-t border-border px-4 py-2.5 text-[0.8125rem] text-muted-foreground">
+        <span className="tnum text-muted-foreground">{booking.trainNumber}</span> {booking.trainName}
+        <span className="mx-2 text-muted-foreground">·</span>
         {formatWeekday(booking.journeyDate)} {formatDateShort(booking.journeyDate)}
       </p>
 
       <ul className="divide-y divide-border border-t border-border">
         {booking.passengers.map((passenger) => (
           <li key={passenger.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2.5">
-            <span className="text-[0.875rem] text-text">{passenger.name}</span>
-            <span className="text-[0.6875rem] text-faint">
+            <span className="text-[0.875rem] text-foreground">{passenger.name}</span>
+            <span className="text-[0.6875rem] text-muted-foreground">
               {passenger.age} · {passenger.gender === "male" ? "M" : passenger.gender === "female" ? "F" : "O"}
             </span>
             <span className={cn("tnum ml-auto text-[0.8125rem]", STATUS_TONE[passenger.status])}>
               {passenger.statusLabel}
             </span>
             {explainStatus(passenger.statusLabel) && (
-              <span className="w-full text-[0.6875rem] text-faint">{explainStatus(passenger.statusLabel)}</span>
+              <span className="w-full text-[0.6875rem] text-muted-foreground">{explainStatus(passenger.statusLabel)}</span>
             )}
           </li>
         ))}
@@ -94,7 +94,7 @@ export function TicketCard({
 
       <div className="border-t border-dashed border-border px-4 pb-3 pt-3.5">
         <Barcode value={booking.pnr} />
-        <p className="mt-2 text-center text-[0.625rem] text-faint">
+        <p className="mt-2 text-center text-[0.625rem] text-muted-foreground">
           Show this to the ticket examiner. Works without a network.
         </p>
       </div>

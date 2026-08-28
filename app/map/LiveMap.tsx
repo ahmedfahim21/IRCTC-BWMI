@@ -14,8 +14,11 @@ import { MapControls } from "@/components/map/MapControls";
 import { TrainLayer, unpackTrain, type MapTrain } from "@/components/map/TrainLayer";
 import { RouteLayer } from "@/components/map/RouteLayer";
 import { RailSpine } from "@/components/rail/RailSpine";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { todayIso } from "@/lib/domain/time";
 import { cn } from "@/components/ui/cn";
 
@@ -100,19 +103,19 @@ export function LiveMap() {
       <div className="border-b border-border px-4 py-2.5 sm:px-6">
         <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="flex items-center gap-2 text-[1.0625rem] tracking-[-0.01em]">
-            <RadioTower className="size-4 text-brand" aria-hidden />
+            <RadioTower className="size-4 text-primary" aria-hidden />
             Live map
           </h1>
           {data && (
-            <p className="text-[0.75rem] text-dim">
-              <span className="tnum text-text">{visibleTrains.length.toLocaleString("en-IN")}</span> trains moving
+            <p className="text-[0.75rem] text-muted-foreground">
+              <span className="tnum text-foreground">{visibleTrains.length.toLocaleString("en-IN")}</span> trains moving
               {visibleTrains.length !== data.total && (
-                <span className="text-faint"> of {data.total.toLocaleString("en-IN")}</span>
+                <span className="text-muted-foreground"> of {data.total.toLocaleString("en-IN")}</span>
               )}
             </p>
           )}
-          <span className="ml-auto flex items-center gap-1.5 text-[0.6875rem] text-faint">
-            {isFetching && <span className="size-1.5 animate-pulse rounded-full bg-ok" aria-hidden />}
+          <span className="ml-auto flex items-center gap-1.5 text-[0.6875rem] text-muted-foreground">
+            {isFetching && <span className="size-1.5 animate-pulse rounded-full bg-success" aria-hidden />}
             {data ? `updated ${new Date(data.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : ""}
           </span>
         </div>
@@ -137,18 +140,19 @@ export function LiveMap() {
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(18rem,22rem)_1fr]">
         <aside className="flex max-h-[40vh] min-h-0 flex-col border-b border-border lg:max-h-none lg:border-b-0 lg:border-r">
           <div className="border-b border-border p-2.5">
-            <label className="relative block">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-faint" aria-hidden />
-              <input
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
                 type="search"
                 value={listFilter}
                 onChange={(event) => setListFilter(event.target.value)}
                 placeholder="Find a train"
-                className="h-9 w-full rounded-lg border border-border bg-surface-2 pl-8 pr-3 text-[0.8125rem] text-text placeholder:text-faint"
+                className="h-9 rounded-lg border-border bg-muted pl-8 pr-3 text-[0.8125rem]"
               />
-            </label>
+            </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto" role="listbox" aria-label="Running trains">
+          <ScrollArea className="min-h-0 flex-1">
+          <div role="listbox" aria-label="Running trains">
             {isPending && (
               <div className="p-3">
                 <Skeleton className="h-24 w-full" />
@@ -163,15 +167,16 @@ export function LiveMap() {
               const item = unpackTrain(train);
               const active = item.number === selectedNumber;
               return (
-                <button
+                <Button
                   key={item.number}
                   type="button"
+                  variant="ghost"
                   role="option"
                   aria-selected={active}
                   onClick={() => selectTrain(item)}
                   className={cn(
-                    "flex w-full items-start gap-2.5 border-b border-border px-3 py-2.5 text-left transition-colors hover:bg-surface-2",
-                    active && "bg-brand-soft"
+                    "h-auto w-full items-start gap-2.5 rounded-none border-b border-border px-3 py-2.5 text-left hover:bg-muted",
+                    active && "bg-accent"
                   )}
                 >
                   <span
@@ -181,15 +186,16 @@ export function LiveMap() {
                   />
                   <span className="min-w-0">
                     <span className="flex items-baseline gap-2">
-                      <span className="tnum text-[0.75rem] text-faint">{item.number}</span>
-                      <span className="truncate text-[0.8125rem] text-text">{item.name}</span>
+                      <span className="tnum text-[0.75rem] text-muted-foreground">{item.number}</span>
+                      <span className="truncate text-[0.8125rem] text-foreground">{item.name}</span>
                     </span>
-                    <span className="text-[0.6875rem] text-faint">{data?.types[item.type]}</span>
+                    <span className="text-[0.6875rem] text-muted-foreground">{data?.types[item.type]}</span>
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>
+          </ScrollArea>
           <p className="sr-only" aria-live="polite">
             {selected ? `Selected ${selected.number} ${selected.name}` : "No train selected"}
           </p>
@@ -212,7 +218,7 @@ export function LiveMap() {
           </ClientRailMap>
 
           {selected && (
-            <div className="absolute inset-x-2.5 bottom-2.5 z-20 max-h-[45%] overflow-y-auto rounded-xl border border-border bg-surface p-3.5 shadow-[var(--shadow-lg)] sm:left-2.5 sm:right-auto sm:w-[22rem]">
+            <div className="absolute inset-x-2.5 bottom-2.5 z-20 max-h-[45%] overflow-y-auto rounded-xl border border-border bg-card p-3.5 shadow-[var(--shadow-lg)] sm:left-2.5 sm:right-auto sm:w-[22rem]">
               <div className="mb-1.5 flex items-start gap-2">
                 <span
                   className="mt-1.5 size-2 shrink-0 rounded-full"
@@ -221,19 +227,21 @@ export function LiveMap() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-baseline gap-2">
-                    <span className="tnum text-[0.8125rem] text-faint">{selected.number}</span>
-                    <span className="truncate text-[0.9375rem] text-text">{selected.name}</span>
+                    <span className="tnum text-[0.8125rem] text-muted-foreground">{selected.number}</span>
+                    <span className="truncate text-[0.9375rem] text-foreground">{selected.name}</span>
                   </p>
-                  <p className="mt-0.5 text-[0.6875rem] text-faint">{data?.types[selected.type]} · moving now</p>
+                  <p className="mt-0.5 text-[0.6875rem] text-muted-foreground">{data?.types[selected.type]} · moving now</p>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => selectTrain(null)}
                   aria-label="Close"
-                  className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
+                  className="shrink-0 text-muted-foreground hover:text-foreground"
                 >
                   <X className="size-3.5" aria-hidden />
-                </button>
+                </Button>
               </div>
               {trainDetail && (
                 <div className="mb-3 max-h-48 overflow-y-auto">
@@ -247,7 +255,7 @@ export function LiveMap() {
               <div className="flex gap-2">
                 <Link
                   href={`/trains/${selected.number}`}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand py-2 text-[0.8125rem] text-on-brand transition-opacity hover:opacity-90"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[0.8125rem] text-primary-foreground transition-opacity hover:opacity-90"
                 >
                   Full route
                   <ArrowRight className="size-3.5" aria-hidden />
@@ -255,7 +263,7 @@ export function LiveMap() {
                 {trainDetail && (
                   <Link
                     href={`/?from=${trainDetail.train.schedule[0]?.stationCode ?? ""}`}
-                    className="flex items-center justify-center rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim hover:text-text"
+                    className="flex items-center justify-center rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-muted-foreground hover:text-foreground"
                   >
                     Search from here
                   </Link>

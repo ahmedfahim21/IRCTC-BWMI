@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { BookingFlow } from "./BookingFlow";
 
 export const metadata = { title: "Book — IRCTC" };

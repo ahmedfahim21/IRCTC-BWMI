@@ -45,7 +45,7 @@ export function Barcode({ value, height = 44 }: { value: string; height?: number
       preserveAspectRatio="none"
       role="img"
       aria-label={`Barcode for PNR ${value}`}
-      className="text-text"
+      className="text-foreground"
     >
       {bars.map((bar, index) => (
         <rect key={index} x={bar.x} y={0} width={bar.width} height={height} fill="currentColor" />

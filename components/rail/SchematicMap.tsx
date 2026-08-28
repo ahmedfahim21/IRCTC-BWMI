@@ -89,7 +89,7 @@ export function SchematicMap({
   const scale = Math.max(view.w, view.h) / 320;
 
   return (
-    <div className={cn("relative overflow-hidden rounded-[14px] border border-border bg-surface-2", className)}>
+    <div className={cn("relative overflow-hidden rounded-[14px] border border-border bg-muted", className)}>
       <svg
         viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
         preserveAspectRatio="xMidYMid slice"
@@ -103,7 +103,7 @@ export function SchematicMap({
         <path d={routePath} fill="none" className="stroke-[color:var(--track)]" strokeWidth={scale * 3} strokeLinecap="round" strokeLinejoin="round" />
         {/* Your segment of it. */}
         {segmentPath && (
-          <path d={segmentPath} fill="none" className="stroke-[color:var(--brand)]" strokeWidth={scale * 3} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={segmentPath} fill="none" className="stroke-[color:var(--primary)]" strokeWidth={scale * 3} strokeLinecap="round" strokeLinejoin="round" />
         )}
 
         {points
@@ -114,30 +114,30 @@ export function SchematicMap({
               cx={p.x}
               cy={p.y}
               r={scale * 1.6}
-              className="fill-[color:var(--surface)] stroke-[color:var(--brand)]"
+              className="fill-[color:var(--card)] stroke-[color:var(--primary)]"
               strokeWidth={scale * 0.9}
             />
           ))}
 
         {/* Terminals, larger. */}
         {[points[0], points[points.length - 1]].filter(Boolean).map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={scale * 2.6} className="fill-[color:var(--brand)]" />
+          <circle key={i} cx={p.x} cy={p.y} r={scale * 2.6} className="fill-[color:var(--primary)]" />
         ))}
 
         {livePoint && live && live.state !== "notStarted" && (
           <g>
-            <circle cx={livePoint[0]} cy={livePoint[1]} r={scale * 6} className="fill-[color:var(--ok)]" opacity={0.18}>
+            <circle cx={livePoint[0]} cy={livePoint[1]} r={scale * 6} className="fill-[color:var(--success)]" opacity={0.18}>
               <animate attributeName="r" values={`${scale * 4};${scale * 9};${scale * 4}`} dur="2.4s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.28;0;0.28" dur="2.4s" repeatCount="indefinite" />
             </circle>
-            <circle cx={livePoint[0]} cy={livePoint[1]} r={scale * 3} className="fill-[color:var(--ok)] stroke-[color:var(--surface)]" strokeWidth={scale} />
+            <circle cx={livePoint[0]} cy={livePoint[1]} r={scale * 3} className="fill-[color:var(--success)] stroke-[color:var(--card)]" strokeWidth={scale} />
           </g>
         )}
       </svg>
 
       {live && live.state !== "notStarted" && (
-        <span className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-[0.6875rem] text-dim">
-          <span className="live-ring relative size-1.5 rounded-full bg-ok text-ok" aria-hidden />
+        <span className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[0.6875rem] text-muted-foreground">
+          <span className="live-ring relative size-1.5 rounded-full bg-success text-success" aria-hidden />
           {live.state === "arrived"
             ? "Arrived"
             : live.state === "halted"

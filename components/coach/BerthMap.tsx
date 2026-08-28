@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { DoorOpen, Plug, Droplets } from "lucide-react";
 import type { Berth, CoachLayout, CoachType } from "@/lib/types";
 import { cn } from "@/components/ui/cn";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface BerthSelection {
   coachCode: string;
@@ -47,19 +49,19 @@ export function BerthMap({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-[0.8125rem] text-dim">
-          <span className="text-text">{coach.code}</span> · {coach.type}
-          <span className="ml-2 text-faint">
+        <p className="text-[0.8125rem] text-muted-foreground">
+          <span className="text-foreground">{coach.code}</span> · {coach.type}
+          <span className="ml-2 text-muted-foreground">
             <span className="tnum">{freeCount}</span> of <span className="tnum">{coach.berths.length}</span> free
           </span>
         </p>
-        <p className="text-[0.6875rem] text-faint">
+        <p className="text-[0.6875rem] text-muted-foreground">
           {selectedNumbers.size} of {passengerCount} chosen here
         </p>
       </div>
 
-      <div className="-mx-1 overflow-x-auto px-1 pb-2">
-        <div className="flex min-w-fit items-stretch gap-2">
+      <ScrollArea className="-mx-1 px-1 pb-2">
+        <div className="flex min-w-fit items-stretch gap-2 pb-2">
           {/* Door and toilets sit at both ends of a coach. */}
           <EndCap />
           {bays.map(([bayNumber, berths]) => (
@@ -76,7 +78,8 @@ export function BerthMap({
           ))}
           <EndCap />
         </div>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
 
       <Legend />
     </div>
@@ -89,7 +92,7 @@ function isSeated(type: CoachType) {
 
 function EndCap() {
   return (
-    <div className="flex w-9 shrink-0 flex-col items-center justify-center gap-2.5 rounded-md border border-dashed border-border text-faint">
+    <div className="flex w-9 shrink-0 flex-col items-center justify-center gap-2.5 rounded-md border border-dashed border-border text-muted-foreground">
       <DoorOpen className="size-3.5" aria-hidden />
       <Droplets className="size-3.5" aria-hidden />
       <span className="sr-only">Door and toilets</span>
@@ -116,7 +119,7 @@ function Bay({
 }) {
   if (seated) {
     return (
-      <div className="flex shrink-0 gap-1.5 rounded-md border border-border bg-surface-2 p-1.5">
+      <div className="flex shrink-0 gap-1.5 rounded-md border border-border bg-muted p-1.5">
         {berths.map((berth) => (
           <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} selectable={selectable} />
         ))}
@@ -135,7 +138,7 @@ function Bay({
   }
 
   return (
-    <div className="flex shrink-0 items-stretch gap-2 rounded-md border border-border bg-surface-2 p-1.5">
+    <div className="flex shrink-0 items-stretch gap-2 rounded-md border border-border bg-muted p-1.5">
       <div className="flex gap-1.5">
         {columns.map((column, index) => (
           <div key={index} className="flex flex-col gap-1.5">
@@ -149,7 +152,7 @@ function Bay({
       {sideBerths.length > 0 && (
         <>
           {/* The corridor. */}
-          <span className="w-2 shrink-0 self-stretch rounded-full bg-surface-3" aria-hidden />
+          <span className="w-2 shrink-0 self-stretch rounded-full bg-secondary" aria-hidden />
           <div className="flex flex-col justify-between gap-1.5">
             {sideBerths.map((berth) => (
               <BerthButton key={berth.number} berth={berth} selected={selectedNumbers.has(berth.number)} onToggle={onToggle} atCapacity={atCapacity} selectable={selectable} />
@@ -181,25 +184,26 @@ function BerthButton({
     berth.hasCharging ? "charging point" : null,
   ].filter(Boolean);
 
+  const tipLabel =
+    berth.isBooked
+      ? `Berth ${berth.number} (${berth.type}) — taken`
+      : `Berth ${berth.number}, ${berth.type}${notes.length ? ` — ${notes.join(", ")}` : ""}`;
+
   return (
+    <Tooltip>
+      <TooltipTrigger asChild aria-label={`Berth ${berth.number}, ${berth.type}${berth.isBooked ? ", taken" : notes.length ? `, ${notes.join(", ")}` : ""}`}>
     <button
       type="button"
       disabled={disabled}
       onClick={() => onToggle(berth)}
       aria-pressed={selected}
-      title={
-        berth.isBooked
-          ? `Berth ${berth.number} (${berth.type}) — taken`
-          : `Berth ${berth.number}, ${berth.type}${notes.length ? ` — ${notes.join(", ")}` : ""}`
-      }
-      aria-label={`Berth ${berth.number}, ${berth.type}${berth.isBooked ? ", taken" : notes.length ? `, ${notes.join(", ")}` : ""}`}
       className={cn(
         "relative flex h-11 w-[2.85rem] flex-col items-center justify-center rounded-md border text-[0.625rem] leading-none transition-colors",
         berth.isBooked
-          ? "cursor-not-allowed border-border bg-surface-3 text-faint/50"
+          ? "cursor-not-allowed border-border bg-secondary text-muted-foreground/50"
           : selected
-            ? "border-brand bg-brand text-on-brand"
-            : "border-ok/30 bg-ok-soft text-ok hover:border-ok",
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-success/30 bg-success-soft text-success hover:border-success",
         atCapacity && !selected && !berth.isBooked && "cursor-not-allowed opacity-40"
       )}
     >
@@ -209,20 +213,23 @@ function BerthButton({
         <Plug className="absolute right-0.5 top-0.5 size-2 opacity-60" aria-hidden />
       )}
     </button>
+      </TooltipTrigger>
+      <TooltipContent>{tipLabel}</TooltipContent>
+    </Tooltip>
   );
 }
 
 function Legend() {
   return (
-    <ul className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[0.75rem] text-faint">
+    <ul className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[0.75rem] text-muted-foreground">
       <li className="flex items-center gap-1.5">
-        <span className="size-3 rounded-sm border border-ok/30 bg-ok-soft" aria-hidden /> Free
+        <span className="size-3 rounded-sm border border-success/30 bg-success-soft" aria-hidden /> Free
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="size-3 rounded-sm border border-brand bg-brand" aria-hidden /> Yours
+        <span className="size-3 rounded-sm border border-primary bg-primary" aria-hidden /> Yours
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="size-3 rounded-sm border border-border bg-surface-3" aria-hidden /> Taken
+        <span className="size-3 rounded-sm border border-border bg-secondary" aria-hidden /> Taken
       </li>
       <li className="flex items-center gap-1.5">
         <Plug className="size-3" aria-hidden /> Charging point

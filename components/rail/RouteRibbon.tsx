@@ -42,25 +42,25 @@ export function RouteRibbon({
         <div className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-track" />
         {/* Your segment. */}
         <div
-          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-brand"
+          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
           style={{ left: `${start}%`, width: `${Math.max(1.5, end - start)}%` }}
         />
         <Marker at={start} filled={boardsAtOrigin} />
         <Marker at={end} filled={alightsAtEnd} />
         {typeof liveFraction === "number" && (
           <span
-            className="absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ok ring-2 ring-[color:var(--surface)]"
+            className="absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-success ring-2 ring-[color:var(--card)]"
             style={{ left: `${Math.max(0, Math.min(1, liveFraction)) * 100}%` }}
             aria-label="Train is here now"
           />
         )}
       </div>
-      <div className="mt-1.5 flex items-center justify-between text-[0.625rem] text-faint">
-        <span className={cn(boardsAtOrigin && "text-dim")}>{originCode}</span>
-        <span className="text-dim">
+      <div className="mt-1.5 flex items-center justify-between text-[0.625rem] text-muted-foreground">
+        <span className={cn(boardsAtOrigin && "text-muted-foreground")}>{originCode}</span>
+        <span className="text-muted-foreground">
           {boardCode} → {alightCode}
         </span>
-        <span className={cn(alightsAtEnd && "text-dim")}>{destinationCode}</span>
+        <span className={cn(alightsAtEnd && "text-muted-foreground")}>{destinationCode}</span>
       </div>
     </div>
   );
@@ -70,8 +70,8 @@ function Marker({ at, filled }: { at: number; filled: boolean }) {
   return (
     <span
       className={cn(
-        "absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-brand",
-        filled ? "bg-brand" : "bg-[color:var(--surface)]"
+        "absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary",
+        filled ? "bg-primary" : "bg-[color:var(--card)]"
       )}
       style={{ left: `${at}%` }}
       aria-hidden

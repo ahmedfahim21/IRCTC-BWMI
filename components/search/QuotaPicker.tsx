@@ -25,11 +25,11 @@ export function QuotaPicker({
           type="button"
           disabled={disabled}
           aria-disabled={disabled}
-          className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border"
+          className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-[0.8125rem] text-muted-foreground transition-colors hover:border-input hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border"
         >
-          <span className="text-faint">Quota</span>
-          <span className="text-text">{GLOSSARY[value].short}</span>
-          <ChevronDown className="size-3 text-faint" aria-hidden />
+          <span className="text-muted-foreground">Quota</span>
+          <span className="text-foreground">{GLOSSARY[value].short}</span>
+          <ChevronDown className="size-3 text-muted-foreground" aria-hidden />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -37,7 +37,7 @@ export function QuotaPicker({
           sideOffset={6}
           align="end"
           collisionPadding={12}
-          className="z-50 w-72 rounded-xl border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
+          className="z-50 w-72 rounded-xl border border-border bg-card p-1.5 shadow-[var(--shadow-lg)]"
         >
           {QUOTAS.map((quota) => {
             const entry = GLOSSARY[quota];
@@ -48,17 +48,17 @@ export function QuotaPicker({
                 onClick={() => onChange(quota)}
                 className={cn(
                   "flex w-full gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
-                  value === quota ? "bg-surface-2" : "hover:bg-surface-2"
+                  value === quota ? "bg-muted" : "hover:bg-muted"
                 )}
               >
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
-                    <span className="font-mono text-[0.6875rem] text-brand">{quota}</span>
-                    <span className="text-[0.8125rem] text-text">{entry.short}</span>
+                    <span className="font-mono text-[0.6875rem] text-primary">{quota}</span>
+                    <span className="text-[0.8125rem] text-foreground">{entry.short}</span>
                   </span>
-                  <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-faint">{entry.full}</span>
+                  <span className="mt-0.5 block text-[0.6875rem] leading-relaxed text-muted-foreground">{entry.full}</span>
                 </span>
-                {value === quota && <Check className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />}
+                {value === quota && <Check className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />}
               </button>
             );
           })}

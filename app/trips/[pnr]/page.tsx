@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { TripDetail } from "./TripDetail";
 
 export async function generateMetadata({ params }: { params: Promise<{ pnr: string }> }) {

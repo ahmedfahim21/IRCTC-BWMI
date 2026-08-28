@@ -3,6 +3,7 @@
 import type { PunctualityDay } from "@/lib/types";
 import { formatDateShort } from "@/lib/domain/time";
 import { cn } from "@/components/ui/cn";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * How late this train actually ran, over its last 30 outings. Sets expectations
@@ -20,16 +21,16 @@ export function PunctualitySparkline({ history }: { history: PunctualityDay[] })
   return (
     <div>
       <div className="mb-2.5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <p className="text-[0.8125rem] text-dim">
+        <p className="text-[0.8125rem] text-muted-foreground">
           Ran within 15 minutes of schedule on{" "}
-          <span className="tnum text-text">
+          <span className="tnum text-foreground">
             {onTime} of {delays.length}
           </span>{" "}
           recent trips
         </p>
-        <p className="text-[0.75rem] text-faint">
-          typical delay <span className="tnum text-dim">{median} min</span>
-          {cancellations > 0 && <span className="ml-2 text-warn">{cancellations} cancelled</span>}
+        <p className="text-[0.75rem] text-muted-foreground">
+          typical delay <span className="tnum text-muted-foreground">{median} min</span>
+          {cancellations > 0 && <span className="ml-2 text-warning">{cancellations} cancelled</span>}
         </p>
       </div>
 
@@ -37,24 +38,33 @@ export function PunctualitySparkline({ history }: { history: PunctualityDay[] })
         {history.map((day) => {
           const height = day.cancelled ? 100 : Math.max(4, (day.delayMins / max) * 100);
           const tone = day.cancelled
-            ? "bg-faint"
+            ? "bg-muted-foreground"
             : day.delayMins <= 15
-              ? "bg-ok"
+              ? "bg-success"
               : day.delayMins <= 45
-                ? "bg-warn"
-                : "bg-danger";
+                ? "bg-warning"
+                : "bg-destructive";
           return (
+            <Tooltip key={day.date}>
+              <TooltipTrigger
+                asChild
+                aria-label={`${formatDateShort(day.date)} — ${day.cancelled ? "cancelled" : `${day.delayMins} min late`}`}
+              >
             <span
-              key={day.date}
-              title={`${formatDateShort(day.date)} — ${day.cancelled ? "cancelled" : `${day.delayMins} min late`}`}
-              className={cn("flex-1 rounded-sm transition-opacity hover:opacity-70", tone, day.cancelled && "opacity-40")}
+              tabIndex={-1}
+              className={cn("block flex-1 rounded-sm transition-opacity hover:opacity-70", tone, day.cancelled && "opacity-40")}
               style={{ height: `${height}%` }}
             />
+              </TooltipTrigger>
+              <TooltipContent>
+                {`${formatDateShort(day.date)} — ${day.cancelled ? "cancelled" : `${day.delayMins} min late`}`}
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
 
-      <div className="mt-1.5 flex justify-between text-[0.625rem] text-faint">
+      <div className="mt-1.5 flex justify-between text-[0.625rem] text-muted-foreground">
         <span>{formatDateShort(history[0].date)}</span>
         <span>{formatDateShort(history[history.length - 1].date)}</span>
       </div>

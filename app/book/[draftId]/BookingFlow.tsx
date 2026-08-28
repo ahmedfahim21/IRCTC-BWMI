@@ -14,9 +14,16 @@ import { PassengerEditor, blankPassenger, saveRoster } from "@/components/book/P
 import { FareSummary, RefundPreview } from "@/components/book/FareSummary";
 import { HoldBanner } from "@/components/book/HoldBanner";
 import { TatkalPanel, BookingQueue } from "@/components/book/TatkalPanel";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { formatRupees } from "@/components/availability/ClassCell";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/components/ui/cn";
 import { useAgentIntentDrain, useAgentPublish } from "@/lib/agent/agentStore";
 import { applyBookingOptionsPatch, normalizeSetOptionsInput } from "@/lib/agent/normalizeToolInput";
@@ -215,6 +222,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     onSuccess: ({ booking }) => {
       saveRoster(passengers);
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      toast.success(`Booking confirmed — PNR ${booking.pnr}`);
       router.push(`/trips/${booking.pnr}`);
     },
     onError: (cause) => {
@@ -329,13 +337,14 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <ErrorState error={error ?? new Error("This booking draft is no longer available")} onRetry={() => refetch()} />
-        <button
+        <Button
           type="button"
+          variant="link"
           onClick={() => router.push("/")}
-          className="mt-3 text-[0.8125rem] text-brand underline decoration-dotted underline-offset-2"
+          className="mt-3 h-auto p-0 text-[0.8125rem] decoration-dotted"
         >
           Start a new search
-        </button>
+        </Button>
       </div>
     );
 
@@ -360,7 +369,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-4 px-4 py-20 sm:px-6">
         <BookingQueue position={Math.max(1, queuePosition)} total={4200} />
-        <p className="text-center text-[0.75rem] text-faint">Confirming {namedPassengers.length} passenger{namedPassengers.length === 1 ? "" : "s"} on {train.number}</p>
+        <p className="text-center text-[0.75rem] text-muted-foreground">Confirming {namedPassengers.length} passenger{namedPassengers.length === 1 ? "" : "s"} on {train.number}</p>
       </div>
     );
   }
@@ -369,19 +378,20 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     <div className="mx-auto max-w-4xl px-4 pb-28 pt-5 sm:px-6">
       <HoldBanner holdExpiresAt={draft.holdExpiresAt} saving={savePatch.isPending} />
 
-      <header className="card mt-3 p-4">
+      <Card className="mt-3 gap-0 py-0 shadow-none">
+        <CardContent className="p-4">
         <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-          <span className="tnum text-[0.8125rem] text-faint">{train.number}</span>
-          <h1 className="text-[1.0625rem] text-text">{train.name}</h1>
+          <span className="tnum text-[0.8125rem] text-muted-foreground">{train.number}</span>
+          <h1 className="text-[1.0625rem] text-foreground">{train.name}</h1>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[0.875rem]">
-          <span className="tnum text-text">{formatMinute(fromStop?.departureMinute ?? 0)}</span>
-          <span className="text-dim">{stations[draft.fromCode]?.name}</span>
-          <ArrowRight className="size-3.5 text-faint" aria-hidden />
-          <span className="tnum text-text">{formatMinute(toStop?.arrivalMinute ?? 0)}</span>
-          <span className="text-dim">{stations[draft.toCode]?.name}</span>
+          <span className="tnum text-foreground">{formatMinute(fromStop?.departureMinute ?? 0)}</span>
+          <span className="text-muted-foreground">{stations[draft.fromCode]?.name}</span>
+          <ArrowRight className="size-3.5 text-muted-foreground" aria-hidden />
+          <span className="tnum text-foreground">{formatMinute(toStop?.arrivalMinute ?? 0)}</span>
+          <span className="text-muted-foreground">{stations[draft.toCode]?.name}</span>
         </div>
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[0.75rem] text-faint">
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[0.75rem] text-muted-foreground">
           <span>{formatWeekday(draft.journeyDate)} {formatDateShort(draft.journeyDate)}</span>
           <span>·</span>
           <span className="font-mono">{draft.classCode}</span>
@@ -394,7 +404,8 @@ export function BookingFlow({ draftId }: { draftId: string }) {
             </>
           )}
         </p>
-      </header>
+        </CardContent>
+      </Card>
 
       {showTatkal && (
         <div className="mt-3">
@@ -412,28 +423,29 @@ export function BookingFlow({ draftId }: { draftId: string }) {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div className="min-w-0 space-y-4">
-          <section className="card p-4">
-            <h2 className="mb-1 text-[0.9375rem] text-text">Choose your berth</h2>
+          <Card className="gap-0 py-0 shadow-none">
+            <CardContent className="p-4">
+            <h2 className="mb-1 text-[0.9375rem] text-foreground">Choose your berth</h2>
             {availability && (
-              <p className="mb-3 text-[0.8125rem] text-dim">
+              <p className="mb-3 text-[0.8125rem] text-muted-foreground">
                 <span
                   className={cn(
                     "tnum",
-                    availability.state === "available" ? "text-ok" : availability.state === "rac" ? "text-warn" : "text-danger"
+                    availability.state === "available" ? "text-success" : availability.state === "rac" ? "text-warning" : "text-destructive"
                   )}
                 >
                   {availability.label}
                 </span>
-                <span className="ml-2 text-faint">{explainStatus(availability.label)}</span>
+                <span className="ml-2 text-muted-foreground">{explainStatus(availability.label)}</span>
               </p>
             )}
 
             {coachData ? (
               <>
                 {!canChooseBerth && (
-                  <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border bg-surface-2 p-3">
-                    <Info className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
-                    <p className="text-[0.8125rem] leading-relaxed text-dim">
+                  <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border bg-muted p-3">
+                    <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+                    <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">
                       {availability?.state === "rac"
                         ? "RAC tickets share a side berth, so you can't claim one yet. The diagram still shows the coach."
                         : "This class is waitlisted, so you can't claim a berth yet. The diagram still shows the coach."}
@@ -459,10 +471,12 @@ export function BookingFlow({ draftId }: { draftId: string }) {
             ) : (
               <SkeletonRows rows={3} />
             )}
-          </section>
+            </CardContent>
+          </Card>
 
-          <section className="card p-4">
-            <h2 className="mb-3 text-[0.9375rem] text-text">Who&rsquo;s travelling</h2>
+          <Card className="gap-0 py-0 shadow-none">
+            <CardContent className="p-4">
+            <h2 className="mb-3 text-[0.9375rem] text-foreground">Who&rsquo;s travelling</h2>
             <PassengerEditor
               passengers={passengers}
               onChange={(next) => {
@@ -478,7 +492,8 @@ export function BookingFlow({ draftId }: { draftId: string }) {
               }}
             />
 
-            <div className="mt-4 space-y-2 border-t border-border pt-3.5">
+            <Separator className="my-4" />
+            <div className="space-y-2 pt-0.5">
               <Toggle
                 label="Keep us in the same coach"
                 hint="Where there's room for everyone together"
@@ -504,38 +519,42 @@ export function BookingFlow({ draftId }: { draftId: string }) {
                 onChange={(autoUpgrade) => setOptions({ ...options, autoUpgrade })}
               />
             </div>
-          </section>
+            </CardContent>
+          </Card>
 
-          <section className="card p-4">
-            <h2 className="mb-3 text-[0.9375rem] text-text">Where to send the ticket</h2>
+          <Card className="gap-0 py-0 shadow-none">
+            <CardContent className="p-4">
+            <h2 className="mb-3 text-[0.9375rem] text-foreground">Where to send the ticket</h2>
             <div className="flex flex-wrap gap-2">
-              <label className="min-w-[9rem] flex-1">
-                <span className="eyebrow mb-1 block">Mobile</span>
-                <input
+              <div className="min-w-[9rem] flex-1">
+                <Label className="eyebrow mb-1 block">Mobile</Label>
+                <Input
                   value={contact.phone}
                   onChange={(e) => setContact({ ...contact, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
                   inputMode="numeric"
                   placeholder="10 digits"
-                  className="tnum h-10 w-full rounded-lg border border-border bg-surface px-2.5 text-[0.875rem] text-text outline-none transition-colors focus:border-brand placeholder:text-faint"
+                  className="tnum h-10 rounded-lg border-border bg-card px-2.5 text-[0.875rem] focus-visible:border-primary"
                 />
-              </label>
-              <label className="min-w-[11rem] flex-[2]">
-                <span className="eyebrow mb-1 block">Email (optional)</span>
-                <input
+              </div>
+              <div className="min-w-[11rem] flex-[2]">
+                <Label className="eyebrow mb-1 block">Email (optional)</Label>
+                <Input
                   value={contact.email}
                   onChange={(e) => setContact({ ...contact, email: e.target.value })}
                   type="email"
                   placeholder="you@example.com"
-                  className="h-10 w-full rounded-lg border border-border bg-surface px-2.5 text-[0.875rem] text-text outline-none transition-colors focus:border-brand placeholder:text-faint"
+                  className="h-10 rounded-lg border-border bg-card px-2.5 text-[0.875rem] focus-visible:border-primary"
                 />
-              </label>
+              </div>
             </div>
-          </section>
+            </CardContent>
+          </Card>
         </div>
 
         <aside className="min-w-0 space-y-3 lg:sticky lg:top-[4.5rem]">
-          <div className="card p-4">
-            <h2 className="mb-3 text-[0.9375rem] text-text">What you&rsquo;ll pay</h2>
+          <Card className="gap-0 py-0 shadow-none">
+            <CardContent className="p-4">
+            <h2 className="mb-3 text-[0.9375rem] text-foreground">What you&rsquo;ll pay</h2>
             {availability ? (
               <FareSummary
                 fare={{ ...availability.fare, total: totalFare, baseFare: availability.fare.baseFare * Math.max(1, passengers.length) }}
@@ -544,31 +563,33 @@ export function BookingFlow({ draftId }: { draftId: string }) {
             ) : (
               <SkeletonRows rows={1} />
             )}
-          </div>
+            </CardContent>
+          </Card>
 
           {refund && <RefundPreview quote={refund.quote} />}
 
-          <div className="card p-4">
-            <button
+          <Card className="gap-0 py-0 shadow-none">
+            <CardContent className="p-4">
+            <Button
               type="button"
               disabled={!ready || confirm.isPending}
               onClick={() => {
                 setConfirmError(null);
                 confirm.mutate();
               }}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-12 w-full gap-2 rounded-xl text-[0.9375rem] hover:opacity-90"
             >
               <Check className="size-4" aria-hidden />
               Confirm and pay {formatRupees(totalFare)}
-            </button>
+            </Button>
 
-            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[0.6875rem] text-faint">
+            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[0.6875rem] text-muted-foreground">
               <Lock className="size-3" aria-hidden />
               No CAPTCHA. No session timeout.
             </p>
 
             {!ready && (
-              <p className="mt-2 text-center text-[0.75rem] text-warn">
+              <p className="mt-2 text-center text-[0.75rem] text-warning">
                 {namedPassengers.length !== passengers.length
                   ? "Every passenger needs a name"
                   : "Add a mobile number so we can send the ticket"}
@@ -576,11 +597,12 @@ export function BookingFlow({ draftId }: { draftId: string }) {
             )}
 
             {confirmError && (
-              <p role="alert" className="mt-2 rounded-lg bg-danger-soft px-2.5 py-2 text-[0.75rem] text-danger">
+              <p role="alert" className="mt-2 rounded-lg bg-destructive-soft px-2.5 py-2 text-[0.75rem] text-destructive">
                 {confirmError}
               </p>
             )}
-          </div>
+            </CardContent>
+          </Card>
         </aside>
       </div>
     </div>
@@ -599,27 +621,12 @@ function Toggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-start gap-2.5 rounded-lg py-1.5 text-left transition-colors hover:bg-surface-2"
-    >
-      <span
-        className={cn(
-          "mt-0.5 flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors",
-          checked ? "bg-brand" : "bg-surface-3"
-        )}
-        aria-hidden
-      >
-        <span className={cn("size-3 rounded-full bg-[color:var(--surface)] transition-transform", checked && "translate-x-3")} />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[0.8125rem] text-text">{label}</span>
-        {hint && <span className="block text-[0.6875rem] leading-relaxed text-faint">{hint}</span>}
-      </span>
-    </button>
+    <div className="flex w-full items-start gap-2.5 rounded-lg py-1.5">
+      <Switch id={label} checked={checked} onCheckedChange={onChange} aria-label={label} className="mt-0.5" />
+      <Label htmlFor={label} className="min-w-0 cursor-pointer font-normal">
+        <span className="block text-[0.8125rem] text-foreground">{label}</span>
+        {hint && <span className="block text-[0.6875rem] leading-relaxed text-muted-foreground">{hint}</span>}
+      </Label>
+    </div>
   );
 }

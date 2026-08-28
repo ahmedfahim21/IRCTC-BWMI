@@ -339,7 +339,7 @@ export function SlippyRasterMap({
     <RailMapContext.Provider value={api}>
       <div
         ref={wrapRef}
-        className={cn("relative size-full min-h-[12rem] overflow-hidden bg-surface-2", className)}
+        className={cn("relative size-full min-h-[12rem] overflow-hidden bg-muted", className)}
         onPointerDown={
           interactive
             ? (event) => {
@@ -377,7 +377,7 @@ export function SlippyRasterMap({
         }
       >
         <canvas ref={canvasRef} className="absolute inset-0 size-full cursor-grab" role="img" aria-label="Map of India" />
-        <p className="pointer-events-none absolute bottom-1 left-1 z-[5] text-[0.5625rem] text-faint">
+        <p className="pointer-events-none absolute bottom-1 left-1 z-[5] text-[0.5625rem] text-muted-foreground">
           {basemap === "satellite"
             ? "Sentinel-2 cloudless · EOX"
             : streetHostRef.current === "osm"

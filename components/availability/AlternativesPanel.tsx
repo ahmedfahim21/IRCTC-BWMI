@@ -38,10 +38,10 @@ export function AlternativesPanel({
         return (
           <div key={group.kind}>
             <div className="mb-2.5 flex items-baseline gap-2">
-              <Icon className="size-4 shrink-0 translate-y-0.5 text-brand" aria-hidden />
+              <Icon className="size-4 shrink-0 translate-y-0.5 text-primary" aria-hidden />
               <div>
-                <h3 className="text-[0.9375rem] text-text">{group.title}</h3>
-                <p className="mt-0.5 text-[0.75rem] leading-relaxed text-faint">{group.rationale}</p>
+                <h3 className="text-[0.9375rem] text-foreground">{group.title}</h3>
+                <p className="mt-0.5 text-[0.75rem] leading-relaxed text-muted-foreground">{group.rationale}</p>
               </div>
             </div>
 
@@ -50,26 +50,26 @@ export function AlternativesPanel({
                 <li key={item.id}>
                   <Link
                     href={`/search?from=${item.fromCode}&to=${item.toCode}&date=${item.dateIso}&quota=${item.quota}`}
-                    className="card flex h-full flex-col gap-2 p-3 transition-colors hover:border-border-strong"
+                    className="rounded-xl border bg-card flex h-full flex-col gap-2 p-3 transition-colors hover:border-input"
                   >
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-[0.8125rem] text-text">{item.headline}</span>
-                      <span className="tnum shrink-0 text-[0.75rem] text-dim">{formatRupees(item.fareTotal)}</span>
+                      <span className="truncate text-[0.8125rem] text-foreground">{item.headline}</span>
+                      <span className="tnum shrink-0 text-[0.75rem] text-muted-foreground">{formatRupees(item.fareTotal)}</span>
                     </div>
 
-                    <p className="text-[0.75rem] text-dim">{item.detail}</p>
+                    <p className="text-[0.75rem] text-muted-foreground">{item.detail}</p>
 
                     <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-1">
-                      <span className="tnum rounded bg-ok-soft px-1.5 py-0.5 text-[0.6875rem] text-ok">
+                      <span className="tnum rounded bg-success-soft px-1.5 py-0.5 text-[0.6875rem] text-success">
                         {item.availabilityLabel}
                       </span>
-                      <span className="text-[0.6875rem] text-faint">
+                      <span className="text-[0.6875rem] text-muted-foreground">
                         {formatDateShort(item.dateIso)} · {name(item.fromCode)} → {name(item.toCode)}
                       </span>
                     </div>
 
                     {item.tradeoff && (
-                      <p className={cn("text-[0.6875rem] leading-relaxed text-warn")}>{item.tradeoff}</p>
+                      <p className={cn("text-[0.6875rem] leading-relaxed text-warning")}>{item.tradeoff}</p>
                     )}
                   </Link>
                 </li>

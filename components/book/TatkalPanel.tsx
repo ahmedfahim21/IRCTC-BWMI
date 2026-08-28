@@ -35,20 +35,20 @@ export function TatkalPanel({
   const seconds = totalSeconds % 60;
 
   return (
-    <div className={cn("rounded-xl border p-3.5", armed ? "border-warn/50 bg-warn-soft" : "border-border bg-surface-2")}>
+    <div className={cn("rounded-xl border p-3.5", armed ? "border-warning/50 bg-warning-soft" : "border-border bg-muted")}>
       <div className="mb-2 flex items-center gap-2">
-        <Zap className={cn("size-4", armed ? "text-warn" : "text-faint")} aria-hidden />
-        <span className="text-[0.875rem] text-text">Tatkal Ready</span>
-        {armed && <span className="ml-auto rounded bg-warn px-1.5 py-0.5 text-[0.625rem] text-[color:var(--surface)]">Armed</span>}
+        <Zap className={cn("size-4", armed ? "text-warning" : "text-muted-foreground")} aria-hidden />
+        <span className="text-[0.875rem] text-foreground">Tatkal Ready</span>
+        {armed && <span className="ml-auto rounded bg-warning px-1.5 py-0.5 text-[0.625rem] text-[color:var(--card)]">Armed</span>}
       </div>
 
-      <p className="mb-3 text-[0.8125rem] leading-relaxed text-dim">
+      <p className="mb-3 text-[0.8125rem] leading-relaxed text-muted-foreground">
         {open ? (
           <>Tatkal booking for {classCode} is open now. Confirm below — everything is already filled in.</>
         ) : (
           <>
             Tatkal for {classCode} opens in{" "}
-            <span className="tnum text-text">
+            <span className="tnum text-foreground">
               {hours > 0 && `${hours}h `}
               {String(minutes).padStart(2, "0")}m {String(seconds).padStart(2, "0")}s
             </span>
@@ -63,8 +63,8 @@ export function TatkalPanel({
         className={cn(
           "w-full rounded-lg border px-3 py-2 text-[0.8125rem] transition-colors",
           armed
-            ? "border-warn bg-transparent text-warn hover:bg-warn/10"
-            : "border-border-strong text-text hover:bg-surface-3"
+            ? "border-warning bg-transparent text-warning hover:bg-warning/10"
+            : "border-input text-foreground hover:bg-secondary"
         )}
       >
         {armed ? "Disarm" : "Save this as Tatkal Ready"}
@@ -80,15 +80,15 @@ export function TatkalPanel({
 export function BookingQueue({ position, total }: { position: number; total: number }) {
   const progress = Math.max(2, Math.round(((total - position) / total) * 100));
   return (
-    <div className="rounded-xl border border-border bg-surface-2 p-4 text-center" role="status" aria-live="polite">
-      <p className="tnum text-[1.75rem] leading-none text-text">#{position.toLocaleString("en-IN")}</p>
-      <p className="mt-1.5 text-[0.8125rem] text-dim">
+    <div className="rounded-xl border border-border bg-muted p-4 text-center" role="status" aria-live="polite">
+      <p className="tnum text-[1.75rem] leading-none text-foreground">#{position.toLocaleString("en-IN")}</p>
+      <p className="mt-1.5 text-[0.8125rem] text-muted-foreground">
         in the queue, of {total.toLocaleString("en-IN")} people booking this train right now
       </p>
-      <div className="mx-auto mt-3 h-1.5 max-w-xs overflow-hidden rounded-full bg-surface-3">
-        <div className="h-full rounded-full bg-brand transition-[width] duration-700" style={{ width: `${progress}%` }} />
+      <div className="mx-auto mt-3 h-1.5 max-w-xs overflow-hidden rounded-full bg-secondary">
+        <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${progress}%` }} />
       </div>
-      <p className="mt-2.5 text-[0.75rem] text-faint">
+      <p className="mt-2.5 text-[0.75rem] text-muted-foreground">
         Roughly {Math.max(1, Math.ceil(position / 140))} seconds left. Your place is held — don&rsquo;t reload.
       </p>
     </div>

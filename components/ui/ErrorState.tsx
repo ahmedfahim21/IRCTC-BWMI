@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertTriangle, RotateCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
+import { Button } from "./button";
 
 /**
  * A visible failure. Nothing in this app falls back to placeholder data to keep
@@ -9,22 +11,16 @@ import { AlertTriangle, RotateCw } from "lucide-react";
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const message = error instanceof Error ? error.message : "Something went wrong";
   return (
-    <div className="card flex flex-col items-start gap-3 border-danger/30 bg-danger-soft p-5" role="alert">
-      <div className="flex items-center gap-2 text-danger">
-        <AlertTriangle className="size-4 shrink-0" aria-hidden />
-        <span className="text-sm">Couldn&rsquo;t load this</span>
-      </div>
-      <p className="text-[0.8125rem] leading-relaxed text-dim">{message}</p>
+    <Alert variant="destructive" className="border-destructive/30 bg-destructive-soft">
+      <AlertTriangle className="size-4" aria-hidden />
+      <AlertTitle>Couldn&rsquo;t load this</AlertTitle>
+      <AlertDescription>{message}</AlertDescription>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-[0.8125rem] text-text transition-colors hover:bg-surface-2"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={onRetry} className="mt-2">
           <RotateCw className="size-3.5" aria-hidden />
           Try again
-        </button>
+        </Button>
       )}
-    </div>
+    </Alert>
   );
 }
