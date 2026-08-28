@@ -48,6 +48,28 @@ export interface LiveMapSnapshot {
   trains: PackedTrain[];
 }
 
+/** List/React identity. Index is required because train numbers repeat in the live pack. */
+export function packedTrainKey(train: PackedTrain, index: number): string {
+  return `${index}:${train[0]}:${train[2]}:${train[3]}`;
+}
+
+function packedTupleId(train: PackedTrain): string {
+  return train.join("\u001f");
+}
+
+/** Drop bitwise-identical tuples. Same number at two positions is kept twice. */
+export function uniquePackedTrains(trains: PackedTrain[]): PackedTrain[] {
+  const seen = new Set<string>();
+  const out: PackedTrain[] = [];
+  for (const train of trains) {
+    const id = packedTupleId(train);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(train);
+  }
+  return out;
+}
+
 const round = (n: number) => Math.round(n * 1000) / 1000;
 
 export async function liveMapSnapshot(): Promise<LiveMapSnapshot | null> {
@@ -74,5 +96,6 @@ export async function liveMapSnapshot(): Promise<LiveMapSnapshot | null> {
     ]);
   }
 
-  return { updatedAt: new Date().toISOString(), total: trains.length, trains };
+  const unique = uniquePackedTrains(trains);
+  return { updatedAt: new Date().toISOString(), total: unique.length, trains: unique };
 }

@@ -17,6 +17,7 @@ import {
   toTrainType,
   trainFromResponse,
 } from "@/lib/railradar/map";
+import { packedTrainKey, uniquePackedTrains, type PackedTrain } from "@/lib/railradar/liveMap";
 import { resolveLiveStationCode, toLiveCode, toMockCode } from "@/lib/railradar/stations";
 import type {
   RrCoachesResponse,
@@ -240,5 +241,18 @@ describe("RailRadar mapping", () => {
         expect(availability.sampleSize).toBe(0);
       }
     });
+  });
+});
+
+describe("packed live map identity", () => {
+  const a: PackedTrain = ["00168", "A", 28.6, 77.2, 5, 28.7, 77.3];
+  const b: PackedTrain = ["00168", "B", 19.0, 72.8, 5, 19.1, 72.9];
+
+  it("keeps the same number at two positions and drops bitwise copies", () => {
+    expect(uniquePackedTrains([a, a, b])).toEqual([a, b]);
+  });
+
+  it("keys two 00168 rows differently", () => {
+    expect(packedTrainKey(a, 0)).not.toBe(packedTrainKey(b, 1));
   });
 });

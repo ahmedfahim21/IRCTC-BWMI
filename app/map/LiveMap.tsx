@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { RadioTower, Search } from "lucide-react";
-import type { PackedTrain } from "@/lib/railradar/liveMap";
+import { packedTrainKey, type PackedTrain } from "@/lib/railradar/liveMap";
 import { api } from "@/lib/apiClient";
 import { typeColourVar } from "@/lib/railradar/trainTypes";
 import { TypeLegend } from "@/components/map/TypeLegend";
@@ -164,7 +164,7 @@ export function LiveMap() {
               const active = item.number === selectedNumber;
               return (
                 <button
-                  key={`${item.number}:${item.lat}:${item.lng}:${index}`}
+                  key={packedTrainKey(train, index)}
                   type="button"
                   role="option"
                   aria-selected={active}
