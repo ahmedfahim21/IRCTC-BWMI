@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import * as Popover from "@radix-ui/react-popover";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/components/ui/cn";
 import { addDays, todayIso } from "@/lib/domain/time";
 
@@ -122,9 +122,9 @@ export function DatePicker({
   const canNext = viewY < maxP.y || (viewY === maxP.y && viewM < maxP.m);
 
   return (
-    <Popover
+    <Popover.Root
       open={open}
-      onOpenChange={(next) => {
+      onOpenChange={(next: boolean) => {
         setOpen(next);
         if (next) {
           setViewY(selected.y);
@@ -132,7 +132,7 @@ export function DatePicker({
         }
       }}
     >
-      <PopoverTrigger asChild>
+      <Popover.Trigger asChild>
         <button
           type="button"
           disabled={disabled}
@@ -142,10 +142,13 @@ export function DatePicker({
           <Calendar className="size-4 shrink-0 text-dim" aria-hidden />
           <span className="truncate">{formatTrigger(date)}</span>
         </button>
-      </PopoverTrigger>
-      <PopoverContent
+      </Popover.Trigger>
+      <Popover.Portal>
+      <Popover.Content
         align="start"
-        className="w-[20.5rem] rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-md)]"
+        sideOffset={6}
+        collisionPadding={12}
+        className="z-50 w-[20.5rem] rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-md)]"
       >
         <div className="mb-2 flex items-center gap-1">
           <button
@@ -247,7 +250,8 @@ export function DatePicker({
             );
           })}
         </div>
-      </PopoverContent>
-    </Popover>
+      </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
