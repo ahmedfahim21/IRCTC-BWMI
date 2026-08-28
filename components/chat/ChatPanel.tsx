@@ -16,6 +16,9 @@ import { getToolName, isToolUIPart } from "ai";
 import { cn } from "@/components/ui/cn";
 import { useAgentChat } from "@/lib/agent/ChatProvider";
 import { hasPendingUiToolCalls } from "@/lib/agent/resolveToolOutput";
+import { ChatMarkdown } from "./ChatMarkdown";
+import { ToolCallCard } from "./ToolCallCard";
+import { isRecord } from "./toolCallDisplay";
 
 type Dock = "right" | "left" | "bottom";
 const DOCK_KEY = "irctc.chatDock";
@@ -34,14 +37,12 @@ function readDock(pathname: string): Dock {
   return "right";
 }
 
-function formatToolOutput(output: unknown): string | null {
-  if (!output || typeof output !== "object") return null;
-  const record = output as Record<string, unknown>;
-  if (typeof record.error === "string") return record.error;
-  if (typeof record.detail === "string") return record.detail;
-  if (typeof record.text === "string") return record.text;
-  if (typeof record.action === "string") return `Done: ${record.action}`;
-  return null;
+function toolPartInput(part: { input?: unknown }): Record<string, unknown> | null {
+  return isRecord(part.input) ? part.input : null;
+}
+
+function toolPartError(part: { errorText?: unknown }): string | undefined {
+  return typeof part.errorText === "string" ? part.errorText : undefined;
 }
 
 /**
@@ -105,7 +106,7 @@ export function ChatPanel() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open booking chat"
-          className="fixed bottom-[7.75rem] right-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-24 sm:right-6"
+          className="fixed bottom-20 right-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-6 sm:right-6"
         >
           <MessageCircle className="size-5" aria-hidden />
         </button>
@@ -167,7 +168,7 @@ export function ChatPanel() {
             </button>
           </header>
 
-          <div ref={scroller} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
+          <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
             {messages.length === 0 && (
               <div className="space-y-3">
                 <p className="text-[0.8125rem] leading-relaxed text-dim">
@@ -187,58 +188,45 @@ export function ChatPanel() {
                 </div>
               </div>
             )}
-            {messages.map((message) => (
-              <div key={message.id} className={cn("text-[0.8125rem] leading-relaxed", message.role === "user" ? "text-text" : "text-dim")}>
-                <p className="mb-0.5 text-[0.625rem] uppercase tracking-wider text-faint">
-                  {message.role === "user" ? "You" : "Assistant"}
-                </p>
-                {(message.parts ?? []).map((part, index) => {
-                  if (part.type === "text" && part.text) {
-                    return (
-                      <p key={`${message.id}-${index}`} className="whitespace-pre-wrap">
-                        {part.text}
+            {messages.map((message) => {
+              const isUser = message.role === "user";
+              return (
+                <div key={message.id} className={cn(isUser && "flex justify-end")}>
+                  <div className={cn("space-y-1.5", isUser && "max-w-[92%] rounded-lg bg-surface-2 px-2.5 py-2")}>
+                    {!isUser && (
+                      <p className="flex items-center gap-1 text-[0.625rem] uppercase tracking-wider text-faint">
+                        <MessageCircle className="size-3" aria-hidden />
+                        Assistant
                       </p>
-                    );
-                  }
-                  if (isToolUIPart(part)) {
-                    const name = getToolName(part);
-                    const state = "state" in part ? String(part.state) : "";
-                    const failed = state === "output-error";
-                    const done = state === "output-available";
-                    const input = "input" in part && part.input && typeof part.input === "object" ? (part.input as Record<string, unknown>) : null;
-                    const output = "output" in part ? part.output : null;
-                    const summary = input
-                      ? Object.entries(input)
-                          .slice(0, 3)
-                          .map(([key, value]) => `${key} ${String(value)}`)
-                          .join(" · ")
-                      : "";
-                    const resultText = formatToolOutput(output);
-                    const outputFailed = Boolean(
-                      output && typeof output === "object" && (output as { ok?: boolean }).ok === false
-                    );
-                    return (
-                      <div
-                        key={`${message.id}-${index}`}
-                        data-testid="chat-tool"
-                        className={cn(
-                          "rounded-md border px-2 py-1 font-mono text-[0.6875rem]",
-                          failed || outputFailed ? "border-danger/40 text-danger" : "border-border text-faint"
-                        )}
-                      >
-                        <p>
-                          {name.replaceAll("_", " ")}
-                          {done ? " · done" : failed ? " · failed" : " · calling"}
-                          {summary ? ` · ${summary}` : ""}
-                        </p>
-                        {resultText && done && <p className="mt-0.5 text-[0.625rem] leading-snug">{resultText}</p>}
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            ))}
+                    )}
+                    {(message.parts ?? []).map((part, index) => {
+                      if (part.type === "text" && part.text) {
+                        return (
+                          <ChatMarkdown
+                            key={`${message.id}-${index}`}
+                            text={part.text}
+                            className="text-text"
+                          />
+                        );
+                      }
+                      if (isToolUIPart(part)) {
+                        return (
+                          <ToolCallCard
+                            key={`${message.id}-${index}`}
+                            name={getToolName(part)}
+                            state={"state" in part ? String(part.state) : ""}
+                            input={toolPartInput(part)}
+                            output={"output" in part ? part.output : null}
+                            errorText={toolPartError(part)}
+                          />
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+              );
+            })}
             {pendingTools && !busy && <p className="text-[0.75rem] text-faint">Updating the screen…</p>}
             {busy && <p className="text-[0.75rem] text-faint">Working…</p>}
             {error && (

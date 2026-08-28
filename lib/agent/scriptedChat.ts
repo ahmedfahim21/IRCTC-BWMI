@@ -233,14 +233,14 @@ export function planFromTranscript(text: string, session: SearchSession = defaul
   if (/\b(delhi)\b/.test(lower) && /\b(mumbai|bombay)\b/.test(lower) && !/\b(ndls|new delhi|nzm|dli)\b/.test(lower)) {
     return [
       { kind: "tool", name: "lookup_station", args: { query: "Delhi" } },
-      { kind: "text", text: "Delhi has more than one station. NDLS (New Delhi) and NZM (Hazrat Nizamuddin) are the usual choices." },
+      { kind: "text", text: "Delhi has more than one station. **NDLS (New Delhi)** and **NZM (Hazrat Nizamuddin)** are the usual choices." },
     ];
   }
 
   if (/\bonly delhi\b|\bambiguous\b|^delhi$/.test(lower)) {
     return [
       { kind: "tool", name: "lookup_station", args: { query: "Delhi" } },
-      { kind: "text", text: "Delhi has more than one station. NDLS (New Delhi) and NZM (Hazrat Nizamuddin) are the usual choices." },
+      { kind: "text", text: "Delhi has more than one station. **NDLS (New Delhi)** and **NZM (Hazrat Nizamuddin)** are the usual choices." },
     ];
   }
 
