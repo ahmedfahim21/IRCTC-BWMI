@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { EyeOff, Eye } from "lucide-react";
 import type { LiveStatus, ScheduleStop, Station } from "@/lib/types";
 import { formatDelay, formatDuration, formatMinute } from "@/lib/domain/time";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/components/ui/cn";
 
 export interface SpineTimeline {
@@ -74,15 +75,22 @@ export function RailSpine({
           {visible.length} stops
           {!haltsOnly && hiddenCount > 0 && <span className="normal-case"> · {hiddenCount} passed without stopping</span>}
         </p>
-        <button
-          type="button"
-          onClick={() => setHaltsOnly((v) => !v)}
-          aria-pressed={haltsOnly}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-2 py-1 text-[0.6875rem] text-dim transition-colors hover:border-border-strong"
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={haltsOnly ? "halts" : "all"}
+          onValueChange={(value) => value && setHaltsOnly(value === "halts")}
         >
-          {haltsOnly ? <Eye className="size-3" aria-hidden /> : <EyeOff className="size-3" aria-hidden />}
-          {haltsOnly ? "Show every station" : "Halts only"}
-        </button>
+          <ToggleGroupItem value="all" aria-label="Show every station" className="gap-1.5 rounded-lg px-2 py-1 text-[0.6875rem]">
+            <Eye className="size-3" aria-hidden />
+            All stops
+          </ToggleGroupItem>
+          <ToggleGroupItem value="halts" aria-label="Halts only" className="gap-1.5 rounded-lg px-2 py-1 text-[0.6875rem]">
+            <EyeOff className="size-3" aria-hidden />
+            Halts only
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <ol className="relative">
@@ -113,17 +121,17 @@ export function RailSpine({
                 </div>
               )}
 
-              <div className={cn("relative flex gap-3", inHighlight && "bg-brand-soft")}>
+              <div className={cn("relative flex gap-3", inHighlight && "bg-accent")}>
                 {/* Times */}
                 <div className="w-[3.75rem] shrink-0 py-1.5 text-right">
                   {stop.arrivalMinute !== null && (
-                    <p className="tnum text-[0.8125rem] leading-tight text-text">{formatMinute(stop.arrivalMinute)}</p>
+                    <p className="tnum text-[0.8125rem] leading-tight text-foreground">{formatMinute(stop.arrivalMinute)}</p>
                   )}
                   {stop.departureMinute !== null && stop.arrivalMinute !== stop.departureMinute && (
-                    <p className="tnum text-[0.8125rem] leading-tight text-dim">{formatMinute(stop.departureMinute)}</p>
+                    <p className="tnum text-[0.8125rem] leading-tight text-muted-foreground">{formatMinute(stop.departureMinute)}</p>
                   )}
                   {actual && actual.delayMins > 2 && (
-                    <p className="tnum text-[0.6875rem] leading-tight text-warn">
+                    <p className="tnum text-[0.6875rem] leading-tight text-warning">
                       {formatMinute((stop.arrivalMinute ?? stop.departureMinute!) + actual.delayMins)}
                     </p>
                   )}
@@ -143,38 +151,38 @@ export function RailSpine({
                       "relative z-10 mt-2.5 rounded-full transition-colors",
                       stop.isHalt
                         ? isTerminus
-                          ? "size-3 border-2 border-brand bg-[color:var(--surface)]"
-                          : "size-2.5 border-2 border-brand bg-[color:var(--surface)]"
+                          ? "size-3 border-2 border-primary bg-[color:var(--card)]"
+                          : "size-2.5 border-2 border-primary bg-[color:var(--card)]"
                         : "size-1.5 bg-track",
-                      passed && stop.isHalt && "bg-brand",
-                      isHere && "border-ok bg-ok"
+                      passed && stop.isHalt && "bg-primary",
+                      isHere && "border-success bg-success"
                     )}
                     aria-hidden
                   />
                   {isHere && (
-                    <span className="live-ring absolute z-0 mt-2.5 size-2.5 rounded-full text-ok" aria-hidden />
+                    <span className="live-ring absolute z-0 mt-2.5 size-2.5 rounded-full text-success" aria-hidden />
                   )}
                 </div>
 
                 {/* Station */}
                 <div className={cn("min-w-0 flex-1 py-1.5", !stop.isHalt && "opacity-55")}>
                   <div className="flex items-baseline gap-2">
-                    <p className={cn("truncate", stop.isHalt ? "text-[0.875rem] text-text" : "text-[0.75rem] text-dim")}>
+                    <p className={cn("truncate", stop.isHalt ? "text-[0.875rem] text-foreground" : "text-[0.75rem] text-muted-foreground")}>
                       {station?.name ?? stop.stationCode}
                     </p>
                     {stop.platform !== null && (
-                      <span className="tnum shrink-0 rounded bg-surface-3 px-1.5 py-0.5 text-[0.625rem] text-dim">
+                      <span className="tnum shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[0.625rem] text-muted-foreground">
                         PF {stop.platform}
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[0.6875rem] text-faint">
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[0.6875rem] text-muted-foreground">
                     <span className="font-mono">{stop.stationCode}</span>
                     <span className="tnum">{stop.distanceKm} km</span>
-                    {stop.haltMins > 0 && <span className="text-dim">{stop.haltMins} min halt</span>}
+                    {stop.haltMins > 0 && <span className="text-muted-foreground">{stop.haltMins} min halt</span>}
                     {!stop.isHalt && <span>passes through</span>}
                     {actual && actual.delayMins > 2 && (
-                      <span className="text-warn">{formatDelay(actual.delayMins)}</span>
+                      <span className="text-warning">{formatDelay(actual.delayMins)}</span>
                     )}
                   </p>
                 </div>
@@ -195,18 +203,18 @@ export function RailSpine({
 function RunningMarker({ live, nextStationName }: { live: LiveStatus; nextStationName?: string }) {
   return (
     <li className="sticky bottom-3 z-20 mt-3 list-none">
-      <div className="mx-auto flex w-fit items-center gap-2.5 rounded-full border border-ok/40 bg-surface px-3 py-1.5 shadow-[var(--shadow-md)]">
-        <span className="live-ring relative size-2 rounded-full bg-ok text-ok" aria-hidden />
+      <div className="mx-auto flex w-fit items-center gap-2.5 rounded-full border border-success/40 bg-card px-3 py-1.5 shadow-[var(--shadow-md)]">
+        <span className="live-ring relative size-2 rounded-full bg-success text-success" aria-hidden />
         {live.speedKmph > 0 && (
-          <span className="text-[0.75rem] text-text">
+          <span className="text-[0.75rem] text-foreground">
             <span className="tnum">{live.speedKmph}</span> km/h
           </span>
         )}
-        <span className="text-[0.75rem] text-dim">
+        <span className="text-[0.75rem] text-muted-foreground">
           <span className="tnum">{Math.round(live.distanceCoveredKm)}</span> km in
           {nextStationName ? ` · next ${nextStationName}` : ""}
         </span>
-        <span className={cn("text-[0.75rem]", live.delayMins > 5 ? "text-warn" : "text-ok")}>
+        <span className={cn("text-[0.75rem]", live.delayMins > 5 ? "text-warning" : "text-success")}>
           {formatDelay(live.delayMins)}
         </span>
       </div>

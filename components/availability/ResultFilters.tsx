@@ -2,8 +2,11 @@
 
 import type { ClassCode } from "@/lib/types";
 import { GLOSSARY } from "@/lib/glossary";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/components/ui/cn";
-import { Check } from "lucide-react";
 
 export type SortKey = "departure" | "duration" | "arrival" | "fare";
 
@@ -51,108 +54,112 @@ export function ResultFilters({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="eyebrow mr-1">Leaves</span>
-        {DEPARTURE_WINDOWS.map((window) => (
-          <Chip
-            key={window.id}
-            active={filters.departureWindows.includes(window.id)}
-            onClick={() => onChange({ ...filters, departureWindows: toggle(filters.departureWindows, window.id) })}
-          >
-            {window.label}
-          </Chip>
-        ))}
+        <ToggleGroup
+          type="multiple"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={filters.departureWindows}
+          onValueChange={(next) => onChange({ ...filters, departureWindows: next })}
+          className="flex-wrap"
+        >
+          {DEPARTURE_WINDOWS.map((window) => (
+            <ToggleGroupItem
+              key={window.id}
+              value={window.id}
+              aria-label={window.label}
+              className="rounded-lg border px-2.5 py-1.5 text-[0.75rem] data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-primary"
+            >
+              {window.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="eyebrow mr-1">Class</span>
-        {availableClasses.map((classCode) => (
-          <Chip
-            key={classCode}
-            active={filters.classes.includes(classCode)}
-            onClick={() => onChange({ ...filters, classes: toggle(filters.classes, classCode) })}
-            title={GLOSSARY[classCode]?.short}
-          >
-            <span className="font-mono">{classCode}</span>
-          </Chip>
-        ))}
+        <ToggleGroup
+          type="multiple"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={filters.classes}
+          onValueChange={(next) => onChange({ ...filters, classes: next as ClassCode[] })}
+          className="flex-wrap"
+        >
+          {availableClasses.map((classCode) => (
+            <ToggleGroupItem
+              key={classCode}
+              value={classCode}
+              aria-label={GLOSSARY[classCode]?.short ?? classCode}
+              className="rounded-lg border px-2.5 py-1.5 text-[0.75rem] data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-primary"
+            >
+              <span className="font-mono">{classCode}</span>
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <button
-          type="button"
-          onClick={() => onChange({ ...filters, confirmableOnly: !filters.confirmableOnly })}
-          aria-pressed={filters.confirmableOnly}
-          className={cn(
-            "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[0.75rem] transition-colors",
-            filters.confirmableOnly
-              ? "border-ok/40 bg-ok-soft text-ok"
-              : "border-border bg-surface text-dim hover:border-border-strong"
-          )}
-        >
-          <span
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="confirmable-only"
+            checked={filters.confirmableOnly}
+            onCheckedChange={(checked) => onChange({ ...filters, confirmableOnly: checked === true })}
+            aria-label="Only show what I can actually get"
+          />
+          <Label
+            htmlFor="confirmable-only"
             className={cn(
-              "flex size-3.5 items-center justify-center rounded border",
-              filters.confirmableOnly ? "border-ok bg-ok text-[color:var(--surface)]" : "border-border-strong"
+              "cursor-pointer text-[0.75rem] font-normal",
+              filters.confirmableOnly ? "text-success" : "text-muted-foreground"
             )}
-            aria-hidden
           >
-            {filters.confirmableOnly && <Check className="size-2.5" strokeWidth={3} />}
-          </span>
-          Only show what I can actually get
-        </button>
+            Only show what I can actually get
+          </Label>
+        </div>
 
-        <div className="ml-auto flex items-center gap-1.5">
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
           <span className="eyebrow">Sort</span>
-          {SORTS.map((sort) => (
-            <Chip key={sort.key} active={filters.sort === sort.key} onClick={() => onChange({ ...filters, sort: sort.key })}>
-              {sort.label}
-            </Chip>
-          ))}
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            value={filters.sort}
+            onValueChange={(next) => next && onChange({ ...filters, sort: next as SortKey })}
+          >
+            {SORTS.map((sort) => (
+              <ToggleGroupItem
+                key={sort.key}
+                value={sort.key}
+                aria-label={sort.label}
+                className="rounded-lg border px-2.5 py-1.5 text-[0.75rem] data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-primary"
+              >
+                {sort.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
       </div>
 
-      <p className="text-[0.75rem] text-faint">
-        Showing <span className="tnum text-dim">{matchCount}</span> of{" "}
-        <span className="tnum text-dim">{totalCount}</span> trains
+      <p className="text-[0.75rem] text-muted-foreground">
+        Showing <span className="tnum text-muted-foreground">{matchCount}</span> of{" "}
+        <span className="tnum text-muted-foreground">{totalCount}</span> trains
         {anyFilter && (
           <>
             {" · "}
-            <button
+            <Button
               type="button"
+              variant="link"
               onClick={() => onChange({ ...filters, departureWindows: [], classes: [], confirmableOnly: false })}
-              className="underline decoration-dotted underline-offset-2 hover:text-dim"
+              className="h-auto p-0 text-[0.75rem] decoration-dotted"
             >
               Clear filters
-            </button>
+            </Button>
           </>
         )}
       </p>
     </div>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-  title,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      title={title}
-      className={cn(
-        "rounded-lg border px-2.5 py-1.5 text-[0.75rem] transition-colors",
-        active ? "border-brand bg-brand-soft text-brand" : "border-border bg-surface text-dim hover:border-border-strong"
-      )}
-    >
-      {children}
-    </button>
   );
 }

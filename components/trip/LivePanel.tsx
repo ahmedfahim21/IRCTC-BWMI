@@ -5,6 +5,11 @@ import { useState } from "react";
 import type { LiveStatus, ScheduleStop, Station } from "@/lib/types";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import { formatDelay, formatMinute } from "@/lib/domain/time";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -34,11 +39,11 @@ export function LivePanel({
   const nextStation = live.nextStopCode ? stations[live.nextStopCode] : null;
 
   return (
-    <div className="card overflow-hidden">
+    <Card className="gap-0 overflow-hidden py-0 shadow-none">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border px-4 py-3">
         {running ? (
-          <span className="flex items-center gap-2 text-ok">
-            <span className="live-ring relative size-1.5 rounded-full bg-ok" aria-hidden />
+          <span className="flex items-center gap-2 text-success">
+            <span className="live-ring relative size-1.5 rounded-full bg-success" aria-hidden />
             <span className="text-[0.75rem] uppercase tracking-wider">
               {live.state === "halted" ? "Standing" : "Running"}
             </span>
@@ -46,24 +51,24 @@ export function LivePanel({
         ) : (
           <span className="eyebrow">{live.state === "arrived" ? "Journey complete" : "Not started yet"}</span>
         )}
-        <span className="ml-auto text-[0.6875rem] text-faint">
+        <span className="ml-auto text-[0.6875rem] text-muted-foreground">
           Updated {new Date(live.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
 
-      <div className="space-y-3 px-4 py-3.5">
+      <CardContent className="space-y-3 px-4 py-3.5">
         {running && (
-          <p className="flex flex-wrap items-baseline gap-x-2 text-[0.875rem] text-dim">
-            <Train className="size-3.5 shrink-0 translate-y-0.5 text-faint" aria-hidden />
+          <p className="flex flex-wrap items-baseline gap-x-2 text-[0.875rem] text-muted-foreground">
+            <Train className="size-3.5 shrink-0 translate-y-0.5 text-muted-foreground" aria-hidden />
             {live.state === "halted" ? (
-              <>Standing at <span className="text-text">{lastStation?.name}</span></>
+              <>Standing at <span className="text-foreground">{lastStation?.name}</span></>
             ) : (
               <>
-                Past <span className="text-text">{lastStation?.name}</span> at{" "}
-                <span className="tnum text-text">{live.speedKmph} km/h</span>
+                Past <span className="text-foreground">{lastStation?.name}</span> at{" "}
+                <span className="tnum text-foreground">{live.speedKmph} km/h</span>
               </>
             )}
-            {nextStation && <span className="text-faint">· next {nextStation.name}</span>}
+            {nextStation && <span className="text-muted-foreground">· next {nextStation.name}</span>}
           </p>
         )}
 
@@ -85,18 +90,18 @@ export function LivePanel({
         </dl>
 
         {coachPosition && (
-          <div className="rounded-lg border border-border bg-surface-2 p-3">
-            <p className="mb-1 flex items-center gap-2 text-[0.875rem] text-text">
-              <span className="rounded bg-brand px-1.5 py-0.5 text-[0.6875rem] text-on-brand">
+          <div className="rounded-lg border border-border bg-muted p-3">
+            <p className="mb-1 flex items-center gap-2 text-[0.875rem] text-foreground">
+              <span className="rounded bg-primary px-1.5 py-0.5 text-[0.6875rem] text-primary-foreground">
                 Coach {coachPosition.coach.code}
               </span>
-              {boardingStop.platform !== null && <span className="text-dim">Platform {boardingStop.platform}</span>}
+              {boardingStop.platform !== null && <span className="text-muted-foreground">Platform {boardingStop.platform}</span>}
             </p>
-            <p className="text-[0.8125rem] leading-relaxed text-dim">{coachPosition.hint}.</p>
+            <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">{coachPosition.hint}.</p>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -114,14 +119,14 @@ function Fact({
   tone: "ok" | "warn";
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface-2 px-3 py-2.5">
-      <dt className="mb-1 flex items-center gap-1.5 text-[0.625rem] uppercase tracking-wider text-faint">
+    <div className="rounded-lg border border-border bg-muted px-3 py-2.5">
+      <dt className="mb-1 flex items-center gap-1.5 text-[0.625rem] uppercase tracking-wider text-muted-foreground">
         <Icon className="size-3" aria-hidden />
         <span className="truncate">{label}</span>
       </dt>
       <dd className="flex items-baseline gap-2">
-        <span className="tnum text-[1.0625rem] text-text">{value}</span>
-        <span className={cn("text-[0.6875rem]", tone === "warn" ? "text-warn" : "text-ok")}>{note}</span>
+        <span className="tnum text-[1.0625rem] text-foreground">{value}</span>
+        <span className={cn("text-[0.6875rem]", tone === "warn" ? "text-warning" : "text-success")}>{note}</span>
       </dd>
     </div>
   );
@@ -147,20 +152,23 @@ export function Alarms({
   const [leadMins, setLeadMins] = useState(30);
 
   return (
-    <div className="card p-4">
-      <h2 className="mb-3 flex items-center gap-2 text-[0.9375rem] text-text">
-        <Bell className="size-4 text-faint" aria-hidden />
+    <Card className="gap-0 py-0 shadow-none">
+      <CardContent className="p-4">
+      <h2 className="mb-3 flex items-center gap-2 text-[0.9375rem] text-foreground">
+        <Bell className="size-4 text-muted-foreground" aria-hidden />
         Alarms
       </h2>
 
       <div className="space-y-2">
         <AlarmRow
+          id="boarding-alarm"
           enabled={boarding}
           onToggle={setBoarding}
           title={`Leave for ${boardingName}`}
           detail={`${formatMinute(boardingMinute - 90)} — about 90 minutes before departure`}
         />
         <AlarmRow
+          id="arrival-alarm"
           enabled={arrival}
           onToggle={setArrival}
           title={`Wake me before ${destinationName}`}
@@ -170,61 +178,58 @@ export function Alarms({
 
       {arrival && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
-          <span className="mr-1 text-[0.6875rem] text-faint">Wake me</span>
-          {[15, 30, 45, 60].map((mins) => (
-            <button
-              key={mins}
-              type="button"
-              onClick={() => setLeadMins(mins)}
-              aria-pressed={leadMins === mins}
-              className={cn(
-                "rounded-lg border px-2.5 py-1 text-[0.75rem] transition-colors",
-                leadMins === mins ? "border-brand bg-brand-soft text-brand" : "border-border text-dim hover:border-border-strong"
-              )}
-            >
-              {mins} min before
-            </button>
-          ))}
+          <span className="mr-1 text-[0.6875rem] text-muted-foreground">Wake me</span>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            spacing={0}
+            value={String(leadMins)}
+            onValueChange={(value) => value && setLeadMins(Number(value))}
+          >
+            {[15, 30, 45, 60].map((mins) => (
+              <ToggleGroupItem
+                key={mins}
+                value={String(mins)}
+                aria-label={`${mins} minutes before arrival`}
+                className="rounded-lg border px-2.5 py-1 text-[0.75rem] data-[state=on]:border-primary data-[state=on]:bg-accent data-[state=on]:text-primary"
+              >
+                {mins} min before
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
       )}
 
-      <p className="mt-3 text-[0.6875rem] leading-relaxed text-faint">
+      <p className="mt-3 text-[0.6875rem] leading-relaxed text-muted-foreground">
         Alarms track the train&rsquo;s actual running, not the timetable — if it runs late, they move with it.
       </p>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
 function AlarmRow({
+  id,
   enabled,
   onToggle,
   title,
   detail,
 }: {
+  id: string;
   enabled: boolean;
   onToggle: (value: boolean) => void;
   title: string;
   detail: string;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={enabled}
-      onClick={() => onToggle(!enabled)}
-      className="flex w-full items-start gap-2.5 rounded-lg py-1.5 text-left transition-colors hover:bg-surface-2"
-    >
-      <AlarmClock className={cn("mt-0.5 size-4 shrink-0", enabled ? "text-brand" : "text-faint")} aria-hidden />
-      <span className="min-w-0 flex-1">
-        <span className="block text-[0.8125rem] text-text">{title}</span>
-        <span className="block text-[0.6875rem] text-faint">{detail}</span>
-      </span>
-      <span
-        className={cn("mt-0.5 flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors", enabled ? "bg-brand" : "bg-surface-3")}
-        aria-hidden
-      >
-        <span className={cn("size-3 rounded-full bg-[color:var(--surface)] transition-transform", enabled && "translate-x-3")} />
-      </span>
-    </button>
+    <div className="flex w-full items-start gap-2.5 rounded-lg py-1.5">
+      <AlarmClock className={cn("mt-0.5 size-4 shrink-0", enabled ? "text-primary" : "text-muted-foreground")} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <Label htmlFor={id} className="block cursor-pointer text-[0.8125rem] font-normal text-foreground">{title}</Label>
+        <span className="block text-[0.6875rem] text-muted-foreground">{detail}</span>
+      </div>
+      <Switch id={id} checked={enabled} onCheckedChange={(next) => { onToggle(next); if (next) toast.success(`Alarm set — ${title}`); }} aria-label={title} className="mt-0.5" />
+    </div>
   );
 }

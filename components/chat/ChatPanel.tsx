@@ -12,6 +12,10 @@ import {
   X,
 } from "lucide-react";
 import { getToolName, isToolUIPart } from "ai";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/components/ui/cn";
 import { useAgentChat } from "@/lib/agent/ChatProvider";
 import { hasPendingUiToolCalls } from "@/lib/agent/resolveToolOutput";
@@ -98,21 +102,25 @@ export function ChatPanel() {
   return (
     <>
       {!open && (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon-lg"
           onClick={() => setOpen(true)}
           aria-label="Open booking chat"
-          className="fixed bottom-[7.75rem] right-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-24 sm:right-6"
+          className="fixed bottom-[7.75rem] right-4 z-40 rounded-full border-border bg-card text-muted-foreground shadow-[var(--shadow-lg)] hover:text-foreground sm:bottom-24 sm:right-6"
         >
           <MessageCircle className="size-5" aria-hidden />
-        </button>
+        </Button>
       )}
 
-      {open && (
-        <section
+      <Sheet open={open} onOpenChange={setOpen} modal={false}>
+        <SheetContent
+          showCloseButton={false}
+          side={dock === "bottom" ? "bottom" : dock === "left" ? "left" : "right"}
           aria-label="Booking chat"
           className={cn(
-            "fixed z-40 flex flex-col border border-border bg-surface shadow-[var(--shadow-lg)]",
+            "z-40 flex flex-col gap-0 border-border bg-card p-0 shadow-[var(--shadow-lg)] sm:max-w-none",
             dock === "bottom" &&
               "inset-x-0 bottom-[3.75rem] h-[min(24rem,50vh)] rounded-t-xl sm:bottom-0 sm:left-auto sm:right-0 sm:m-4 sm:h-[28rem] sm:w-[22rem] sm:rounded-xl",
             dock === "right" &&
@@ -122,33 +130,19 @@ export function ChatPanel() {
           )}
         >
           <header className="flex items-center gap-1.5 border-b border-border px-3 py-2">
-            <p className="min-w-0 flex-1 text-[0.8125rem] text-text">Chat</p>
-            <button
-              type="button"
-              onClick={newChat}
-              className="rounded-md px-1.5 py-0.5 text-[0.6875rem] text-faint hover:text-text"
-            >
+            <p className="min-w-0 flex-1 text-[0.8125rem] text-foreground">Chat</p>
+            <Button type="button" variant="ghost" size="sm" onClick={newChat} className="h-auto px-1.5 py-0.5 text-[0.6875rem]">
               New
-            </button>
+            </Button>
             {busy && (
-              <button
-                type="button"
-                onClick={() => void stop()}
-                aria-label="Stop generating"
-                className="rounded-md p-1 text-faint hover:text-text"
-              >
+              <Button type="button" variant="ghost" size="icon-xs" onClick={() => void stop()} aria-label="Stop generating">
                 <Square className="size-3.5" aria-hidden />
-              </button>
+              </Button>
             )}
             {!busy && messages.length > 0 && (
-              <button
-                type="button"
-                onClick={() => void regenerate()}
-                aria-label="Regenerate response"
-                className="rounded-md p-1 text-faint hover:text-text"
-              >
+              <Button type="button" variant="ghost" size="icon-xs" onClick={() => void regenerate()} aria-label="Regenerate response">
                 <RotateCcw className="size-3.5" aria-hidden />
-              </button>
+              </Button>
             )}
             <DockButton label="Dock left" current={dock === "left"} onClick={() => setDockAndStore("left")}>
               <PanelLeft className="size-3.5" />
@@ -159,15 +153,16 @@ export function ChatPanel() {
             <DockButton label="Dock right" current={dock === "right"} onClick={() => setDockAndStore("right")}>
               <PanelRight className="size-3.5" />
             </DockButton>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat" className="rounded-md p-1 text-faint hover:text-text">
+            <Button type="button" variant="ghost" size="icon-xs" onClick={() => setOpen(false)} aria-label="Close chat">
               <X className="size-3.5" aria-hidden />
-            </button>
+            </Button>
           </header>
 
-          <div ref={scroller} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
+          <ScrollArea className="min-h-0 flex-1">
+          <div ref={scroller} className="space-y-2.5 px-3 py-3">
             {messages.length === 0 && (
               <div className="space-y-3">
-                <p className="text-[0.8125rem] leading-relaxed text-dim">
+                <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">
                   Ask for a train the way you would say it. The form and the map move with the answer.
                 </p>
                 <div className="flex flex-col gap-1.5">
@@ -176,7 +171,7 @@ export function ChatPanel() {
                       key={starter}
                       type="button"
                       onClick={() => submit(starter)}
-                      className="rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-left text-[0.75rem] text-text hover:border-brand/40"
+                      className="rounded-lg border border-border bg-muted px-2.5 py-2 text-left text-[0.75rem] text-foreground hover:border-primary/40"
                     >
                       {starter}
                     </button>
@@ -185,8 +180,8 @@ export function ChatPanel() {
               </div>
             )}
             {messages.map((message) => (
-              <div key={message.id} className={cn("text-[0.8125rem] leading-relaxed", message.role === "user" ? "text-text" : "text-dim")}>
-                <p className="mb-0.5 text-[0.625rem] uppercase tracking-wider text-faint">
+              <div key={message.id} className={cn("text-[0.8125rem] leading-relaxed", message.role === "user" ? "text-foreground" : "text-muted-foreground")}>
+                <p className="mb-0.5 text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                   {message.role === "user" ? "You" : "Assistant"}
                 </p>
                 {(message.parts ?? []).map((part, index) => {
@@ -220,7 +215,7 @@ export function ChatPanel() {
                         data-testid="chat-tool"
                         className={cn(
                           "rounded-md border px-2 py-1 font-mono text-[0.6875rem]",
-                          failed || outputFailed ? "border-danger/40 text-danger" : "border-border text-faint"
+                          failed || outputFailed ? "border-destructive/40 text-destructive" : "border-border text-muted-foreground"
                         )}
                       >
                         <p>
@@ -236,24 +231,25 @@ export function ChatPanel() {
                 })}
               </div>
             ))}
-            {pendingTools && !busy && <p className="text-[0.75rem] text-faint">Updating the screen…</p>}
-            {busy && <p className="text-[0.75rem] text-faint">Working…</p>}
+            {pendingTools && !busy && <p className="text-[0.75rem] text-muted-foreground">Updating the screen…</p>}
+            {busy && <p className="text-[0.75rem] text-muted-foreground">Working…</p>}
             {error && (
               <div className="space-y-1">
-                <p className="text-[0.8125rem] text-danger">{error.message}</p>
+                <p className="text-[0.8125rem] text-destructive">{error.message}</p>
                 <button
                   type="button"
                   onClick={() => {
                     clearError();
                     void regenerate();
                   }}
-                  className="text-[0.75rem] text-brand underline decoration-dotted underline-offset-2"
+                  className="text-[0.75rem] text-primary underline decoration-dotted underline-offset-2"
                 >
                   Retry
                 </button>
               </div>
             )}
           </div>
+          </ScrollArea>
 
           <form
             className="flex items-end gap-2 border-t border-border p-2.5"
@@ -265,7 +261,7 @@ export function ChatPanel() {
             <label className="sr-only" htmlFor="booking-chat-input">
               Message
             </label>
-            <textarea
+            <Textarea
               id="booking-chat-input"
               value={input}
               onChange={(event) => setInput(event.target.value)}
@@ -277,33 +273,35 @@ export function ChatPanel() {
               }}
               rows={2}
               placeholder="From NDLS to MAS…"
-              className="min-h-[2.75rem] flex-1 resize-none rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-[0.8125rem] text-text placeholder:text-faint"
+              className="min-h-[2.75rem] flex-1 resize-none rounded-lg border-border bg-muted text-[0.8125rem]"
             />
-            <button
+            <Button
               type="submit"
+              size="icon-lg"
               disabled={busy || pendingTools || !input.trim()}
               aria-label="Send message"
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
+              className="shrink-0 rounded-lg"
             >
               <Send className="size-4" aria-hidden />
-            </button>
+            </Button>
           </form>
           {lastUserText && !busy && (
             <div className="border-t border-border px-2.5 py-1.5">
-              <button
+              <Button
                 type="button"
+                variant="link"
                 onClick={() => {
                   setInput(lastUserText);
                   setEditingLast(true);
                 }}
-                className="text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
+                className="h-auto p-0 text-[0.6875rem] text-muted-foreground decoration-dotted"
               >
                 Edit last message
-              </button>
+              </Button>
             </div>
           )}
-        </section>
-      )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
@@ -325,7 +323,7 @@ function DockButton({
       aria-label={label}
       aria-pressed={current}
       onClick={onClick}
-      className={cn("rounded-md p-1", current ? "text-brand" : "text-faint hover:text-text")}
+      className={cn("rounded-md p-1", current ? "text-primary" : "text-muted-foreground hover:text-foreground")}
     >
       {children}
     </button>

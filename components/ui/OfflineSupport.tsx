@@ -51,7 +51,7 @@ export function OfflineSupport() {
   return (
     <div
       role="status"
-      className="sticky top-14 z-30 flex items-center justify-center gap-2 bg-warn px-4 py-1.5 text-[0.75rem] text-[color:var(--surface)]"
+      className="sticky top-14 z-30 flex items-center justify-center gap-2 bg-warning px-4 py-1.5 text-[0.75rem] text-[color:var(--card)]"
     >
       <CloudOff className="size-3.5" aria-hidden />
       No network — showing what was saved. Your tickets still work.

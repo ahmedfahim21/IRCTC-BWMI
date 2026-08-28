@@ -4,20 +4,19 @@ import { AppHeader, MobileNav } from "@/components/AppHeader";
 import { Providers } from "@/components/ui/Providers";
 import { LocaleProvider } from "@/lib/i18n/useLocale";
 import { OfflineSupport } from "@/components/ui/OfflineSupport";
+import { Toaster } from "@/components/ui/sonner";
 import { ChatProvider } from "@/lib/agent/ChatProvider";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { VoiceButton } from "@/components/voice/VoiceButton";
 import "./globals.css";
 
 /*
- * Noto Sans is the UX4G base typeface. Self-hosted and subset by Next rather
- * than pulled from a CDN, with `swap` so text paints immediately in the system
- * font on a slow connection and changes over when the file lands. Devanagari is
- * included because Hindi is a first-class language here, not a bolt-on.
+ * Noto Sans covers latin and Devanagari in one family — Hindi is first-class
+ * here, not a bolt-on. Self-hosted via next/font with swap so text paints in
+ * the system font on a slow connection and upgrades when the file lands.
  */
 const notoSans = Noto_Sans({
   subsets: ["latin", "devanagari"],
-  weight: ["400", "500"],
   display: "swap",
   variable: "--font-noto-sans",
   fallback: ["system-ui", "sans-serif"],
@@ -33,7 +32,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
   width: "device-width",
@@ -45,14 +44,14 @@ const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('irctc.theme');
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={notoSans.variable} suppressHydrationWarning>
+    <html lang="en" className={`${notoSans.variable} font-sans`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="min-h-dvh">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand focus:px-3 focus:py-2 focus:text-sm focus:text-on-brand"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground"
         >
           Skip to content
         </a>
@@ -67,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <MobileNav />
               <ChatPanel />
               <VoiceButton />
+              <Toaster position="top-center" richColors closeButton />
             </ChatProvider>
           </LocaleProvider>
         </Providers>

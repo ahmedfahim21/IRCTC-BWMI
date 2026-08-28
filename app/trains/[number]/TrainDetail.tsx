@@ -13,8 +13,10 @@ import { CoachStrip, PlatformDiagram } from "@/components/coach/CoachStrip";
 import { BerthMap } from "@/components/coach/BerthMap";
 import { PunctualitySparkline } from "@/components/rail/PunctualitySparkline";
 import { CrossingsList } from "@/components/rail/CrossingsList";
-import { SkeletonRows } from "@/components/ui/Skeleton";
+import { SkeletonRows } from "@/components/ui/SkeletonRows";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -82,31 +84,31 @@ export function TrainDetail({ number }: { number: string }) {
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
       <header className="mb-4">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="tnum text-[1.0625rem] text-faint">{train.number}</span>
-          <h1 className="text-[1.25rem] tracking-[-0.01em] text-text">{train.name}</h1>
-          <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] capitalize text-dim">{train.type}</span>
+          <span className="tnum text-[1.0625rem] text-muted-foreground">{train.number}</span>
+          <h1 className="text-[1.25rem] tracking-[-0.01em] text-foreground">{train.name}</h1>
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[0.6875rem] capitalize text-muted-foreground">{train.type}</span>
           {train.hasPantry && (
-            <span className="flex items-center gap-1 text-[0.6875rem] text-faint">
+            <span className="flex items-center gap-1 text-[0.6875rem] text-muted-foreground">
               <Utensils className="size-3" aria-hidden /> Pantry
             </span>
           )}
         </div>
 
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.875rem] text-dim">
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.875rem] text-muted-foreground">
           <span>{stations[first.stationCode]?.name}</span>
-          <ArrowRight className="size-3.5 text-faint" aria-hidden />
+          <ArrowRight className="size-3.5 text-muted-foreground" aria-hidden />
           <span>{stations[last.stationCode]?.name}</span>
-          <span className="tnum text-faint">
+          <span className="tnum text-muted-foreground">
             {formatMinute(first.departureMinute)} → {formatMinute(last.arrivalMinute)}
           </span>
         </p>
 
         <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-          <span className="flex items-center gap-1.5 text-[0.75rem] text-faint" aria-label="Days it runs">
+          <span className="flex items-center gap-1.5 text-[0.75rem] text-muted-foreground" aria-label="Days it runs">
             {DAY_LETTERS.map((letter, index) => (
               <span
                 key={index}
-                className={cn("inline-block w-3 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/35")}
+                className={cn("inline-block w-3 text-center", train.runsOn.includes(index) ? "text-muted-foreground" : "text-muted-foreground/35")}
               >
                 {letter}
               </span>
@@ -114,7 +116,7 @@ export function TrainDetail({ number }: { number: string }) {
           </span>
           <Link
             href={`/trains/${train.returnTrainNumber}`}
-            className="flex items-center gap-1.5 text-[0.75rem] text-faint transition-colors hover:text-brand"
+            className="flex items-center gap-1.5 text-[0.75rem] text-muted-foreground transition-colors hover:text-primary"
           >
             <Repeat className="size-3" aria-hidden />
             Return: <span className="tnum">{train.returnTrainNumber}</span>
@@ -140,25 +142,22 @@ export function TrainDetail({ number }: { number: string }) {
         className="mb-4 aspect-[3/2] w-full sm:aspect-[16/7]"
       />
 
-      <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border" role="tablist">
-        {TABS.map((key) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={tab === key}
-            onClick={() => setTab(key)}
-            className={cn(
-              "shrink-0 border-b-2 px-3 py-2 text-[0.8125rem] transition-colors",
-              tab === key ? "border-brand text-text" : "border-transparent text-faint hover:text-dim"
-            )}
-          >
-            {TAB_LABEL[key]}
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)} className="mb-4 gap-0">
+        <TabsList variant="line" className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none border-b border-border bg-transparent p-0">
+          {TABS.map((key) => (
+            <TabsTrigger
+              key={key}
+              value={key}
+              className="shrink-0 rounded-none border-b-2 border-transparent px-3 py-2 text-[0.8125rem] data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              {TAB_LABEL[key]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="card min-w-0 overflow-hidden p-4">
-        {tab === "route" && (
+        <Card className="mt-4 gap-0 overflow-hidden py-0 shadow-none">
+          <CardContent className="min-w-0 p-4">
+        <TabsContent value="route" className="mt-0">
           <RailSpine
             schedule={train.schedule}
             stations={stations}
@@ -168,84 +167,86 @@ export function TrainDetail({ number }: { number: string }) {
             highlightFrom={from}
             highlightTo={to}
           />
-        )}
+        </TabsContent>
 
-        {tab === "coaches" && (
-          <div className="space-y-5">
-            <div>
-              <p className="eyebrow mb-2">Rake order, from the engine</p>
-              <CoachStrip
-                rake={train.rake}
-                selectedCode={selectedCoach}
-                onSelect={(coach) => setSelectedCoach(coach.code === selectedCoach ? null : coach.code)}
-              />
-              <p className="mt-2 text-[0.75rem] text-faint">
-                Tap a coach to see its berths and where it stops on the boarding platform.
-              </p>
-            </div>
-
-            {coachData ? (
-              <PlatformDiagram
-                positions={coachData.positions}
-                stationName={coachData.boardingStation.name}
-                platform={coachData.platform}
-                highlightCoach={selectedCoach}
-              />
-            ) : (
-              <SkeletonRows rows={1} />
-            )}
-
-            {coachData && selectedLayout && (
-              <div>
-                <p className="eyebrow mb-2">Berths in {selectedLayout.code}</p>
-                <BerthMap
-                  coach={selectedLayout}
-                  selections={[]}
-                  onToggle={() => undefined}
-                  passengerCount={1}
-                  selectable={false}
-                />
-              </div>
-            )}
+        <TabsContent value="coaches" className="mt-0 space-y-5">
+          <div>
+            <p className="eyebrow mb-2">Rake order, from the engine</p>
+            <CoachStrip
+              rake={train.rake}
+              selectedCode={selectedCoach}
+              onSelect={(coach) => setSelectedCoach(coach.code === selectedCoach ? null : coach.code)}
+            />
+            <p className="mt-2 text-[0.75rem] text-muted-foreground">
+              Tap a coach to see its berths and where it stops on the boarding platform.
+            </p>
           </div>
-        )}
 
-        {tab === "crossings" &&
-          (data.crossingsAvailable === false ? (
+          {coachData ? (
+            <PlatformDiagram
+              positions={coachData.positions}
+              stationName={coachData.boardingStation.name}
+              platform={coachData.platform}
+              highlightCoach={selectedCoach}
+            />
+          ) : (
+            <SkeletonRows rows={1} />
+          )}
+
+          {coachData && selectedLayout && (
+            <div>
+              <p className="eyebrow mb-2">Berths in {selectedLayout.code}</p>
+              <BerthMap
+                coach={selectedLayout}
+                selections={[]}
+                onToggle={() => undefined}
+                passengerCount={1}
+                selectable={false}
+              />
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="crossings" className="mt-0">
+          {data.crossingsAvailable === false ? (
             <Unavailable
               title="Not available for live timetables"
               body="Working out which trains you cross means reading the timetable of every other train on the line. Against a live API that is one request per train, which the sandbox quota can't carry. It works on the generated timetable — try 12951 or 16511."
             />
           ) : (
             <div>
-              <p className="mb-3 text-[0.8125rem] leading-relaxed text-dim">
+              <p className="mb-3 text-[0.8125rem] leading-relaxed text-muted-foreground">
                 Other trains on this line that you pass, overtake, or get overtaken by.
               </p>
               <CrossingsList crossings={crossings} stations={stations} />
             </div>
-          ))}
+          )}
+        </TabsContent>
 
-        {tab === "punctuality" &&
-          (data.punctualityAvailable === false ? (
+        <TabsContent value="punctuality" className="mt-0">
+          {data.punctualityAvailable === false ? (
             <Unavailable
               title="Not available for live timetables"
               body="This needs the running history of the last 30 journeys — one request each. It works on the generated timetable, where the history is computed rather than fetched."
             />
           ) : (
             <PunctualitySparkline history={punctuality} />
-          ))}
-      </div>
+          )}
+        </TabsContent>
+          </CardContent>
+        </Card>
+      </Tabs>
     </div>
   );
 }
 
 function Unavailable({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex items-start gap-2.5 rounded-lg border border-border bg-surface-2 p-3.5">
-      <Info className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
+    <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted p-3.5">
+      <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
       <div>
-        <p className="text-[0.875rem] text-text">{title}</p>
-        <p className="mt-1 text-[0.8125rem] leading-relaxed text-dim">{body}</p>
+        <p className="text-[0.875rem] text-foreground">{title}</p>
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted-foreground">{body}</p>
       </div>
     </div>
   );
@@ -263,14 +264,14 @@ function Stat({
   sub?: string;
 }) {
   return (
-    <div className="card px-3 py-2.5">
-      <dt className="mb-1 flex items-center gap-1.5 text-[0.625rem] uppercase tracking-wider text-faint">
+    <div className="rounded-xl border bg-card px-3 py-2.5">
+      <dt className="mb-1 flex items-center gap-1.5 text-[0.625rem] uppercase tracking-wider text-muted-foreground">
         <Icon className="size-3" aria-hidden />
         {label}
       </dt>
-      <dd className="tnum text-[0.9375rem] text-text">
+      <dd className="tnum text-[0.9375rem] text-foreground">
         {value}
-        {sub && <span className="ml-1 text-[0.6875rem] text-faint">{sub}</span>}
+        {sub && <span className="ml-1 text-[0.6875rem] text-muted-foreground">{sub}</span>}
       </dd>
     </div>
   );

@@ -1,9 +1,8 @@
 /**
  * Train-type index shared by the live-map wire format and the map UI.
  *
- * Colours are UX4G semantic tokens — the previous canvas palette was the only
- * place in the app that painted with raw hex, so it ignored the theme and
- * never went through the contrast audit.
+ * Colours resolve from CSS custom properties so the map canvas picks up theme
+ * changes without hard-coded hex.
  */
 
 export const TRAIN_TYPES = [
@@ -20,15 +19,15 @@ export const TRAIN_TYPES = [
 
 /** CSS custom-property names (without `var()`) keyed by `TRAIN_TYPES` index. */
 export const TYPE_COLOUR_VARS = [
-  "--danger",
-  "--warn",
-  "--ok",
+  "--destructive",
+  "--warning",
+  "--success",
   "--info",
-  "--brand",
-  "--accent",
-  "--text-faint",
-  "--warn",
-  "--text-dim",
+  "--chart-1",
+  "--chart-2",
+  "--chart-3",
+  "--chart-4",
+  "--muted-foreground",
 ] as const;
 
 export function typeColourVar(index: number): string {

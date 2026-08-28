@@ -6,7 +6,7 @@ import { ArrowRight, Clock, MapPin, Train as TrainIcon } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { formatDelay, formatMinute, journeyInstant, todayIso } from "@/lib/domain/time";
 import { RouteRibbon } from "@/components/rail/RouteRibbon";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/components/ui/cn";
 
 function countdown(ms: number): string {
@@ -52,34 +52,34 @@ export function NextTripCard() {
   return (
     <Link
       href={`/trips/${next.pnr}`}
-      className="card group block p-4 transition-colors hover:border-border-strong sm:p-5"
+      className="rounded-xl border bg-card group block p-4 transition-colors hover:border-input sm:p-5"
     >
       <div className="mb-3 flex items-center gap-2">
         {isRunning ? (
-          <span className="relative flex items-center gap-1.5 text-ok">
-            <span className="live-ring relative inline-flex size-1.5 rounded-full bg-ok" aria-hidden />
+          <span className="relative flex items-center gap-1.5 text-success">
+            <span className="live-ring relative inline-flex size-1.5 rounded-full bg-success" aria-hidden />
             <span className="text-[0.6875rem] uppercase tracking-wider">Running now</span>
           </span>
         ) : (
           <span className="eyebrow">Your next trip</span>
         )}
-        <span className="ml-auto tnum text-[0.75rem] text-faint">{countdown(departureMs - Date.now())}</span>
+        <span className="ml-auto tnum text-[0.75rem] text-muted-foreground">{countdown(departureMs - Date.now())}</span>
       </div>
 
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[0.9375rem] text-text">
-            <TrainIcon className="size-4 shrink-0 text-faint" aria-hidden />
-            <span className="tnum text-faint">{next.trainNumber}</span>
+          <p className="flex items-center gap-2 text-[0.9375rem] text-foreground">
+            <TrainIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="tnum text-muted-foreground">{next.trainNumber}</span>
             <span className="truncate">{next.trainName}</span>
           </p>
-          <p className="mt-1 truncate text-[0.8125rem] text-dim">
-            {station(next.fromCode)} <ArrowRight className="inline size-3 text-faint" aria-hidden /> {station(next.toCode)}
+          <p className="mt-1 truncate text-[0.8125rem] text-muted-foreground">
+            {station(next.fromCode)} <ArrowRight className="inline size-3 text-muted-foreground" aria-hidden /> {station(next.toCode)}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="tnum text-lg text-text">{formatMinute(next.boardingMinute)}</p>
-          <p className={cn("tnum text-[0.6875rem]", delay > 5 ? "text-warn" : "text-ok")}>{formatDelay(delay)}</p>
+          <p className="tnum text-lg text-foreground">{formatMinute(next.boardingMinute)}</p>
+          <p className={cn("tnum text-[0.6875rem]", delay > 5 ? "text-warning" : "text-success")}>{formatDelay(delay)}</p>
         </div>
       </div>
 
@@ -97,17 +97,17 @@ export function NextTripCard() {
           />
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-[0.75rem]">
-            <span className="flex items-center gap-1.5 text-dim">
-              <MapPin className="size-3.5 text-faint" aria-hidden />
-              Platform <span className="tnum text-text">{trip.boardingStop.platform ?? "—"}</span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <MapPin className="size-3.5 text-muted-foreground" aria-hidden />
+              Platform <span className="tnum text-foreground">{trip.boardingStop.platform ?? "—"}</span>
             </span>
             {trip.coachPosition && (
-              <span className="flex items-center gap-1.5 text-dim">
-                Coach <span className="tnum text-text">{trip.coachPosition.coach.code}</span>
-                <span className="text-faint">· {trip.coachPosition.distanceFromEntryM} m from the bridge</span>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                Coach <span className="tnum text-foreground">{trip.coachPosition.coach.code}</span>
+                <span className="text-muted-foreground">· {trip.coachPosition.distanceFromEntryM} m from the bridge</span>
               </span>
             )}
-            <span className="ml-auto flex items-center gap-1.5 text-faint">
+            <span className="ml-auto flex items-center gap-1.5 text-muted-foreground">
               <Clock className="size-3.5" aria-hidden />
               {trip.booking.chartStatus === "prepared" ? "Chart prepared" : "Chart not prepared"}
             </span>

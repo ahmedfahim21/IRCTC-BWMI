@@ -109,7 +109,7 @@ function RouteOverlay({
       aria-hidden
     >
       {d && (
-        <path d={d} fill="none" stroke="var(--brand)" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={d} fill="none" stroke="var(--primary)" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
       )}
       {stops.map((stop) => {
         const pt = project(stop.lng, stop.lat);
@@ -121,8 +121,8 @@ function RouteOverlay({
             cx={pt.x}
             cy={pt.y}
             r={terminal ? 6 : 4}
-            fill={terminal ? "var(--brand)" : "var(--surface)"}
-            stroke={terminal ? "var(--surface)" : "var(--brand)"}
+            fill={terminal ? "var(--primary)" : "var(--card)"}
+            stroke={terminal ? "var(--card)" : "var(--primary)"}
             strokeWidth={terminal ? 2 : 1.6}
           />
         );

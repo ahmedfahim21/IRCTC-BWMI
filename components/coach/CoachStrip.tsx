@@ -3,21 +3,23 @@
 import type { Coach, CoachType } from "@/lib/types";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import { cn } from "@/components/ui/cn";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TrainFront } from "lucide-react";
 
 const COACH_TONE: Partial<Record<CoachType, string>> = {
-  ENG: "bg-surface-3 text-faint border-border-strong",
-  SLR: "bg-surface-3 text-faint border-border",
-  GS: "bg-surface-3 text-dim border-border",
-  PC: "bg-warn-soft text-warn border-warn/30",
-  "1A": "bg-brand-soft text-brand border-brand/30",
+  ENG: "bg-secondary text-muted-foreground border-input",
+  SLR: "bg-secondary text-muted-foreground border-border",
+  GS: "bg-secondary text-muted-foreground border-border",
+  PC: "bg-warning-soft text-warning border-warning/30",
+  "1A": "bg-accent text-primary border-primary/30",
   "2A": "bg-info-soft text-info border-info/30",
   "3A": "bg-info-soft text-info border-info/25",
   "3E": "bg-info-soft text-info border-info/25",
-  SL: "bg-ok-soft text-ok border-ok/25",
+  SL: "bg-success-soft text-success border-success/25",
   CC: "bg-info-soft text-info border-info/25",
-  EC: "bg-brand-soft text-brand border-brand/30",
-  "2S": "bg-surface-3 text-dim border-border",
+  EC: "bg-accent text-primary border-primary/30",
+  "2S": "bg-secondary text-muted-foreground border-border",
 };
 
 /** The rake, in the order it's actually marshalled behind the loco. */
@@ -33,8 +35,8 @@ export function CoachStrip({
   className?: string;
 }) {
   return (
-    <div className={cn("-mx-1 overflow-x-auto px-1 pb-1", className)}>
-      <ol className="flex items-center gap-1" aria-label="Coach order from the engine">
+    <ScrollArea className={cn("-mx-1 px-1 pb-1", className)}>
+      <ol className="flex w-max items-center gap-1 pb-1" aria-label="Coach order from the engine">
         {rake.map((coach) => {
           const interactive = Boolean(onSelect) && coach.berthCount > 0;
           const Element = interactive ? "button" : "div";
@@ -49,8 +51,8 @@ export function CoachStrip({
                 }
                 className={cn(
                   "flex min-w-[2.75rem] flex-col items-center gap-0.5 rounded border px-1.5 py-1.5 transition-colors",
-                  COACH_TONE[coach.type] ?? "bg-surface-3 text-dim border-border",
-                  selectedCode === coach.code && "ring-2 ring-brand ring-offset-1 ring-offset-[color:var(--surface)]",
+                  COACH_TONE[coach.type] ?? "bg-secondary text-muted-foreground border-border",
+                  selectedCode === coach.code && "ring-2 ring-ring ring-offset-1 ring-offset-[color:var(--card)]",
                   interactive && "cursor-pointer hover:brightness-110"
                 )}
               >
@@ -66,7 +68,8 @@ export function CoachStrip({
           );
         })}
       </ol>
-    </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }
 
@@ -98,54 +101,61 @@ export function PlatformDiagram({
 
   return (
     <div>
-      <p className="mb-2 text-[0.75rem] text-dim">
+      <p className="mb-2 text-[0.75rem] text-muted-foreground">
         {stationName}
         {platform !== null && (
           <>
             {" · "}
-            <span className="text-text">Platform {platform}</span>
+            <span className="text-foreground">Platform {platform}</span>
           </>
         )}
-        <span className="text-faint"> · {lengthM} m long</span>
+        <span className="text-muted-foreground"> · {lengthM} m long</span>
       </p>
 
-      <div className="relative rounded-lg border border-border bg-surface-2 px-3 pb-7 pt-8">
+      <div className="relative rounded-lg border border-border bg-muted px-3 pb-7 pt-8">
         {/* Foot-over-bridge marker */}
         <div
           className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
           style={{ left: `calc(${Math.max(6, Math.min(94, entryPercent))}% )` }}
         >
-          <span className="whitespace-nowrap rounded bg-brand px-1.5 py-0.5 text-[0.5625rem] text-on-brand">
+          <span className="whitespace-nowrap rounded bg-primary px-1.5 py-0.5 text-[0.5625rem] text-primary-foreground">
             Foot-over-bridge
           </span>
-          <span className="h-2.5 w-px bg-brand" aria-hidden />
+          <span className="h-2.5 w-px bg-primary" aria-hidden />
         </div>
 
-        <div className="flex gap-px overflow-x-auto">
+        <ScrollArea className="w-full">
+        <div className="flex min-w-fit gap-px pb-1">
           {haulage.map((position) => (
+            <Tooltip key={position.coach.code}>
+              <TooltipTrigger asChild aria-label={position.hint}>
             <div
-              key={position.coach.code}
-              title={position.hint}
+              tabIndex={-1}
               className={cn(
                 "flex h-9 min-w-[1.75rem] flex-1 items-center justify-center rounded-sm border text-[0.5625rem] transition-colors",
                 highlightCoach === position.coach.code
-                  ? "border-brand bg-brand text-on-brand"
-                  : "border-border bg-surface text-faint"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground"
               )}
             >
               {position.coach.code}
             </div>
+              </TooltipTrigger>
+              <TooltipContent>{position.hint}</TooltipContent>
+            </Tooltip>
           ))}
         </div>
+        <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
-        <div className="absolute inset-x-3 bottom-2 flex justify-between text-[0.5625rem] text-faint">
+        <div className="absolute inset-x-3 bottom-2 flex justify-between text-[0.5625rem] text-muted-foreground">
           <span>rear of platform</span>
           <span>front of platform</span>
         </div>
       </div>
 
       {highlightCoach && (
-        <p className="mt-2 text-[0.8125rem] leading-relaxed text-dim">
+        <p className="mt-2 text-[0.8125rem] leading-relaxed text-muted-foreground">
           {positions.find((p) => p.coach.code === highlightCoach)?.hint}
         </p>
       )}

@@ -1,8 +1,8 @@
 "use client";
 
-import * as Popover from "@radix-ui/react-popover";
 import { lookup } from "@/lib/glossary";
 import { cn } from "./cn";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 /**
  * Railway jargon, always explained. Every WL / RAC / 3A / PQWL in the app goes
@@ -23,35 +23,28 @@ export function Term({
   if (!entry) return <>{children ?? code}</>;
 
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <button
           type="button"
           aria-label={`What does ${code} mean? ${entry.short}`}
           className={cn(
             "cursor-help underline decoration-dotted decoration-from-font underline-offset-[3px]",
-            "decoration-[color:var(--text-faint)] hover:decoration-[color:var(--brand)]",
+            "decoration-muted-foreground hover:decoration-primary",
             "transition-colors",
             className
           )}
         >
           {children ?? code}
         </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          sideOffset={8}
-          collisionPadding={12}
-          className="z-50 max-w-[19rem] rounded-xl border border-border bg-surface p-3.5 text-sm shadow-[var(--shadow-lg)]"
-        >
-          <div className="mb-1 flex items-baseline gap-2">
-            <span className="font-mono text-[0.8125rem] text-brand">{entry.term}</span>
-            <span className="text-text">{entry.short}</span>
-          </div>
-          <p className="text-[0.8125rem] leading-relaxed text-dim">{entry.full}</p>
-          <Popover.Arrow className="fill-[var(--border)]" width={12} height={6} />
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+      </PopoverTrigger>
+      <PopoverContent className="max-w-[19rem] w-auto border-border shadow-[var(--shadow-lg)]">
+        <div className="mb-1 flex items-baseline gap-2">
+          <span className="font-mono text-[0.8125rem] text-primary">{entry.term}</span>
+          <span className="text-foreground">{entry.short}</span>
+        </div>
+        <p className="text-[0.8125rem] leading-relaxed text-muted-foreground">{entry.full}</p>
+      </PopoverContent>
+    </Popover>
   );
 }

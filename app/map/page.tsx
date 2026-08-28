@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function MapPage() {
   return (
-    <Suspense fallback={<div className="h-[calc(100dvh-3.5rem)] bg-surface-2" aria-hidden />}>
+    <Suspense fallback={<div className="h-[calc(100dvh-3.5rem)] bg-muted" aria-hidden />}>
       <LiveMap />
     </Suspense>
   );

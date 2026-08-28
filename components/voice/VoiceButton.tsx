@@ -188,18 +188,18 @@ export function VoiceButton() {
     <>
       <div className="pointer-events-none fixed inset-x-0 bottom-[3.75rem] z-40 flex flex-col items-end gap-2 p-4 sm:bottom-0 sm:p-6">
         {(result || error) && (
-          <div className="pointer-events-auto w-full max-w-sm self-stretch rounded-xl border border-border bg-surface p-3.5 shadow-[var(--shadow-lg)] sm:self-end">
+          <div className="pointer-events-auto w-full max-w-sm self-stretch rounded-xl border border-border bg-card p-3.5 shadow-[var(--shadow-lg)] sm:self-end">
             <div className="mb-1.5 flex items-start gap-2">
-              <Volume2 className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />
+              <Volume2 className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
               <div className="min-w-0 flex-1">
                 {result && (
                   <>
-                    <p className="text-[0.75rem] text-faint">You said</p>
-                    <p className="text-[0.875rem] text-text">{result.transcript}</p>
-                    <p className="mt-2 text-[0.8125rem] leading-relaxed text-dim">{result.spokenReply}</p>
+                    <p className="text-[0.75rem] text-muted-foreground">You said</p>
+                    <p className="text-[0.875rem] text-foreground">{result.transcript}</p>
+                    <p className="mt-2 text-[0.8125rem] leading-relaxed text-muted-foreground">{result.spokenReply}</p>
                   </>
                 )}
-                {error && <p className="text-[0.8125rem] leading-relaxed text-danger">{error}</p>}
+                {error && <p className="text-[0.8125rem] leading-relaxed text-destructive">{error}</p>}
               </div>
               <button
                 type="button"
@@ -209,7 +209,7 @@ export function VoiceButton() {
                   setPhase("idle");
                 }}
                 aria-label="Dismiss"
-                className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
+                className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <X className="size-3.5" aria-hidden />
               </button>
@@ -224,13 +224,13 @@ export function VoiceButton() {
           aria-label={listening ? "Stop listening" : "Search by voice"}
           className={cn(
             "pointer-events-auto relative flex size-14 items-center justify-center rounded-full shadow-[var(--shadow-lg)] transition-colors",
-            listening ? "bg-danger text-[color:var(--surface)]" : "bg-brand text-on-brand",
+            listening ? "bg-destructive text-[color:var(--card)]" : "bg-primary text-primary-foreground",
             busy && "opacity-70"
           )}
         >
           {listening && (
             <span
-              className="absolute inset-0 rounded-full bg-danger opacity-30"
+              className="absolute inset-0 rounded-full bg-destructive opacity-30"
               style={{ transform: `scale(${1 + level * 0.7})`, transition: "transform 80ms linear" }}
               aria-hidden
             />
@@ -253,7 +253,7 @@ export function VoiceButton() {
 
       {listening && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[9.5rem] z-40 flex justify-center px-4 sm:bottom-24">
-          <p className="rounded-full bg-surface px-3 py-1.5 text-[0.75rem] text-dim shadow-[var(--shadow-md)]">
+          <p className="rounded-full bg-card px-3 py-1.5 text-[0.75rem] text-muted-foreground shadow-[var(--shadow-md)]">
             Listening — say something like &ldquo;trains from Delhi to Mumbai tomorrow&rdquo;
           </p>
         </div>

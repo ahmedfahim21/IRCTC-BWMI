@@ -1,9 +1,9 @@
 "use client";
 
-import * as Popover from "@radix-ui/react-popover";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/apiClient";
 import { cn } from "./cn";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 const LABEL: Record<string, string> = {
   stationSearch: "Station search",
@@ -35,8 +35,8 @@ export function DataSourceBadge() {
   const liveCount = Object.values(data.sources).filter((v) => v === "live").length;
 
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <button
           type="button"
           aria-label={
@@ -44,59 +44,50 @@ export function DataSourceBadge() {
               ? `Data sources: ${liveCount} of ${Object.keys(data.sources).length} live. Tap for the breakdown.`
               : "All data is generated. Tap for the breakdown."
           }
-          className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2 py-1.5 text-[0.6875rem] text-dim transition-colors hover:text-text"
+          className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1.5 text-[0.6875rem] text-muted-foreground transition-colors hover:text-foreground"
         >
-          <span className={cn("size-1.5 shrink-0 rounded-full", data.live ? "bg-ok" : "bg-warn")} aria-hidden />
-          {/* Never hidden: this is what tells the reader which numbers are real. */}
+          <span className={cn("size-1.5 shrink-0 rounded-full", data.live ? "bg-success" : "bg-warning")} aria-hidden />
           <span className="hidden sm:inline">{data.live ? "Part live" : "Demo data"}</span>
           <span className="tnum sm:hidden">
             {data.live ? `${liveCount}/${Object.keys(data.sources).length}` : "demo"}
           </span>
         </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          sideOffset={8}
-          align="end"
-          collisionPadding={12}
-          className="z-50 w-[19rem] rounded-xl border border-border bg-surface p-3.5 shadow-[var(--shadow-lg)]"
-        >
-          <p className="mb-2 text-[0.8125rem] text-text">
-            {data.live ? (
-              <>
-                <span className="tnum">{liveCount}</span> of {Object.keys(data.sources).length} data sources are live,
-                from the RailRadar API.
-              </>
-            ) : (
-              "Everything here is generated. Realistic in shape, not real railway data."
-            )}
-          </p>
-
-          <dl className="space-y-1 border-t border-border pt-2">
-            {Object.entries(data.sources).map(([key, value]) => (
-              <div key={key} className="flex items-baseline justify-between gap-3">
-                <dt className="text-[0.75rem] text-dim">{LABEL[key] ?? key}</dt>
-                <dd className={cn("text-[0.6875rem]", value === "live" ? "text-ok" : "text-faint")}>
-                  {value === "live" ? "live" : "modelled"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-
-          {data.quota && (
-            <p className="mt-2.5 border-t border-border pt-2 text-[0.6875rem] leading-relaxed text-faint">
-              <span className="tnum">{data.quota.used}</span> of{" "}
-              <span className="tnum">{data.quota.budget}</span> monthly API requests used. Responses are
-              cached on disk so repeat views cost nothing.
-            </p>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[19rem] border-border shadow-[var(--shadow-lg)]">
+        <p className="mb-2 text-[0.8125rem] text-foreground">
+          {data.live ? (
+            <>
+              <span className="tnum">{liveCount}</span> of {Object.keys(data.sources).length} data sources are live,
+              from the RailRadar API.
+            </>
+          ) : (
+            "Everything here is generated. Realistic in shape, not real railway data."
           )}
+        </p>
 
-          <p className="mt-2 text-[0.6875rem] leading-relaxed text-faint">
-            Booking is always local — there is no public API for reserving a berth.
+        <dl className="space-y-1 border-t border-border pt-2">
+          {Object.entries(data.sources).map(([key, value]) => (
+            <div key={key} className="flex items-baseline justify-between gap-3">
+              <dt className="text-[0.75rem] text-muted-foreground">{LABEL[key] ?? key}</dt>
+              <dd className={cn("text-[0.6875rem]", value === "live" ? "text-success" : "text-muted-foreground")}>
+                {value === "live" ? "live" : "modelled"}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        {data.quota && (
+          <p className="mt-2.5 border-t border-border pt-2 text-[0.6875rem] leading-relaxed text-muted-foreground">
+            <span className="tnum">{data.quota.used}</span> of{" "}
+            <span className="tnum">{data.quota.budget}</span> monthly API requests used. Responses are
+            cached on disk so repeat views cost nothing.
           </p>
-          <Popover.Arrow className="fill-[var(--border)]" width={12} height={6} />
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+        )}
+
+        <p className="mt-2 text-[0.6875rem] leading-relaxed text-muted-foreground">
+          Booking is always local — there is no public API for reserving a berth.
+        </p>
+      </PopoverContent>
+    </Popover>
   );
 }

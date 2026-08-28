@@ -26,30 +26,30 @@ export function HoldBanner({ holdExpiresAt, saving }: { holdExpiresAt: string; s
     <div
       className={cn(
         "flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border px-3.5 py-2.5",
-        expired ? "border-border bg-surface-2" : low ? "border-warn/40 bg-warn-soft" : "border-border bg-surface-2"
+        expired ? "border-border bg-muted" : low ? "border-warning/40 bg-warning-soft" : "border-border bg-muted"
       )}
     >
-      <span className={cn("flex items-center gap-1.5 text-[0.8125rem]", low && !expired ? "text-warn" : "text-dim")}>
+      <span className={cn("flex items-center gap-1.5 text-[0.8125rem]", low && !expired ? "text-warning" : "text-muted-foreground")}>
         <TimerReset className="size-3.5" aria-hidden />
         {expired ? (
           "Seat hold expired"
         ) : (
           <>
             Seats held for{" "}
-            <span className="tnum text-text">
+            <span className="tnum text-foreground">
               {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
             </span>
           </>
         )}
       </span>
 
-      <span className="flex items-center gap-1.5 text-[0.75rem] text-faint">
-        <ShieldCheck className="size-3.5 text-ok" aria-hidden />
+      <span className="flex items-center gap-1.5 text-[0.75rem] text-muted-foreground">
+        <ShieldCheck className="size-3.5 text-success" aria-hidden />
         {saving ? "Saving…" : "Saved — you can close this and come back"}
       </span>
 
       {expired && (
-        <span className="text-[0.75rem] text-dim">
+        <span className="text-[0.75rem] text-muted-foreground">
           Your details are still here. Availability will be re-checked when you confirm.
         </span>
       )}

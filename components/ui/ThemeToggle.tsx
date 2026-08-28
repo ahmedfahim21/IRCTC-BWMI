@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { cn } from "./cn";
+import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 
 type Theme = "light" | "dark" | "system";
 const OPTIONS: Array<{ value: Theme; icon: typeof Sun; label: string }> = [
@@ -26,25 +26,30 @@ export function ThemeToggle() {
   }, []);
 
   return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5" role="group" aria-label="Colour theme">
+    <ToggleGroup
+      type="single"
+      value={theme}
+      onValueChange={(value) => {
+        if (!value) return;
+        const next = value as Theme;
+        setTheme(next);
+        applyTheme(next);
+      }}
+      variant="outline"
+      size="sm"
+      className="rounded-lg border border-border bg-muted p-0.5"
+      aria-label="Colour theme"
+    >
       {OPTIONS.map(({ value, icon: Icon, label }) => (
-        <button
+        <ToggleGroupItem
           key={value}
-          type="button"
+          value={value}
           aria-label={label}
-          aria-pressed={theme === value}
-          onClick={() => {
-            setTheme(value);
-            applyTheme(value);
-          }}
-          className={cn(
-            "rounded-md p-1.5 transition-colors",
-            theme === value ? "bg-surface text-text shadow-[var(--shadow-sm)]" : "text-faint hover:text-dim"
-          )}
+          className="rounded-md p-1.5 data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-[var(--shadow-sm)]"
         >
           <Icon className="size-3.5" aria-hidden />
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
