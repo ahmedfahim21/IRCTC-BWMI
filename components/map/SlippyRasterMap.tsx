@@ -209,24 +209,43 @@ export function SlippyRasterMap({
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
-    const fitted = zoomToFit(
-      INDIA_BOUNDS[0][0],
-      INDIA_BOUNDS[0][1],
-      INDIA_BOUNDS[1][0],
-      INDIA_BOUNDS[1][1],
-      wrap.clientWidth || 800,
-      wrap.clientHeight || 600,
-      28
-    );
-    viewRef.current = { centerLng: fitted.centerLng, centerLat: fitted.centerLat, zoom: fitted.zoom };
-    paint();
-    emit();
-    bumpView();
-    const observer = new ResizeObserver(() => {
+    const apply = (fitIndiaFirst: boolean) => {
+      if (wrap.clientWidth < 2 || wrap.clientHeight < 2) return;
+      if (fitIndiaFirst) {
+        const fitted = zoomToFit(
+          INDIA_BOUNDS[0][0],
+          INDIA_BOUNDS[0][1],
+          INDIA_BOUNDS[1][0],
+          INDIA_BOUNDS[1][1],
+          wrap.clientWidth,
+          wrap.clientHeight,
+          20
+        );
+        viewRef.current = clampView(
+          fitted.centerLng,
+          fitted.centerLat,
+          fitted.zoom,
+          wrap.clientWidth,
+          wrap.clientHeight,
+          INDIA_BOUNDS
+        );
+      } else {
+        const current = viewRef.current;
+        viewRef.current = clampView(
+          current.centerLng,
+          current.centerLat,
+          current.zoom,
+          wrap.clientWidth,
+          wrap.clientHeight,
+          INDIA_BOUNDS
+        );
+      }
       paint();
       emit();
       bumpView();
-    });
+    };
+    apply(true);
+    const observer = new ResizeObserver(() => apply(false));
     observer.observe(wrap);
     return () => observer.disconnect();
   }, [paint, emit, bumpView]);
@@ -297,7 +316,7 @@ export function SlippyRasterMap({
   const fitBounds = useCallback(
     (west: number, south: number, east: number, north: number, padding = 48) => {
       const wrap = wrapRef.current;
-      if (!wrap) return;
+      if (!wrap || wrap.clientWidth < 2 || wrap.clientHeight < 2) return;
       const fitted = zoomToFit(west, south, east, north, wrap.clientWidth, wrap.clientHeight, padding);
       setView(fitted);
     },

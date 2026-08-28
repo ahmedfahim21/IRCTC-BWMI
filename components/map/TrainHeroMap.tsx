@@ -26,6 +26,7 @@ export function TrainHeroMap({
   highlightTo?: string;
   className?: string;
 }) {
+  const [selectedPin, setSelectedPin] = useState<StationPin | null>(null);
   const origin = highlightFrom ? stations[highlightFrom] : stations[schedule[0]?.stationCode];
   const dest = highlightTo ? stations[highlightTo] : stations[schedule[schedule.length - 1]?.stationCode];
   const pins: StationPin[] = [];
@@ -41,7 +42,8 @@ export function TrainHeroMap({
       <ClientRailMap>
         <MapControls />
         <RouteLayer trainNumber={trainNumber} schedule={schedule} stations={stations} />
-        <StationPins pins={pins} />
+        <StationPins pins={pins} onSelect={setSelectedPin} />
+        {selectedPin && <StationCallout pin={selectedPin} onClose={() => setSelectedPin(null)} />}
       </ClientRailMap>
       {live && live.state !== "notStarted" && Number.isFinite(live.position.lat) && (
         <span className="sr-only">

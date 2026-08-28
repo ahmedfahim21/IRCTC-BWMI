@@ -131,18 +131,18 @@ export function SearchMap({
 }
 
 function FitStationPair({ pins }: { pins: StationPin[] }) {
-  const { fitBounds } = useRailMap();
+  const { fitBounds, ready } = useRailMap();
   const fittedFor = useRef("");
 
   useEffect(() => {
-    if (pins.length < 2) return;
+    if (!ready || pins.length < 2) return;
     const key = pins.map((pin) => pin.code).join("-");
     if (fittedFor.current === key) return;
     fittedFor.current = key;
     const lngs = pins.map((pin) => pin.lng);
     const lats = pins.map((pin) => pin.lat);
-    fitBounds(Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats), 48);
-  }, [pins, fitBounds]);
+    fitBounds(Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats), 24);
+  }, [pins, fitBounds, ready]);
 
   return null;
 }

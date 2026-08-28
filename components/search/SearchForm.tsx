@@ -61,7 +61,7 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
   };
 
   return (
-    <form onSubmit={submit} className="card p-5 shadow-[var(--shadow-md)] sm:p-6">
+    <form onSubmit={submit} className="card overflow-hidden p-5 shadow-[var(--shadow-sm)] sm:p-6">
       <div className="relative">
         <StationCombobox
           label={t("search.from")}

@@ -21,6 +21,7 @@ export function JourneyRow({
   quota,
   selected = false,
   onSelect,
+  flush = false,
 }: {
   journey: JourneyDto;
   stations: Record<string, Station>;
@@ -28,6 +29,7 @@ export function JourneyRow({
   quota: QuotaCode;
   selected?: boolean;
   onSelect?: () => void;
+  flush?: boolean;
 }) {
   const router = useRouter();
   const [starting, setStarting] = useState<string | null>(null);
@@ -58,9 +60,10 @@ export function JourneyRow({
   return (
     <article
       className={cn(
-        "card overflow-hidden transition-colors",
+        "overflow-hidden transition-colors",
+        flush ? "border-b border-border last:border-b-0" : "card",
         !journey.runsToday && "opacity-55",
-        selected && "border-brand"
+        selected && (flush ? "bg-brand-soft" : "border-brand")
       )}
       aria-label={`${train.number} ${train.name}`}
       aria-current={selected ? "true" : undefined}

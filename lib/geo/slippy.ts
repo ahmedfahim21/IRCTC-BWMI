@@ -40,8 +40,8 @@ export function zoomToFit(
   const zH = Math.log2(innerH / (ySpan * TILE_SIZE));
   const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(zW, zH)));
   return {
-    centerLng: (west + east) / 2,
-    centerLat: (south + north) / 2,
+    centerLng: worldXToLng((lngToWorldX(west, 0) + lngToWorldX(east, 0)) / 2, 0),
+    centerLat: worldYToLat((latToWorldY(north, 0) + latToWorldY(south, 0)) / 2, 0),
     zoom,
   };
 }

@@ -120,16 +120,16 @@ function RouteOverlay({
   fitPadding: number;
   onSelectStop?: (stop: RouteStop) => void;
 }) {
-  const { project, fitBounds } = useRailMap();
+  const { project, fitBounds, ready } = useRailMap();
   const fittedFor = useRef<string | null>(null);
   const { coords, stops, bounds } = routeGeometry(schedule, stations);
 
   useEffect(() => {
-    if (!bounds) return;
+    if (!bounds || !ready) return;
     if (fittedFor.current === routeKey) return;
     fittedFor.current = routeKey;
     fitBounds(bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1], fitPadding);
-  }, [bounds, routeKey, fitBounds, fitPadding]);
+  }, [bounds, routeKey, fitBounds, fitPadding, ready]);
 
   const points = coords
     .map(([lng, lat]) => project(lng, lat))
