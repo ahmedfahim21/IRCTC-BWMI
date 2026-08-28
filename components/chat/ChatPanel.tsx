@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, PanelBottom, PanelLeft, PanelRight, Send, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import {
+  MessageCircle,
+  PanelBottom,
+  PanelLeft,
+  PanelRight,
+  RotateCcw,
+  Send,
+  Square,
+  X,
+} from "lucide-react";
 import { getToolName, isToolUIPart } from "ai";
 import { cn } from "@/components/ui/cn";
-import { api } from "@/lib/apiClient";
 import { useAgentChat } from "@/lib/agent/ChatProvider";
+import { hasPendingUiToolCalls } from "@/lib/agent/resolveToolOutput";
 
 type Dock = "right" | "left" | "bottom";
 const DOCK_KEY = "irctc.chatDock";
@@ -24,20 +32,26 @@ function readDock(): Dock {
   return "right";
 }
 
+function formatToolOutput(output: unknown): string | null {
+  if (!output || typeof output !== "object") return null;
+  const record = output as Record<string, unknown>;
+  if (typeof record.error === "string") return record.error;
+  if (typeof record.detail === "string") return record.detail;
+  if (typeof record.text === "string") return record.text;
+  if (typeof record.action === "string") return `Done: ${record.action}`;
+  return null;
+}
+
 /**
  * Dockable agent panel. Shares the ChatProvider instance with voice so a spoken
  * turn lands in the same thread.
  */
 export function ChatPanel() {
   const chat = useAgentChat();
-  const { isFetched: statusKnown } = useQuery({
-    queryKey: ["status"],
-    queryFn: ({ signal }) => api.status(signal),
-    staleTime: 5 * 60_000,
-  });
   const [open, setOpen] = useState(false);
   const [dock, setDock] = useState<Dock>("right");
   const [input, setInput] = useState("");
+  const [editingLast, setEditingLast] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => setDock(readDock()), []);
@@ -49,19 +63,25 @@ export function ChatPanel() {
   }, []);
 
   useEffect(() => {
-    scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
+    scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [chat?.messages, open]);
 
   if (!chat) return null;
 
-  const { messages, sendMessage, status, error } = chat;
+  const { messages, sendMessage, status, error, stop, regenerate, clearError, newChat } = chat;
   const busy = status === "submitted" || status === "streaming";
+  const pendingTools = hasPendingUiToolCalls(messages);
 
   const submit = (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
     setOpen(true);
     setInput("");
+    if (editingLast) {
+      setEditingLast(false);
+      chat.editLastUserMessage(trimmed);
+      return;
+    }
     void sendMessage({ text: trimmed });
   };
 
@@ -69,6 +89,11 @@ export function ChatPanel() {
     setDock(next);
     localStorage.setItem(DOCK_KEY, next);
   };
+
+  const lastUserText = [...messages]
+    .reverse()
+    .find((message) => message.role === "user")
+    ?.parts?.find((part) => part.type === "text")?.text;
 
   return (
     <>
@@ -98,6 +123,33 @@ export function ChatPanel() {
         >
           <header className="flex items-center gap-1.5 border-b border-border px-3 py-2">
             <p className="min-w-0 flex-1 text-[0.8125rem] text-text">Chat</p>
+            <button
+              type="button"
+              onClick={newChat}
+              className="rounded-md px-1.5 py-0.5 text-[0.6875rem] text-faint hover:text-text"
+            >
+              New
+            </button>
+            {busy && (
+              <button
+                type="button"
+                onClick={() => void stop()}
+                aria-label="Stop generating"
+                className="rounded-md p-1 text-faint hover:text-text"
+              >
+                <Square className="size-3.5" aria-hidden />
+              </button>
+            )}
+            {!busy && messages.length > 0 && (
+              <button
+                type="button"
+                onClick={() => void regenerate()}
+                aria-label="Regenerate response"
+                className="rounded-md p-1 text-faint hover:text-text"
+              >
+                <RotateCcw className="size-3.5" aria-hidden />
+              </button>
+            )}
             <DockButton label="Dock left" current={dock === "left"} onClick={() => setDockAndStore("left")}>
               <PanelLeft className="size-3.5" />
             </DockButton>
@@ -123,9 +175,8 @@ export function ChatPanel() {
                     <button
                       key={starter}
                       type="button"
-                      disabled={!statusKnown}
                       onClick={() => submit(starter)}
-                      className="rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-left text-[0.75rem] text-text hover:border-brand/40 disabled:opacity-40"
+                      className="rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-left text-[0.75rem] text-text hover:border-brand/40"
                     >
                       {starter}
                     </button>
@@ -152,33 +203,56 @@ export function ChatPanel() {
                     const failed = state === "output-error";
                     const done = state === "output-available";
                     const input = "input" in part && part.input && typeof part.input === "object" ? (part.input as Record<string, unknown>) : null;
+                    const output = "output" in part ? part.output : null;
                     const summary = input
                       ? Object.entries(input)
                           .slice(0, 3)
                           .map(([key, value]) => `${key} ${String(value)}`)
                           .join(" · ")
                       : "";
+                    const resultText = formatToolOutput(output);
+                    const outputFailed = Boolean(
+                      output && typeof output === "object" && (output as { ok?: boolean }).ok === false
+                    );
                     return (
-                      <p
+                      <div
                         key={`${message.id}-${index}`}
                         data-testid="chat-tool"
                         className={cn(
                           "rounded-md border px-2 py-1 font-mono text-[0.6875rem]",
-                          failed ? "border-danger/40 text-danger" : "border-border text-faint"
+                          failed || outputFailed ? "border-danger/40 text-danger" : "border-border text-faint"
                         )}
                       >
-                        {name.replaceAll("_", " ")}
-                        {done ? " · done" : failed ? " · failed" : " · calling"}
-                        {summary ? ` · ${summary}` : ""}
-                      </p>
+                        <p>
+                          {name.replaceAll("_", " ")}
+                          {done ? " · done" : failed ? " · failed" : " · calling"}
+                          {summary ? ` · ${summary}` : ""}
+                        </p>
+                        {resultText && done && <p className="mt-0.5 text-[0.625rem] leading-snug">{resultText}</p>}
+                      </div>
                     );
                   }
                   return null;
                 })}
               </div>
             ))}
+            {pendingTools && !busy && <p className="text-[0.75rem] text-faint">Updating the screen…</p>}
             {busy && <p className="text-[0.75rem] text-faint">Working…</p>}
-            {error && <p className="text-[0.8125rem] text-danger">{error.message}</p>}
+            {error && (
+              <div className="space-y-1">
+                <p className="text-[0.8125rem] text-danger">{error.message}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearError();
+                    void regenerate();
+                  }}
+                  className="text-[0.75rem] text-brand underline decoration-dotted underline-offset-2"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
 
           <form
@@ -207,13 +281,27 @@ export function ChatPanel() {
             />
             <button
               type="submit"
-              disabled={busy || !statusKnown || !input.trim()}
+              disabled={busy || pendingTools || !input.trim()}
               aria-label="Send message"
               className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
             >
               <Send className="size-4" aria-hidden />
             </button>
           </form>
+          {lastUserText && !busy && (
+            <div className="border-t border-border px-2.5 py-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setInput(lastUserText);
+                  setEditingLast(true);
+                }}
+                className="text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
+              >
+                Edit last message
+              </button>
+            </div>
+          )}
         </section>
       )}
     </>

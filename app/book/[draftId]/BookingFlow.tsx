@@ -18,6 +18,9 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { formatRupees } from "@/components/availability/ClassCell";
 import { cn } from "@/components/ui/cn";
+import { useAgentIntentDrain, useAgentPublish } from "@/lib/agent/agentStore";
+import { applyBookingOptionsPatch, normalizeSetOptionsInput } from "@/lib/agent/normalizeToolInput";
+import type { BerthType } from "@/lib/types";
 
 export function BookingFlow({ draftId }: { draftId: string }) {
   const router = useRouter();
@@ -27,11 +30,15 @@ export function BookingFlow({ draftId }: { draftId: string }) {
   const [selections, setSelections] = useState<BerthSelection[]>([]);
   const [activeCoach, setActiveCoach] = useState<string | null>(null);
   const [options, setOptions] = useState({ keepTogether: true, addMeals: false, travelInsurance: true, autoUpgrade: true });
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const [contact, setContact] = useState({ phone: "", email: "" });
   const [tatkalArmed, setTatkalArmed] = useState(false);
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const hydrated = useRef(false);
+  const confirmRef = useRef<(() => void) | null>(null);
+  const publish = useAgentPublish();
 
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["draft", draftId],
@@ -153,6 +160,45 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passengersWithBerths, options, contact, draft?.draftId]);
 
+  useEffect(() => {
+    if (!draft || !hydrated.current) return;
+    publish.current({
+      booking: {
+        draftId: draft.draftId,
+        trainNumber: draft.trainNumber,
+        classCode: draft.classCode,
+        holdExpiresAt: draft.holdExpiresAt,
+        passengers: passengers.map((passenger) => ({
+          name: passenger.name,
+          age: passenger.age,
+          gender: passenger.gender,
+        })),
+        contact,
+        options,
+        berthSelections: selections.map((selection) => ({
+          coach: selection.coachCode,
+          berth: selection.berthNumber,
+        })),
+        activeCoach,
+      },
+      berths: coachData
+        ? {
+            coaches: coachData.coaches.map((coach) => coach.code),
+            freeByCoach: Object.fromEntries(
+              coachData.coaches.map((coach) => [
+                coach.code,
+                coach.berths.filter((berth) => !berth.isBooked).length,
+              ])
+            ),
+          }
+        : null,
+    });
+  }, [draft, passengers, contact, options, selections, activeCoach, coachData, publish]);
+
+  const namedPassengerCount = passengers.filter((passenger) => passenger.name.trim().length > 0).length;
+  const bookingReady =
+    namedPassengerCount > 0 && namedPassengerCount === passengers.length && contact.phone.length >= 10;
+
   const confirm = useMutation({
     mutationFn: async () => {
       await api.patchDraft(draftId, { passengers: passengersWithBerths });
@@ -176,6 +222,107 @@ export function BookingFlow({ draftId }: { draftId: string }) {
       setConfirmError(cause instanceof ApiError ? cause.message : "Could not complete this booking");
     },
   });
+
+  confirmRef.current = () => {
+    if (!bookingReady || confirm.isPending) return;
+    setConfirmError(null);
+    confirm.mutate();
+  };
+
+  useAgentIntentDrain(
+    Boolean(draft && hydrated.current && !isPending),
+    async (intent) => {
+      switch (intent.name) {
+        case "select_berth": {
+          if (!coachData) {
+            return { ok: false, error: "Coach layout still loading — try again in a moment." };
+          }
+          const coachCode = String(intent.input.coach ?? activeCoach ?? "");
+          const wantedType = typeof intent.input.berthType === "string" ? (intent.input.berthType as BerthType) : null;
+          const wantedNumber = Number(intent.input.berth);
+          const coach = coachData?.coaches.find((entry) => entry.code === coachCode);
+          if (!coach) {
+            return { ok: false, error: `Coach ${coachCode} is not on screen.` };
+          }
+          if (activeCoach !== coachCode) setActiveCoach(coachCode);
+          const free = coach.berths.filter((berth) => !berth.isBooked);
+          const byType = wantedType
+            ? free.find((berth) => berth.type === wantedType)
+            : undefined;
+          const byNumber = Number.isFinite(wantedNumber)
+            ? free.find((berth) => berth.number === wantedNumber)
+            : undefined;
+          const target = byType ?? byNumber ?? free[0];
+          if (!target) {
+            return { ok: false, error: `No free berth in ${coachCode}.` };
+          }
+          const key = { coachCode, berthNumber: target.number };
+          const exists = selections.some(
+            (selection) => selection.coachCode === key.coachCode && selection.berthNumber === key.berthNumber
+          );
+          if (!exists) {
+            if (selections.length >= passengers.length) {
+              setSelections([key]);
+            } else {
+              setSelections([...selections, key]);
+            }
+          }
+          return {
+            ok: true,
+            detail: `Selected berth ${target.number} (${target.type}) in ${coachCode}`,
+          };
+        }
+        case "set_passengers": {
+          const list =
+            (intent.input.passengers as Array<{ name: string; age?: number; gender?: Passenger["gender"] }>) ?? [];
+          if (!list.length) return { ok: false, error: "No passengers provided." };
+          setPassengers(
+            list.map((entry, index) => ({
+              ...(passengers[index] ?? blankPassenger(index)),
+              name: entry.name,
+              age: entry.age ?? passengers[index]?.age ?? 30,
+              gender: entry.gender ?? passengers[index]?.gender ?? "male",
+            }))
+          );
+          return { ok: true, detail: `Set ${list.length} passenger(s)` };
+        }
+        case "set_contact": {
+          const phone = String(intent.input.phone ?? contact.phone).replace(/\D/g, "").slice(0, 10);
+          const email = typeof intent.input.email === "string" ? intent.input.email : contact.email;
+          setContact({ phone, email });
+          return { ok: true, detail: `Contact updated (${phone}${email ? `, ${email}` : ""})` };
+        }
+        case "set_options": {
+          const patch = normalizeSetOptionsInput(intent.input);
+          const { next, changed } = applyBookingOptionsPatch(optionsRef.current, patch);
+          if (!changed.length) {
+            return {
+              ok: false,
+              error:
+                "No matching options in the request. Pass addMeals, travelInsurance, keepTogether, or autoUpgrade as booleans.",
+            };
+          }
+          setOptions(next);
+          return { ok: true, detail: `Updated ${changed.join(", ")}` };
+        }
+        case "confirm": {
+          if (!bookingReady) {
+            return { ok: false, error: "Passenger names and a 10-digit mobile are required before confirm." };
+          }
+          confirmRef.current?.();
+          return { ok: true, detail: "Confirm started" };
+        }
+        case "select_class":
+          return { ok: true, detail: `Class is already ${draft?.classCode} on this draft.` };
+        default:
+          return { ok: false, error: `Unhandled booking intent ${intent.name}` };
+      }
+    },
+    (intent) =>
+      ["select_berth", "set_passengers", "set_contact", "set_options", "confirm", "select_class"].includes(
+        intent.name
+      )
+  );
 
   if (isPending) return <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6"><SkeletonRows rows={4} /></div>;
   if (isError || !draft)
