@@ -456,6 +456,7 @@ function Toggle({
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
       className="flex w-full items-start gap-2.5 rounded-lg py-1.5 text-left transition-colors hover:bg-surface-2"
     >

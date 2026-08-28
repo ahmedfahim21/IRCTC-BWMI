@@ -130,7 +130,7 @@ export function RouteLayer({
   schedule?: ScheduleStop[];
   stations?: Record<string, Station>;
 }) {
-  const { map, reducedMotion } = useRailMap();
+  const { map, fitBounds } = useRailMap();
   const fittedFor = useRef<string | null>(null);
 
   const { data } = useQuery({
@@ -162,7 +162,7 @@ export function RouteLayer({
 
       if (bounds && fittedFor.current !== key) {
         fittedFor.current = key;
-        map.fitBounds(bounds, { padding: 48, duration: reducedMotion ? 0 : 700, maxZoom: 8 });
+        fitBounds(bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1], 48);
       }
     };
 
@@ -171,11 +171,79 @@ export function RouteLayer({
     return () => {
       map.off("styledata", paint);
     };
-  }, [map, resolvedSchedule, resolvedStations, key, reducedMotion]);
+  }, [map, resolvedSchedule, resolvedStations, key, fitBounds]);
 
   useEffect(() => {
     fittedFor.current = null;
   }, [key]);
 
-  return null;
+  if (map) return null;
+  if (!resolvedSchedule || !resolvedStations || !key) return null;
+  return (
+    <SlippyRouteOverlay
+      schedule={resolvedSchedule}
+      stations={resolvedStations}
+      routeKey={key}
+    />
+  );
+}
+
+function SlippyRouteOverlay({
+  schedule,
+  stations,
+  routeKey,
+}: {
+  schedule: ScheduleStop[];
+  stations: Record<string, Station>;
+  routeKey: string;
+}) {
+  const { project, fitBounds } = useRailMap();
+  const fittedFor = useRef<string | null>(null);
+  const { collection, bounds } = routeCollection(schedule, stations);
+
+  useEffect(() => {
+    if (!bounds) return;
+    if (fittedFor.current === routeKey) return;
+    fittedFor.current = routeKey;
+    fitBounds(bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1], 48);
+  }, [bounds, routeKey, fitBounds]);
+
+  const line = collection.features.find((f) => f.geometry.type === "LineString");
+  const coords = line && line.geometry.type === "LineString" ? line.geometry.coordinates : [];
+  const points = coords
+    .map(([lng, lat]) => project(lng, lat))
+    .filter((pt): pt is { x: number; y: number } => pt !== null);
+  const d = points.map((pt, i) => `${i === 0 ? "M" : "L"}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(" ");
+
+  const haltPins = collection.features.filter((f) => f.properties?.kind === "halt" || f.properties?.kind === "terminal");
+
+  return (
+    <svg
+      data-testid="map-route-overlay"
+      className="pointer-events-none absolute inset-0 z-[5] size-full"
+      aria-hidden
+    >
+      {d && (
+        <path d={d} fill="none" stroke="var(--brand)" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {haltPins.map((feature, index) => {
+        if (feature.geometry.type !== "Point") return null;
+        const [lng, lat] = feature.geometry.coordinates;
+        const pt = project(lng, lat);
+        if (!pt) return null;
+        const terminal = feature.properties?.kind === "terminal";
+        return (
+          <circle
+            key={`${feature.properties?.code ?? index}`}
+            cx={pt.x}
+            cy={pt.y}
+            r={terminal ? 6 : 4}
+            fill={terminal ? "var(--brand)" : "var(--surface)"}
+            stroke={terminal ? "var(--surface)" : "var(--brand)"}
+            strokeWidth={terminal ? 2 : 1.6}
+          />
+        );
+      })}
+    </svg>
+  );
 }

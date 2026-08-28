@@ -23,7 +23,7 @@ export function StationPins({
   pins: StationPin[];
   onSelect?: (pin: StationPin) => void;
 }) {
-  const { map } = useRailMap();
+  const { map, project } = useRailMap();
   const markers = useRef<maplibregl.Marker[]>([]);
 
   useEffect(() => {
@@ -37,16 +37,17 @@ export function StationPins({
       const el = document.createElement("button");
       el.type = "button";
       el.className = "rail-station-pin";
-      el.setAttribute("aria-label", `${pin.kind === "origin" ? "From" : pin.kind === "destination" ? "To" : "Stop"} ${pin.name} (${pin.code})`);
+      el.setAttribute(
+        "aria-label",
+        `${pin.kind === "origin" ? "From" : pin.kind === "destination" ? "To" : "Stop"} ${pin.name} (${pin.code})`
+      );
       el.innerHTML = `<span class="rail-station-pin__dot" data-kind="${pin.kind}"></span><span class="rail-station-pin__label">${escapeHtml(pin.code)}</span>`;
       el.addEventListener("click", (event) => {
         event.stopPropagation();
         onSelect?.(pin);
       });
 
-      const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
-        .setLngLat([pin.lng, pin.lat])
-        .addTo(map);
+      const marker = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat([pin.lng, pin.lat]).addTo(map);
       markers.current.push(marker);
     }
 
@@ -56,7 +57,35 @@ export function StationPins({
     };
   }, [map, pins, onSelect]);
 
-  return null;
+  if (map) return null;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[6]" data-testid="map-station-pins">
+      {pins.map((pin) => {
+        if (!Number.isFinite(pin.lat) || !Number.isFinite(pin.lng)) return null;
+        const pt = project(pin.lng, pin.lat);
+        if (!pt) return null;
+        const label =
+          pin.kind === "origin" ? "From" : pin.kind === "destination" ? "To" : "Stop";
+        return (
+          <button
+            key={`${pin.kind}-${pin.code}`}
+            type="button"
+            className="rail-station-pin pointer-events-auto absolute"
+            style={{ left: pt.x, top: pt.y, transform: "translate(-50%, -100%)" }}
+            aria-label={`${label} ${pin.name} (${pin.code})`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect?.(pin);
+            }}
+          >
+            <span className="rail-station-pin__dot" data-kind={pin.kind} />
+            <span className="rail-station-pin__label">{pin.code}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function escapeHtml(value: string): string {

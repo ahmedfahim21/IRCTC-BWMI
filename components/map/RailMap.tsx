@@ -155,23 +155,42 @@ function MapLibreEngine({
     };
     instance.once("idle", onIdle);
     let fellBack = false;
+    const abandonGl = () => {
+      if (fellBack) return;
+      fellBack = true;
+      window.clearTimeout(failSafe);
+      window.clearTimeout(hangSafe);
+      try {
+        instance.remove();
+      } catch {
+        // Painter never started; remove still throws on some builds.
+      }
+      mapRef.current = null;
+      onNeedSlippyRef.current();
+    };
     const failSafe = window.setTimeout(() => {
       if (fellBack || instance.isStyleLoaded()) return;
       fellBack = true;
       instance.setStyle(RASTER_STREET_STYLE);
     }, 4000);
-    instance.once("idle", () => window.clearTimeout(failSafe));
+    const hangSafe = window.setTimeout(() => {
+      if (fellBack) return;
+      if (instance.isStyleLoaded()) {
+        setReady(true);
+        emitBbox(instance);
+        return;
+      }
+      abandonGl();
+    }, 6000);
+    instance.once("idle", () => {
+      window.clearTimeout(failSafe);
+      window.clearTimeout(hangSafe);
+    });
+    instance.on("webglcontextlost", abandonGl);
     instance.on("error", (event) => {
       const message = event.error?.message ?? String(event.error ?? "");
       if (/WebGL2|GPUInitialization|webgl/i.test(message)) {
-        window.clearTimeout(failSafe);
-        try {
-          instance.remove();
-        } catch {
-          // Painter never started; remove still throws on some builds.
-        }
-        mapRef.current = null;
-        onNeedSlippyRef.current();
+        abandonGl();
         return;
       }
       if (fellBack) return;
@@ -193,6 +212,7 @@ function MapLibreEngine({
     return () => {
       observer.disconnect();
       window.clearTimeout(failSafe);
+      window.clearTimeout(hangSafe);
       try {
         instance.remove();
       } catch {
@@ -261,6 +281,28 @@ function MapLibreEngine({
     instance.fitBounds(INDIA_BOUNDS, { padding: 28, duration: reducedMotion ? 0 : 600 });
   }, [reducedMotion]);
 
+  const fitBounds = useCallback(
+    (west: number, south: number, east: number, north: number, padding = 48) => {
+      const instance = mapRef.current;
+      if (!instance) return;
+      instance.fitBounds(
+        [
+          [west, south],
+          [east, north],
+        ],
+        { padding, duration: reducedMotion ? 0 : 700, maxZoom: 8 }
+      );
+    },
+    [reducedMotion]
+  );
+
+  const project = useCallback((lng: number, lat: number) => {
+    const instance = mapRef.current;
+    if (!instance) return null;
+    const point = instance.project([lng, lat]);
+    return { x: point.x, y: point.y };
+  }, []);
+
   const zoomBy = useCallback((delta: number) => {
     const instance = mapRef.current;
     if (!instance) return;
@@ -270,8 +312,22 @@ function MapLibreEngine({
   const setBasemap = useCallback((next: Basemap) => setBasemapState(next), []);
 
   const api = useMemo<RailMapApi>(
-    () => ({ map, ready, basemap, setBasemap, theme, reducedMotion, flyTo, fitIndia, zoomBy }),
-    [map, ready, basemap, setBasemap, theme, reducedMotion, flyTo, fitIndia, zoomBy]
+    () => ({
+      map,
+      engine: "gl",
+      ready,
+      viewEpoch: 0,
+      basemap,
+      setBasemap,
+      theme,
+      reducedMotion,
+      project,
+      flyTo,
+      fitIndia,
+      fitBounds,
+      zoomBy,
+    }),
+    [map, ready, basemap, setBasemap, theme, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
   );
 
   return (

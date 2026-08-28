@@ -35,10 +35,16 @@ export async function applyAgentTool(name: string, input: Record<string, unknown
       return `Selected class ${String(input.classCode)}`;
     }
     case "select_berth": {
-      const berth = document.querySelector<HTMLButtonElement>(
-        `button[aria-label^="Berth ${Number(input.berth)}"]:not([disabled])`
-      );
-      (berth ?? document.querySelector<HTMLButtonElement>('button[aria-label^="Berth "]:not([disabled])'))?.click();
+      const wantedType = typeof input.berthType === "string" ? input.berthType : "";
+      const wantedNumber = Number(input.berth);
+      const buttons = [...document.querySelectorAll<HTMLButtonElement>('button[aria-label^="Berth "]:not([disabled])')];
+      const byType = wantedType
+        ? buttons.find((el) => (el.getAttribute("aria-label") ?? "").includes(`, ${wantedType}`))
+        : undefined;
+      const byNumber = Number.isFinite(wantedNumber)
+        ? buttons.find((el) => (el.getAttribute("aria-label") ?? "").startsWith(`Berth ${wantedNumber}`))
+        : undefined;
+      (byType ?? byNumber ?? buttons[0])?.click();
       return "Berth selected";
     }
     case "set_passengers": {
@@ -59,6 +65,27 @@ export async function applyAgentTool(name: string, input: Record<string, unknown
         phone.dispatchEvent(new Event("input", { bubbles: true }));
       }
       return "Contact filled";
+    }
+    case "set_options": {
+      const switches: Array<{ key: string; label: string }> = [
+        { key: "addMeals", label: "Add meals" },
+        { key: "travelInsurance", label: "Travel insurance" },
+        { key: "keepTogether", label: "Keep us in the same coach" },
+        { key: "autoUpgrade", label: "Auto-upgrade" },
+      ];
+      const flipped: string[] = [];
+      for (const { key, label } of switches) {
+        if (typeof input[key] !== "boolean") continue;
+        const wanted = Boolean(input[key]);
+        const control = [...document.querySelectorAll<HTMLButtonElement>('button[role="switch"]')].find((el) =>
+          (el.textContent ?? "").includes(label)
+        );
+        if (!control) continue;
+        const checked = control.getAttribute("aria-checked") === "true";
+        if (checked !== wanted) control.click();
+        flipped.push(label);
+      }
+      return flipped.length ? `Updated ${flipped.join(", ")}` : "No matching options on screen";
     }
     case "confirm": {
       for (let attempt = 0; attempt < 10; attempt++) {

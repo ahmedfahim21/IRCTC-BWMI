@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Station } from "@/lib/types";
 import { api } from "@/lib/apiClient";
@@ -10,6 +10,7 @@ import { MapControls } from "@/components/map/MapControls";
 import { TrainLayer } from "@/components/map/TrainLayer";
 import { RouteLayer } from "@/components/map/RouteLayer";
 import { StationPins, type StationPin } from "@/components/map/StationPins";
+import { useRailMap } from "@/components/map/mapContext";
 import { TRAIN_TYPES } from "@/lib/railradar/trainTypes";
 
 const SEARCH_REFETCH_MS = 10 * 60_000;
@@ -68,7 +69,25 @@ export function SearchMap({
         />
       )}
       {selectedTrain && <RouteLayer trainNumber={selectedTrain} date={date} />}
+      {!selectedTrain && <FitStationPair pins={pins} />}
       <StationPins pins={pins} />
     </ClientRailMap>
   );
+}
+
+function FitStationPair({ pins }: { pins: StationPin[] }) {
+  const { fitBounds } = useRailMap();
+  const fittedFor = useRef("");
+
+  useEffect(() => {
+    if (pins.length < 2) return;
+    const key = pins.map((pin) => pin.code).join("-");
+    if (fittedFor.current === key) return;
+    fittedFor.current = key;
+    const lngs = pins.map((pin) => pin.lng);
+    const lats = pins.map((pin) => pin.lat);
+    fitBounds(Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats), 72);
+  }, [pins, fitBounds]);
+
+  return null;
 }

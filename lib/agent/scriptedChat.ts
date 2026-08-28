@@ -19,14 +19,50 @@ function lastUserText(body: { messages?: Array<{ role: string; parts?: Array<{ t
 }
 
 function stationToken(query: string): string {
-  const lower = query.toLowerCase();
+  const lower = query.toLowerCase().trim();
   if (/\bnew delhi\b|\bndls\b/.test(lower) || lower === "delhi") return "NDLS";
+  if (/\bnizamuddin|\bnzm\b/.test(lower)) return "NZM";
   if (/\bmumbai|bombay|bct|mmct|csmt\b/.test(lower)) return "BCT";
   if (/\bhowrah|kolkata|hwh\b/.test(lower)) return "HWH";
   if (/\bchennai|madras|mas\b/.test(lower)) return "MAS";
   if (/\bbengaluru|bangalore|sbc\b/.test(lower)) return "SBC";
+  if (/\bhyderabad|hyb|secunderabad|sc\b/.test(lower)) return "HYB";
   if (/\bkerala|kochi|ers\b/.test(lower)) return "ERS";
   return query.trim().toUpperCase();
+}
+
+function parseDate(lower: string, fallback: string): string {
+  if (/\btoday\b/.test(lower)) return todayIso();
+  if (/\btomorrow\b/.test(lower)) return addDays(todayIso(), 1);
+  if (/\bnext week\b/.test(lower)) return addDays(todayIso(), 7);
+  const iso = lower.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  if (iso) return iso[1];
+  const days = lower.match(/\bin\s+(\d+)\s+days?\b/);
+  if (days) return addDays(todayIso(), Number(days[1]));
+  return fallback;
+}
+
+type SearchSession = { from: string; to: string; date: string; quota: string };
+
+function defaultSession(): SearchSession {
+  return { from: "NDLS", to: "BCT", date: addDays(todayIso(), 12), quota: "GN" };
+}
+
+let session: SearchSession = defaultSession();
+
+export function resetScriptedSession() {
+  session = defaultSession();
+}
+
+function searchSteps(from: string, to: string, date: string, quota = "GN"): Step[] {
+  session = { from, to, date, quota };
+  return [
+    { kind: "tool", name: "lookup_station", args: { query: from } },
+    { kind: "tool", name: "lookup_station", args: { query: to } },
+    { kind: "tool", name: "search_trains", args: { from, to, date, quota } },
+    { kind: "tool", name: "set_search", args: { from, to, date, quota } },
+    { kind: "text", text: `Searching ${from} to ${to} on ${date}.` },
+  ];
 }
 
 let callId = 0;
@@ -44,7 +80,7 @@ type Step =
 export function planFromTranscript(text: string): Step[] {
   const raw = text.trim();
   const lower = raw.toLowerCase();
-  const date = addDays(todayIso(), 12);
+  const date = parseDate(lower, session.date);
 
   if (/\bexpired\b/.test(lower)) {
     return [
@@ -54,6 +90,7 @@ export function planFromTranscript(text: string): Step[] {
   }
 
   if (/\b(never mind|change of mind|start over)\b/.test(lower)) {
+    resetScriptedSession();
     return [
       { kind: "tool", name: "navigate", args: { href: "/" } },
       { kind: "text", text: "Back to search." },
@@ -67,6 +104,55 @@ export function planFromTranscript(text: string): Step[] {
       { kind: "tool", name: "navigate", args: { href: `/trips/${pnr[1]}` } },
       { kind: "text", text: `Opening PNR ${pnr[1]}.` },
     ];
+  }
+
+  if (/\b(add meals?|with meals?|include meals?)\b/.test(lower)) {
+    return [
+      { kind: "tool", name: "set_options", args: { addMeals: true } },
+      { kind: "text", text: "Meals added — the switch on the booking screen is on." },
+    ];
+  }
+
+  if (/\b(no meals?|without meals?|remove meals?)\b/.test(lower)) {
+    return [
+      { kind: "tool", name: "set_options", args: { addMeals: false } },
+      { kind: "text", text: "Meals turned off." },
+    ];
+  }
+
+  if (/\b(insurance)\b/.test(lower) && /\b(add|with|include|on)\b/.test(lower)) {
+    return [
+      { kind: "tool", name: "set_options", args: { travelInsurance: true } },
+      { kind: "text", text: "Travel insurance is on." },
+    ];
+  }
+
+  if (/\b(seat|berth|coach (?:layout|diagram)|lower berth)\b/.test(lower) && !/\bbook\s+\d{5}\b/.test(lower)) {
+    const berthType = /\blower\b/.test(lower) ? "LB" : /\bmiddle\b/.test(lower) ? "MB" : /\bupper\b/.test(lower) ? "UB" : undefined;
+    return [
+      { kind: "tool", name: "select_berth", args: { coach: "B1", berth: 1, ...(berthType ? { berthType } : {}) } },
+      { kind: "text", text: "The coach diagram is on the booking screen. I picked a free berth." },
+    ];
+  }
+
+  const originChange =
+    lower.match(/\b(?:change|switch)\s+(?:the\s+)?(?:origin|from(?:\s+station)?)\s+to\s+(.+)/i) ??
+    lower.match(/\b(?:actually|instead)\s+from\s+([a-z0-9 :]+)/i);
+  if (originChange) {
+    const from = stationToken(originChange[1]);
+    return searchSteps(from, session.to, date, session.quota);
+  }
+
+  const destChange =
+    lower.match(/\b(?:change|switch)\s+(?:the\s+)?(?:destination|to(?:\s+station)?)\s+to\s+(.+)/i) ??
+    lower.match(/\b(?:actually|instead)\s+(?:go\s+)?to\s+([a-z0-9 :]+)/i);
+  if (destChange && !/\bfrom\s+/.test(lower)) {
+    const to = stationToken(destChange[1]);
+    return searchSteps(session.from, to, date, session.quota);
+  }
+
+  if (/\bchange (?:the )?date\b|\bgo on\b|\btravel on\b|\b(?:different|another) date\b/.test(lower)) {
+    return searchSteps(session.from, session.to, date, session.quota);
   }
 
   if (/\b(delhi)\b/.test(lower) && /\b(mumbai|bombay)\b/.test(lower) && !/\b(ndls|new delhi|nzm|dli)\b/.test(lower)) {
@@ -130,20 +216,21 @@ export function planFromTranscript(text: string): Step[] {
   if (pair) {
     const from = stationToken(pair[1]);
     const to = stationToken(pair[2]);
-    return [
-      { kind: "tool", name: "lookup_station", args: { query: from } },
-      { kind: "tool", name: "lookup_station", args: { query: to } },
-      { kind: "tool", name: "search_trains", args: { from, to, date, quota: "GN" } },
-      { kind: "tool", name: "set_search", args: { from, to, date, quota: "GN" } },
-      { kind: "text", text: `Searching ${from} to ${to} on ${date}.` },
-    ];
+    return searchSteps(from, to, date, "GN");
   }
 
-  return [{ kind: "text", text: `I can search trains, book a berth, or look up a PNR. You said: "${raw}"` }];
+  return [
+    {
+      kind: "text",
+      text: `Which stations, and on which date? I can search trains, change a journey already on screen, pick a berth, or look up a PNR. You said: "${raw}"`,
+    },
+  ];
 }
 
 export async function scriptedChatResponse(body: unknown): Promise<Response> {
   const payload = body as { messages?: Array<{ role: string; parts?: Array<{ type: string; text?: string }>; content?: string }> };
+  const userTurns = (payload.messages ?? []).filter((message) => message.role === "user");
+  if (userTurns.length <= 1) resetScriptedSession();
   const last = payload.messages?.[payload.messages.length - 1];
   if (last && last.role !== "user") {
     const stream = createUIMessageStream({

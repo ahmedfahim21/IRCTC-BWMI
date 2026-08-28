@@ -16,6 +16,7 @@ export const UI_ACTION_NAMES = [
   "select_berth",
   "set_passengers",
   "set_contact",
+  "set_options",
   "confirm",
   "highlight",
 ] as const;
@@ -57,9 +58,13 @@ export function clientUiTools(): ToolSet {
       ),
     }),
     select_berth: tool({
-      description: "Choose a berth on the visible coach diagram.",
+      description: "Choose a berth on the visible coach diagram. Prefers berthType when given (LB, MB, UB, SL, SU).",
       inputSchema: jsonSchema(
-        object({ coach: str("Coach code, e.g. B3"), berth: { type: "integer", description: "Berth number" } }, ["coach", "berth"])
+        object({
+          coach: str("Coach code, e.g. B3"),
+          berth: { type: "integer", description: "Berth number" },
+          berthType: str("Optional berth type to prefer", { enum: ["LB", "MB", "UB", "SL", "SU", "WS", "AS", "CB"] }),
+        }, ["coach", "berth"])
       ),
     }),
     set_passengers: tool({
@@ -83,6 +88,18 @@ export function clientUiTools(): ToolSet {
     set_contact: tool({
       description: "Fill phone and email on the current booking draft.",
       inputSchema: jsonSchema(object({ phone: str("10-digit mobile"), email: str("Email, optional") }, ["phone"])),
+    }),
+    set_options: tool({
+      description:
+        "Toggle booking options on the checkout screen: meals, travel insurance, keep-together, auto-upgrade.",
+      inputSchema: jsonSchema(
+        object({
+          addMeals: { type: "boolean", description: "Order meals to the seat" },
+          travelInsurance: { type: "boolean", description: "Add travel insurance" },
+          keepTogether: { type: "boolean", description: "Keep passengers in the same coach" },
+          autoUpgrade: { type: "boolean", description: "Auto-upgrade if a higher class has space" },
+        })
+      ),
     }),
     confirm: tool({
       description: "Confirm the current held booking. Payment is simulated.",

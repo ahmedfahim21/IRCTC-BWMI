@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { latToWorldY, lngToWorldX, viewportBbox, worldXToLng, worldYToLat, zoomToFit } from "@/lib/geo/slippy";
+import { latToWorldY, lngLatToViewPx, lngToWorldX, viewportBbox, worldXToLng, worldYToLat, zoomToFit } from "@/lib/geo/slippy";
 
 describe("slippy projection", () => {
   it("round-trips lng/lat at zoom 4", () => {
@@ -22,5 +22,13 @@ describe("slippy projection", () => {
     const [west, south, east, north] = box.split(",").map(Number);
     expect(west).toBeLessThan(east);
     expect(south).toBeLessThan(north);
+  });
+
+  it("projects New Delhi onto a landscape India view", () => {
+    const pt = lngLatToViewPx(77.2, 28.6, 82.75, 21.85, 4.5, 800, 600);
+    expect(pt.x).toBeGreaterThan(0);
+    expect(pt.x).toBeLessThan(800);
+    expect(pt.y).toBeGreaterThan(0);
+    expect(pt.y).toBeLessThan(600);
   });
 });

@@ -62,6 +62,22 @@ export function viewportBbox(
   return `${west.toFixed(3)},${south.toFixed(3)},${east.toFixed(3)},${north.toFixed(3)}`;
 }
 
+/** Pixel position of a lng/lat in a slippy viewport. Same math the tile painter uses. */
+export function lngLatToViewPx(
+  lng: number,
+  lat: number,
+  centerLng: number,
+  centerLat: number,
+  zoom: number,
+  width: number,
+  height: number
+): { x: number; y: number } {
+  return {
+    x: (lngToWorldX(lng, zoom) - lngToWorldX(centerLng, zoom)) * TILE_SIZE + width / 2,
+    y: (latToWorldY(lat, zoom) - latToWorldY(centerLat, zoom)) * TILE_SIZE + height / 2,
+  };
+}
+
 export function gpuCanRunMapLibre(): boolean {
   if (typeof document === "undefined") return false;
   try {

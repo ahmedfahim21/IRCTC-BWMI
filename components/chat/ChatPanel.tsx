@@ -148,9 +148,28 @@ export function ChatPanel() {
                   }
                   if (isToolUIPart(part)) {
                     const name = getToolName(part);
+                    const state = "state" in part ? String(part.state) : "";
+                    const failed = state === "output-error";
+                    const done = state === "output-available";
+                    const input = "input" in part && part.input && typeof part.input === "object" ? (part.input as Record<string, unknown>) : null;
+                    const summary = input
+                      ? Object.entries(input)
+                          .slice(0, 3)
+                          .map(([key, value]) => `${key} ${String(value)}`)
+                          .join(" · ")
+                      : "";
                     return (
-                      <p key={`${message.id}-${index}`} className="text-[0.6875rem] text-faint">
+                      <p
+                        key={`${message.id}-${index}`}
+                        data-testid="chat-tool"
+                        className={cn(
+                          "rounded-md border px-2 py-1 font-mono text-[0.6875rem]",
+                          failed ? "border-danger/40 text-danger" : "border-border text-faint"
+                        )}
+                      >
                         {name.replaceAll("_", " ")}
+                        {done ? " · done" : failed ? " · failed" : " · calling"}
+                        {summary ? ` · ${summary}` : ""}
                       </p>
                     );
                   }

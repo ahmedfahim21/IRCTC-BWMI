@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { planFromTranscript, useFakeChat } from "@/lib/agent/scriptedChat";
+import { describe, expect, it, beforeEach } from "vitest";
+import { planFromTranscript, useFakeChat, resetScriptedSession } from "@/lib/agent/scriptedChat";
 
 describe("scripted chat planner", () => {
+  beforeEach(() => resetScriptedSession());
+
   it("uses the scripted path when the Anthropic key is absent", () => {
     expect(useFakeChat()).toBe(true);
   });

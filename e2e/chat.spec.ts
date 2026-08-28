@@ -60,3 +60,54 @@ test("change of mind returns to search", async ({ page }) => {
   await say(page, "change of mind, start over");
   await page.waitForURL(/\/$/, { timeout: 15_000 });
 });
+
+test("changing destination mid-conversation updates the search", async ({ page }) => {
+  await openChat(page);
+  await say(page, "from New Delhi to Mumbai tomorrow");
+  await page.waitForURL(/\/search\?.*from=NDLS/, { timeout: 20_000 });
+  await say(page, "change destination to Chennai");
+  await page.waitForURL(/to=MAS/, { timeout: 20_000 });
+  await expect(page.getByTestId("chat-tool").filter({ hasText: /set search/i }).first()).toBeVisible();
+});
+
+test("changing origin mid-conversation keeps the destination", async ({ page }) => {
+  await openChat(page);
+  await say(page, "from New Delhi to Mumbai tomorrow");
+  await page.waitForURL(/from=NDLS/, { timeout: 20_000 });
+  await say(page, "change origin to NZM");
+  await page.waitForURL(/from=NZM/, { timeout: 20_000 });
+});
+
+test("a new city pair replaces the whole journey", async ({ page }) => {
+  await openChat(page);
+  await say(page, "from New Delhi to Mumbai tomorrow");
+  await page.waitForURL(/from=NDLS/, { timeout: 20_000 });
+  await say(page, "from Bangalore to Chennai tomorrow");
+  await page.waitForURL(/from=SBC.*to=MAS/, { timeout: 20_000 });
+});
+
+test("add meals toggles the booking switch", async ({ page }) => {
+  await openChat(page);
+  await say(page, "book 12951 in 3A");
+  await page.waitForURL(/\/book\/dft_/, { timeout: 20_000 });
+  await expect(page.getByRole("switch", { name: "Add meals" })).toHaveAttribute("aria-checked", "false");
+  await say(page, "add meals please");
+  await expect(page.getByRole("switch", { name: "Add meals" })).toHaveAttribute("aria-checked", "true", { timeout: 15_000 });
+  await expect(page.getByTestId("chat-tool").filter({ hasText: /set options/i })).toBeVisible();
+});
+
+test("asking for seats shows the coach diagram and picks a berth", async ({ page }) => {
+  await openChat(page);
+  await say(page, "book 12951 in 3A");
+  await page.waitForURL(/\/book\/dft_/, { timeout: 20_000 });
+  await expect(page.getByText("Choose your berth")).toBeVisible();
+  await expect(page.locator('button[aria-label^="Berth "]').first()).toBeVisible();
+  await say(page, "show me the seat layout");
+  await expect(page.getByText(/1 of 1 chosen here/)).toBeVisible({ timeout: 15_000 });
+});
+
+test("unknown turns ask a clarifying question", async ({ page }) => {
+  await openChat(page);
+  await say(page, "hello");
+  await expect(page.getByLabel("Booking chat")).toContainText(/Which stations/i, { timeout: 15_000 });
+});

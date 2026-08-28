@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { FeatureCollection, Point } from "geojson";
 import type { GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import type { PackedTrain } from "@/lib/railradar/liveMap";
@@ -218,7 +218,78 @@ export function TrainLayer({
     };
   }, [map, trains, activeTypes, selectedNumber, onSelect]);
 
-  return null;
+  if (map) return null;
+  return (
+    <SlippyTrainOverlay
+      trains={trains}
+      activeTypes={activeTypes}
+      selectedNumber={selectedNumber}
+      onSelect={onSelect}
+    />
+  );
+}
+
+function SlippyTrainOverlay({
+  trains,
+  activeTypes,
+  selectedNumber,
+}: {
+  trains: PackedTrain[];
+  activeTypes: Set<number>;
+  selectedNumber?: string | null;
+  onSelect: (train: MapTrain | null) => void;
+}) {
+  const { project, viewEpoch, theme } = useRailMap();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const wrap = canvas?.parentElement;
+    if (!canvas || !wrap) return;
+    const width = wrap.clientWidth;
+    const height = wrap.clientHeight;
+    if (width < 2 || height < 2) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const colours = resolveTypeColours();
+    const stroke = resolveToken("--text") || (theme === "dark" ? "#fff" : "#111");
+
+    for (const packed of trains) {
+      if (!activeTypes.has(packed[4])) continue;
+      const lat = packed[2];
+      const lng = packed[3];
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const pt = project(lng, lat);
+      if (!pt) continue;
+      if (pt.x < -12 || pt.y < -12 || pt.x > width + 12 || pt.y > height + 12) continue;
+      const selected = packed[0] === selectedNumber;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, selected ? 5.5 : 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = colours[packed[4]] ?? "#888";
+      ctx.fill();
+      ctx.lineWidth = selected ? 2.2 : 0.7;
+      ctx.strokeStyle = stroke;
+      ctx.stroke();
+    }
+  }, [trains, activeTypes, selectedNumber, project, viewEpoch, theme]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      data-testid="map-train-overlay"
+      className="pointer-events-none absolute inset-0 z-[4] size-full"
+      role="img"
+      aria-label="Running trains on the map"
+    />
+  );
 }
 
 export { unpack as unpackTrain };
