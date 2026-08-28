@@ -30,11 +30,11 @@ const STARTERS = [
 ];
 
 function readDock(pathname: string): Dock {
-  if (typeof window === "undefined") return "right";
+  if (typeof window === "undefined") return "left";
   const stored = localStorage.getItem(DOCK_KEY);
   if (stored === "left" || stored === "right" || stored === "bottom") return stored;
   if (pathname.startsWith("/search")) return "bottom";
-  return "right";
+  return "left";
 }
 
 function toolPartInput(part: { input?: unknown }): Record<string, unknown> | null {
@@ -53,7 +53,7 @@ export function ChatPanel() {
   const chat = useAgentChat();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [dock, setDock] = useState<Dock>("right");
+  const [dock, setDock] = useState<Dock>("left");
   const [input, setInput] = useState("");
   const [editingLast, setEditingLast] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
@@ -106,7 +106,7 @@ export function ChatPanel() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open booking chat"
-          className="fixed bottom-20 right-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-6 sm:right-6"
+          className="fixed bottom-20 left-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-6 sm:left-6"
         >
           <MessageCircle className="size-5" aria-hidden />
         </button>
