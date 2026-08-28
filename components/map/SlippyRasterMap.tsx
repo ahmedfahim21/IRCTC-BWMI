@@ -5,7 +5,6 @@ import { cn } from "@/components/ui/cn";
 import { INDIA_BOUNDS } from "./indiaOverlay";
 import { INDIA_RINGS } from "@/components/rail/indiaOutline";
 import { RailMapContext, type RailMapApi } from "./mapContext";
-import { EOX_SATELLITE_TILES, type Basemap } from "./mapStyles";
 import {
   TILE_SIZE,
   MIN_ZOOM,
@@ -41,27 +40,8 @@ function osmStreet(z: number, x: number, y: number): string {
   return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 }
 
-function satelliteTileUrl(z: number, x: number, y: number): string {
-  return EOX_SATELLITE_TILES.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y));
-}
-
-function tileUrl(
-  basemap: Basemap,
-  z: number,
-  x: number,
-  y: number,
-  streetHost: "esri" | "osm"
-): string {
-  switch (basemap) {
-    case "satellite":
-      return satelliteTileUrl(z, x, y);
-    case "terrain":
-      return streetHost === "osm" ? osmStreet(z, x, y) : esriStreet(z, x, y);
-    default: {
-      const _never: never = basemap;
-      return _never;
-    }
-  }
+function tileUrl(z: number, x: number, y: number, streetHost: "esri" | "osm"): string {
+  return streetHost === "osm" ? osmStreet(z, x, y) : esriStreet(z, x, y);
 }
 
 /**
@@ -91,7 +71,6 @@ export function SlippyRasterMap({
   const readyRef = useRef(false);
 
   const [theme, setTheme] = useState<"dark" | "light">(currentTheme);
-  const [basemap, setBasemapState] = useState<Basemap>("terrain");
   const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
@@ -162,7 +141,7 @@ export function SlippyRasterMap({
       const wrappedX = ((x % n) + n) % n;
       for (let y = y0; y < y1; y++) {
         if (y < 0 || y >= n) continue;
-        const url = tileUrl(basemap, z, wrappedX, y, streetHostRef.current);
+        const url = tileUrl(z, wrappedX, y, streetHostRef.current);
         const cached = imagesRef.current.get(url);
         const dx = x * tilePx - originX;
         const dy = y * tilePx - originY;
@@ -178,7 +157,7 @@ export function SlippyRasterMap({
           };
           img.onerror = () => {
             imagesRef.current.set(url, "error");
-            if (basemap === "terrain" && streetHostRef.current === "esri") {
+            if (streetHostRef.current === "esri") {
               streetHostRef.current = "osm";
               imagesRef.current.clear();
               setTick((t) => t + 1);
@@ -206,7 +185,7 @@ export function SlippyRasterMap({
       readyRef.current = true;
       setReady(true);
     }
-  }, [basemap, theme]);
+  }, [theme]);
 
   const stopAnim = useCallback(() => {
     if (animRef.current != null) {
@@ -413,14 +392,10 @@ export function SlippyRasterMap({
     [viewEpoch]
   );
 
-  const setBasemap = useCallback((next: Basemap) => setBasemapState(next), []);
-
   const api = useMemo<RailMapApi>(
     () => ({
       ready,
       viewEpoch,
-      basemap,
-      setBasemap,
       theme,
       reducedMotion,
       project,
@@ -429,7 +404,7 @@ export function SlippyRasterMap({
       fitBounds,
       zoomBy,
     }),
-    [ready, viewEpoch, basemap, setBasemap, theme, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
+    [ready, viewEpoch, theme, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
   );
 
   return (
@@ -481,11 +456,7 @@ export function SlippyRasterMap({
       >
         <canvas ref={canvasRef} className="absolute inset-0 size-full cursor-grab" role="img" aria-label="Map of India" />
         <p className="pointer-events-none absolute bottom-1 left-1 z-[5] text-[0.5625rem] text-faint">
-          {basemap === "satellite"
-            ? "Sentinel-2 cloudless · EOX"
-            : streetHostRef.current === "osm"
-              ? "© OpenStreetMap"
-              : "Tiles © Esri"}
+          {streetHostRef.current === "osm" ? "© OpenStreetMap" : "Tiles © Esri"}
         </p>
         {children}
       </div>

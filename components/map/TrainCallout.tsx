@@ -47,8 +47,8 @@ export function TrainCallout({
         />
         <div className="min-w-0 flex-1">
           <p className="flex items-baseline gap-2">
-            <span className="tnum text-[0.8125rem] text-faint">{train.number}</span>
-            <span className="truncate text-[0.9375rem] text-text">{train.name}</span>
+            <span className="tnum text-[0.8125rem] text-brand">{train.number}</span>
+            <span className="truncate text-[0.8125rem] text-dim">{train.name}</span>
           </p>
           {typeName && (
             <p className="mt-0.5 text-[0.6875rem] text-faint">

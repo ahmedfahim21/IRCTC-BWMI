@@ -159,12 +159,12 @@ export function LiveMap() {
                 <ErrorState error={error} onRetry={() => refetch()} />
               </div>
             )}
-            {listed.map((train) => {
+            {listed.map((train, index) => {
               const item = unpackTrain(train);
               const active = item.number === selectedNumber;
               return (
                 <button
-                  key={item.number}
+                  key={`${item.number}:${item.lat}:${item.lng}:${index}`}
                   type="button"
                   role="option"
                   aria-selected={active}
@@ -181,7 +181,7 @@ export function LiveMap() {
                   />
                   <span className="min-w-0">
                     <span className="flex items-baseline gap-2">
-                      <span className="tnum text-[0.75rem] text-faint">{item.number}</span>
+                      <span className="tnum text-[0.8125rem] text-brand">{item.number}</span>
                       <span className="truncate text-[0.8125rem] text-text">{item.name}</span>
                     </span>
                     <span className="text-[0.6875rem] text-faint">{data?.types[item.type]}</span>

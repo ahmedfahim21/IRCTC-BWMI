@@ -18,6 +18,7 @@ test("the landing map paints India and running trains", async ({ page }) => {
   await expect(page.getByRole("img", { name: "Running trains on the map" })).toBeVisible({
     timeout: 20_000,
   });
+  await expect(page.getByRole("button", { name: /satellite/i })).toHaveCount(0);
 });
 
 test("search shows origin, destination, and a selected train's route", async ({ page }) => {

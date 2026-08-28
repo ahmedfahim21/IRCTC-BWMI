@@ -82,7 +82,7 @@ export function TrainDetail({ number }: { number: string }) {
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
       <header className="mb-4">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="tnum text-[1.0625rem] text-faint">{train.number}</span>
+          <span className="tnum text-[1.0625rem] text-brand">{train.number}</span>
           <h1 className="text-[1.25rem] tracking-[-0.01em] text-text">{train.name}</h1>
           <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] capitalize text-dim">{train.type}</span>
           {train.hasPantry && (
