@@ -22,6 +22,7 @@ import {
 import { applyAgentTool, useAgentNavigation } from "@/lib/agent/useAgentActions";
 import { AgentStoreProvider, agentStore, compactAppState } from "@/lib/agent/agentStore";
 import { repairChatMessages } from "@/lib/agent/messageRepair";
+import { resolveUiToolOutput } from "@/lib/agent/resolveToolOutput";
 import { isUiAction, VOICE_TRANSCRIPT_EVENT } from "@/lib/agent/uiActions";
 
 const CHAT_STORAGE_KEY = "irctc.chat.v1";
@@ -52,12 +53,19 @@ function loadStoredMessages(): UIMessage[] {
   }
 }
 
+function toolInputReady(part: { state?: string; input?: unknown }): boolean {
+  if (part.state === "input-streaming") return false;
+  if (part.state === "output-available" || part.state === "output-error") return false;
+  return part.input != null && typeof part.input === "object";
+}
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   useAgentNavigation();
-  const applied = useRef(new Set<string>());
-  const output = useRef<ChatApi["addToolOutput"] | null>(null);
+  const completed = useRef(new Set<string>());
+  const executing = useRef(new Map<string, Promise<void>>());
   const clientResolvedTurn = useRef(false);
   const chatLive = useRef(false);
+  const chatRef = useRef<ChatApi | null>(null);
   const initialMessages = useRef<UIMessage[] | null>(null);
   if (initialMessages.current === null) {
     initialMessages.current = loadStoredMessages();
@@ -88,6 +96,34 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const runUiTool = useCallback((tool: string, toolCallId: string, input: Record<string, unknown>) => {
+    const existing = executing.current.get(toolCallId);
+    if (existing) return existing;
+
+    const job = (async () => {
+      try {
+        const result = await applyAgentTool(tool, input);
+        const chat = chatRef.current;
+        if (!chat) return;
+        await resolveUiToolOutput(chat, tool, toolCallId, result);
+        if (chatLive.current) clientResolvedTurn.current = true;
+      } catch (error) {
+        const chat = chatRef.current;
+        if (!chat) return;
+        await resolveUiToolOutput(chat, tool, toolCallId, {
+          ok: false,
+          error: error instanceof Error ? error.message : "Tool execution failed",
+        });
+      } finally {
+        executing.current.delete(toolCallId);
+        completed.current.add(toolCallId);
+      }
+    })();
+
+    executing.current.set(toolCallId, job);
+    return job;
+  }, []);
+
   const chat = useChat({
     id: CHAT_ID,
     messages: initialMessages.current,
@@ -98,20 +134,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     },
     onToolCall: ({ toolCall }) => {
       if (!isUiAction(toolCall.toolName)) return;
-      if (applied.current.has(toolCall.toolCallId)) return;
-      applied.current.add(toolCall.toolCallId);
-      void (async () => {
-        const result = await applyAgentTool(toolCall.toolName, (toolCall.input ?? {}) as Record<string, unknown>);
-        output.current?.({
-          tool: toolCall.toolName,
-          toolCallId: toolCall.toolCallId,
-          output: result,
-        });
-        if (chatLive.current) clientResolvedTurn.current = true;
-      })();
+      if (completed.current.has(toolCall.toolCallId)) return;
+      void runUiTool(
+        toolCall.toolName,
+        toolCall.toolCallId,
+        (toolCall.input ?? {}) as Record<string, unknown>
+      );
     },
   });
-  output.current = chat.addToolOutput;
+  chatRef.current = chat;
 
   useEffect(() => {
     clientResolvedTurn.current = false;
@@ -124,23 +155,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const name = getToolName(part);
         if (!isUiAction(name)) continue;
         const key = "toolCallId" in part ? String(part.toolCallId) : "";
-        if (!key || applied.current.has(key)) continue;
+        if (!key || completed.current.has(key) || executing.current.has(key)) continue;
+        if (!toolInputReady(part as { state?: string; input?: unknown })) continue;
         const input = "input" in part ? (part.input as Record<string, unknown>) : null;
         if (!input) continue;
-        if ("state" in part && part.state === "output-available") continue;
-        applied.current.add(key);
-        void (async () => {
-          const result = await applyAgentTool(name, input);
-          output.current?.({
-            tool: name,
-            toolCallId: key,
-            output: result,
-          });
-          if (chatLive.current) clientResolvedTurn.current = true;
-        })();
+        void runUiTool(name, key, input);
       }
     }
-  }, [chat.messages]);
+  }, [chat.messages, runUiTool]);
 
   useEffect(() => {
     try {
@@ -151,7 +173,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [chat.messages]);
 
   const newChat = useCallback(() => {
-    applied.current.clear();
+    completed.current.clear();
+    executing.current.clear();
     clientResolvedTurn.current = false;
     agentStore.resetAll();
     chat.setMessages([]);
@@ -174,7 +197,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           part.type === "text" ? { ...part, text: trimmed } : part
         );
         next[index] = { ...message, parts };
-        applied.current.clear();
+        completed.current.clear();
+        executing.current.clear();
         clientResolvedTurn.current = false;
         chat.setMessages(next.slice(0, index + 1));
         void chat.sendMessage({ text: trimmed });

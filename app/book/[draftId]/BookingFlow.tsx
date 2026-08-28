@@ -30,6 +30,8 @@ export function BookingFlow({ draftId }: { draftId: string }) {
   const [selections, setSelections] = useState<BerthSelection[]>([]);
   const [activeCoach, setActiveCoach] = useState<string | null>(null);
   const [options, setOptions] = useState({ keepTogether: true, addMeals: false, travelInsurance: true, autoUpgrade: true });
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const [contact, setContact] = useState({ phone: "", email: "" });
   const [tatkalArmed, setTatkalArmed] = useState(false);
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
@@ -292,7 +294,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
         }
         case "set_options": {
           const patch = normalizeSetOptionsInput(intent.input);
-          const { next, changed } = applyBookingOptionsPatch(options, patch);
+          const { next, changed } = applyBookingOptionsPatch(optionsRef.current, patch);
           if (!changed.length) {
             return {
               ok: false,

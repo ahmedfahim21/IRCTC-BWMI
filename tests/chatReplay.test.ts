@@ -81,6 +81,13 @@ describe("scripted chat", () => {
     ).toBe(true);
   });
 
+  it("turns off insurance and auto-upgrade together", () => {
+    const steps = planFromTranscript("remove travel insurance and turn off auto upgrade");
+    const tool = steps.find((s) => s.kind === "tool" && s.name === "set_options");
+    expect(tool?.kind === "tool" && tool.args.travelInsurance).toBe(false);
+    expect(tool?.kind === "tool" && tool.args.autoUpgrade).toBe(false);
+  });
+
   it("picks a berth when asked for seats", () => {
     const steps = planFromTranscript("show me the seat layout");
     expect(steps.some((s) => s.kind === "tool" && s.name === "select_berth")).toBe(true);

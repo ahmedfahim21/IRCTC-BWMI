@@ -14,6 +14,7 @@ import {
 import { getToolName, isToolUIPart } from "ai";
 import { cn } from "@/components/ui/cn";
 import { useAgentChat } from "@/lib/agent/ChatProvider";
+import { hasPendingUiToolCalls } from "@/lib/agent/resolveToolOutput";
 
 type Dock = "right" | "left" | "bottom";
 const DOCK_KEY = "irctc.chatDock";
@@ -69,6 +70,7 @@ export function ChatPanel() {
 
   const { messages, sendMessage, status, error, stop, regenerate, clearError, newChat } = chat;
   const busy = status === "submitted" || status === "streaming";
+  const pendingTools = hasPendingUiToolCalls(messages);
 
   const submit = (text: string) => {
     const trimmed = text.trim();
@@ -234,6 +236,7 @@ export function ChatPanel() {
                 })}
               </div>
             ))}
+            {pendingTools && !busy && <p className="text-[0.75rem] text-faint">Updating the screen…</p>}
             {busy && <p className="text-[0.75rem] text-faint">Working…</p>}
             {error && (
               <div className="space-y-1">
@@ -278,7 +281,7 @@ export function ChatPanel() {
             />
             <button
               type="submit"
-              disabled={busy || !input.trim()}
+              disabled={busy || pendingTools || !input.trim()}
               aria-label="Send message"
               className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
             >

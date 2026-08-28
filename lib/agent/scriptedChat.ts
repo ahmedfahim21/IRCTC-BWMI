@@ -160,17 +160,38 @@ export function planFromTranscript(text: string, session: SearchSession = defaul
     ];
   }
 
-  if (/\b(no meals?|without meals?|remove meals?)\b/.test(lower)) {
+  if (/\b(insurance|travel insurance)\b/.test(lower) && /\b(remove|without|no|drop|disable|turn off)\b/.test(lower)) {
+    const args: Record<string, unknown> = { travelInsurance: false };
+    if (/\bauto[- ]?upgrade\b/.test(lower)) {
+      args.autoUpgrade = false;
+    }
     return [
-      { kind: "tool", name: "set_options", args: { addMeals: false } },
-      { kind: "text", text: "Meals turned off." },
+      { kind: "tool", name: "set_options", args },
+      { kind: "text", text: "Travel insurance is off." },
     ];
   }
 
-  if (/\b(insurance|travel insurance)\b/.test(lower) && /\b(remove|without|no|drop|disable|turn off)\b/.test(lower)) {
+  if (/\b(no auto[- ]?upgrade|without auto[- ]?upgrade|disable auto[- ]?upgrade)\b/.test(lower)) {
     return [
-      { kind: "tool", name: "set_options", args: { travelInsurance: false } },
-      { kind: "text", text: "Travel insurance is off." },
+      { kind: "tool", name: "set_options", args: { autoUpgrade: false } },
+      { kind: "text", text: "Auto-upgrade is off." },
+    ];
+  }
+
+  if (/\bauto[- ]?upgrade\b/.test(lower) && /\b(turn off|switch off|remove|without|no|disable)\b/.test(lower)) {
+    return [
+      { kind: "tool", name: "set_options", args: { autoUpgrade: false } },
+      { kind: "text", text: "Auto-upgrade is off." },
+    ];
+  }
+
+  if (
+    /\b(no meals?|without meals?|remove meals?|drop meals?)\b/.test(lower) ||
+    (/\bmeals?\b/.test(lower) && /\b(remove|without|no|drop|disable|turn off)\b/.test(lower))
+  ) {
+    return [
+      { kind: "tool", name: "set_options", args: { addMeals: false } },
+      { kind: "text", text: "Meals turned off." },
     ];
   }
 

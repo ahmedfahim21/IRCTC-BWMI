@@ -96,13 +96,24 @@ test("add meals toggles the booking switch", async ({ page }) => {
   await expect(page.getByTestId("chat-tool").filter({ hasText: /set options/i })).toBeVisible();
 });
 
-test("remove travel insurance toggles the switch off", async ({ page }) => {
+test("booking options can be changed across multiple chat turns", async ({ page }) => {
   await openChat(page);
   await say(page, "book 12951 in 3A");
   await page.waitForURL(/\/book\/dft_/, { timeout: 20_000 });
-  await expect(page.getByRole("switch", { name: "Travel insurance" })).toHaveAttribute("aria-checked", "true");
-  await say(page, "remove travel insurance");
+  await say(page, "add meals please");
+  await expect(page.getByRole("switch", { name: "Add meals" })).toHaveAttribute("aria-checked", "true", {
+    timeout: 15_000,
+  });
+  await expect(page.getByTestId("chat-tool").filter({ hasText: /set options/i }).first()).toContainText(/done|Updated/i);
+  await say(page, "remove travel insurance and turn off auto upgrade");
   await expect(page.getByRole("switch", { name: "Travel insurance" })).toHaveAttribute("aria-checked", "false", {
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("switch", { name: /Auto-upgrade/i })).toHaveAttribute("aria-checked", "false", {
+    timeout: 15_000,
+  });
+  await say(page, "remove meals");
+  await expect(page.getByRole("switch", { name: "Add meals" })).toHaveAttribute("aria-checked", "false", {
     timeout: 15_000,
   });
 });
