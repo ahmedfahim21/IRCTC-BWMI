@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftRight, ArrowUpDown, CircleDot, MapPin, Search } from "lucide-react";
 import { StationCombobox, type StationValue } from "./StationCombobox";
+import { useOrigin } from "@/lib/location/useOrigin";
 import { DateStrip } from "./DateStrip";
 import { DatePicker } from "./DatePicker";
 import { QuotaPicker } from "./QuotaPicker";
@@ -19,9 +20,12 @@ export function SearchForm({
   compact = false,
   variant = "stacked",
   defaults,
+  prefillTo,
 }: {
   compact?: boolean;
   variant?: "stacked" | "bar" | "panel";
+  /** Station code to drop into the destination field when it is still empty. */
+  prefillTo?: string | null;
   defaults?: {
     from: StationValue;
     to: StationValue;
@@ -38,6 +42,7 @@ export function SearchForm({
   const [quota, setQuota] = useState<QuotaCode>(defaults?.quota ?? "GN");
 
   const publish = useAgentPublish();
+  const origin = useOrigin();
 
   useEffect(() => {
     if (defaults) {
@@ -84,6 +89,23 @@ export function SearchForm({
       cancelled = true;
     };
   }, [defaults, searchParams]);
+
+  /*
+   * Fill an empty origin with wherever we think the traveller is. Only ever
+   * into a blank field — it must never overwrite a station someone chose.
+   */
+  const suggested = origin.station;
+  useEffect(() => {
+    if (defaults || !suggested) return;
+    setFrom((current) =>
+      current ?? { token: suggested.code, label: suggested.name, sublabel: `${suggested.code} · ${suggested.city}` }
+    );
+  }, [defaults, suggested]);
+
+  useEffect(() => {
+    if (!prefillTo) return;
+    setTo((current) => current ?? { token: prefillTo, label: prefillTo, sublabel: "" });
+  }, [prefillTo]);
 
   useEffect(() => {
     publish.current({
