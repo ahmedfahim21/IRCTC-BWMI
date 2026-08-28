@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftRight, ArrowUpDown, CircleDot, MapPin, Search } from "lucide-react";
 import { StationCombobox, type StationValue } from "./StationCombobox";
 import { DateStrip } from "./DateStrip";
 import { DatePicker } from "./DatePicker";
 import { QuotaPicker } from "./QuotaPicker";
+import { resolveStationToken } from "./stationValue";
 import type { QuotaCode } from "@/lib/types";
 import { todayIso } from "@/lib/domain/time";
 import { useLocale } from "@/lib/i18n/useLocale";
@@ -29,6 +30,7 @@ export function SearchForm({
   };
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLocale();
   const [from, setFrom] = useState<StationValue | null>(defaults?.from ?? null);
   const [to, setTo] = useState<StationValue | null>(defaults?.to ?? null);
@@ -45,6 +47,7 @@ export function SearchForm({
       setQuota(defaults.quota);
       return;
     }
+
     try {
       const saved = JSON.parse(localStorage.getItem(LAST_KEY) ?? "null");
       if (saved?.from) setFrom(saved.from);
@@ -54,7 +57,33 @@ export function SearchForm({
     } catch {
       // A corrupt saved search is not worth failing over; the form still works empty.
     }
-  }, [defaults]);
+
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    const dateParam = searchParams.get("date");
+    const quotaParam = searchParams.get("quota");
+
+    if (dateParam && dateParam >= todayIso()) setDate(dateParam);
+    if (quotaParam) setQuota(quotaParam as QuotaCode);
+
+    if (!fromParam && !toParam) return;
+
+    let cancelled = false;
+    void (async () => {
+      if (fromParam) {
+        const value = await resolveStationToken(fromParam);
+        if (!cancelled && value) setFrom(value);
+      }
+      if (toParam) {
+        const value = await resolveStationToken(toParam);
+        if (!cancelled && value) setTo(value);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [defaults, searchParams]);
 
   useEffect(() => {
     publish.current({

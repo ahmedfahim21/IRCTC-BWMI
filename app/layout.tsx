@@ -6,7 +6,7 @@ import { LocaleProvider } from "@/lib/i18n/useLocale";
 import { OfflineSupport } from "@/components/ui/OfflineSupport";
 import { ChatProvider } from "@/lib/agent/ChatProvider";
 import { ChatPanel } from "@/components/chat/ChatPanel";
-import { VoiceButton } from "@/components/voice/VoiceButton";
+// import { VoiceButton } from "@/components/voice/VoiceButton";
 import "./globals.css";
 
 /*
@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </main>
               <MobileNav />
               <ChatPanel />
-              <VoiceButton />
+              {/* <VoiceButton /> */}
             </ChatProvider>
           </LocaleProvider>
         </Providers>

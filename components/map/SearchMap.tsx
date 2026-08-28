@@ -31,12 +31,18 @@ function pinFor(station: Station | undefined, kind: StationPin["kind"]): Station
 export function SearchMap({
   origin,
   destination,
+  fromToken,
+  toToken,
+  quota = "GN",
   selectedTrain,
   date,
   mapOpen = true,
 }: {
   origin?: Station;
   destination?: Station;
+  fromToken?: string;
+  toToken?: string;
+  quota?: string;
   selectedTrain?: string | null;
   date: string;
   mapOpen?: boolean;
@@ -64,6 +70,12 @@ export function SearchMap({
     if (to) list.push(to);
     return list;
   }, [origin, destination]);
+
+  const searchFromHref = (stationCode: string) => {
+    if (!toToken || stationCode === toToken) return undefined;
+    const params = new URLSearchParams({ from: stationCode, to: toToken, date, quota });
+    return `/search?${params}`;
+  };
 
   return (
     <ClientRailMap onMoveEnd={setBbox} className="size-full min-h-[12rem]">
@@ -111,7 +123,11 @@ export function SearchMap({
         />
       )}
       {stationPin && (
-        <StationCallout pin={stationPin} onClose={() => setStationPin(null)} />
+        <StationCallout
+          pin={stationPin}
+          searchFromHref={searchFromHref(stationPin.code)}
+          onClose={() => setStationPin(null)}
+        />
       )}
       {routeStop && (
         <StationCallout
@@ -124,6 +140,7 @@ export function SearchMap({
           }}
           arrivalMinute={routeStop.arrivalMinute}
           departureMinute={routeStop.departureMinute}
+          searchFromHref={searchFromHref(routeStop.code)}
           onClose={() => setRouteStop(null)}
         />
       )}

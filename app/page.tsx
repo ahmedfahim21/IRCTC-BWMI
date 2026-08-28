@@ -1,11 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useLocale } from "@/lib/i18n/useLocale";
 import { LandingMap } from "@/components/map/LandingMap";
 import { MapCanvasCard } from "@/components/map/MapCanvasCard";
 import { NextTripCard } from "@/components/trip/NextTripCard";
 import { SearchForm } from "@/components/search/SearchForm";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 /**
  * Book: a compact search panel beside a live map that fills the rest of the
@@ -24,7 +26,15 @@ export default function HomePage() {
 
       <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(26rem,0.95fr)] lg:px-8">
         <div className="flex min-w-0 flex-col gap-4 lg:overflow-y-auto lg:pb-8">
-          <SearchForm variant="panel" />
+          <Suspense
+            fallback={
+              <div className="card p-4 shadow-[var(--shadow-sm)] sm:p-5">
+                <Skeleton className="h-40 w-full" />
+              </div>
+            }
+          >
+            <SearchForm variant="panel" />
+          </Suspense>
           <NextTripCard />
           <p className="text-[0.6875rem] leading-relaxed text-faint">
             An independent redesign concept. This is not the official IRCTC service, is not affiliated

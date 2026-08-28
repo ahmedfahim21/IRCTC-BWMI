@@ -10,12 +10,15 @@ export function StationCallout({
   pin,
   arrivalMinute,
   departureMinute,
+  searchFromHref,
   onClose,
   className,
 }: {
   pin: StationPin;
   arrivalMinute?: number | null;
   departureMinute?: number | null;
+  /** When set, overrides the default home-page link for "Search from here". */
+  searchFromHref?: string;
   onClose: () => void;
   className?: string;
 }) {
@@ -64,7 +67,7 @@ export function StationCallout({
       )}
 
       <Link
-        href={`/?from=${pin.code}`}
+        href={searchFromHref ?? `/?from=${encodeURIComponent(pin.code)}`}
         className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim hover:text-text"
       >
         Search from here
