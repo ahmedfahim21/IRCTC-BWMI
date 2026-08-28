@@ -31,6 +31,9 @@ export async function stubMapTiles(page: Page) {
   await page.route("**/tiles.openrailwaymap.org/**", (route) =>
     route.fulfill({ status: 200, contentType: "image/png", body: EMPTY_PNG })
   );
+  await page.route("**/server.arcgisonline.com/**", (route) =>
+    route.fulfill({ status: 200, contentType: "image/jpeg", body: EMPTY_PNG })
+  );
   await page.route("**/basemaps.cartocdn.com/**", (route) =>
     route.fulfill({ status: 200, contentType: "image/png", body: EMPTY_PNG })
   );

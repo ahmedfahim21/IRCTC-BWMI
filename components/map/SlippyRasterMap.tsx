@@ -30,10 +30,8 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function streetTileUrl(theme: "dark" | "light", z: number, x: number, y: number): string {
-  const host = ["a", "b", "c"][(x + y) % 3];
-  const style = theme === "dark" ? "dark_all" : "light_all";
-  return `https://${host}.basemaps.cartocdn.com/${style}/${z}/${x}/${y}@2x.png`;
+function streetTileUrl(_theme: "dark" | "light", z: number, x: number, y: number): string {
+  return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`;
 }
 
 function satelliteTileUrl(z: number, x: number, y: number): string {
@@ -293,6 +291,9 @@ export function SlippyRasterMap({
         }
       >
         <canvas ref={canvasRef} className="absolute inset-0 size-full cursor-grab" role="img" aria-label="Map of India" />
+        <p className="pointer-events-none absolute bottom-1 left-1 z-[5] text-[0.5625rem] text-faint">
+          {basemap === "satellite" ? "Sentinel-2 cloudless · EOX" : "Tiles © Esri"}
+        </p>
         {children}
       </div>
     </RailMapContext.Provider>
