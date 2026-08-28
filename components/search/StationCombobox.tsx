@@ -40,12 +40,14 @@ export function StationCombobox({
   onChange,
   placeholder,
   icon,
+  compact = false,
 }: {
   label: string;
   value: StationValue | null;
   onChange: (value: StationValue | null) => void;
   placeholder: string;
   icon: React.ReactNode;
+  compact?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -132,13 +134,14 @@ export function StationCombobox({
 
   return (
     <>
-      <label className="eyebrow mb-1.5 block px-0.5" htmlFor={`${listId}-input`}>
+      <label className={cn(compact ? "sr-only" : "eyebrow mb-1.5 block px-0.5")} htmlFor={`${listId}-input`}>
         {label}
       </label>
       <div ref={wrapRef} className="relative min-w-0 w-full">
       <div
         className={cn(
-          "flex items-center gap-2.5 rounded-xl border bg-surface px-3.5 transition-colors",
+          "flex items-center gap-2.5 border bg-surface transition-colors",
+          compact ? "rounded-lg px-3" : "rounded-xl px-3.5",
           open ? "border-brand" : "border-border hover:border-border-strong"
         )}
       >
@@ -166,7 +169,10 @@ export function StationCombobox({
             setHighlight(0);
           }}
           onKeyDown={onKeyDown}
-          className="h-14 min-w-0 flex-1 bg-transparent text-[1rem] text-text outline-none placeholder:text-faint"
+          className={cn(
+            "min-w-0 flex-1 bg-transparent text-text outline-none placeholder:text-faint",
+            compact ? "h-11 text-[0.875rem]" : "h-14 text-[1rem]"
+          )}
         />
         {/* Stays put while the field has focus, so it neither flickers nor
             forces the input to resize mid-typing — and you can still clear a
@@ -188,15 +194,13 @@ export function StationCombobox({
       </div>
       </div>
 
-      {/*
-        * Always occupies a line, and stays put while the field has focus.
-        * Rendering this conditionally grew the field by 20px the moment a
-        * station was picked — shoving the second field and the submit button
-        * down — and then jumped back up on the next focus.
-        */}
-      <p className="mt-1 h-4 truncate px-1 pr-12 text-[0.6875rem] leading-4 text-faint" aria-hidden={!value}>
-        {value?.sublabel ?? ""}
-      </p>
+      {compact ? (
+        <p className="sr-only">{value?.sublabel ?? ""}</p>
+      ) : (
+        <p className="mt-1 h-4 truncate px-1 pr-12 text-[0.6875rem] leading-4 text-faint" aria-hidden={!value}>
+          {value?.sublabel ?? ""}
+        </p>
+      )}
 
       {open &&
         menuBox &&

@@ -3,23 +3,22 @@
 import { useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, CalendarDays, SlidersHorizontal, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import type { ClassCode, QuotaCode } from "@/lib/types";
 import { api } from "@/lib/apiClient";
 import { isConfirmable } from "@/lib/domain/search";
-import { formatDateShort, formatWeekday, todayIso } from "@/lib/domain/time";
-import { GLOSSARY } from "@/lib/glossary";
+import { todayIso } from "@/lib/domain/time";
 import { useAgentIntentDrain, useAgentPublish } from "@/lib/agent/agentStore";
 import { JourneyRow } from "@/components/availability/JourneyRow";
 import { ResultFilters, DEPARTURE_WINDOWS, type Filters } from "@/components/availability/ResultFilters";
 import { AlternativesPanel } from "@/components/availability/AlternativesPanel";
 import { GlossaryLegend } from "@/components/availability/GlossaryLegend";
 import { DateStrip } from "@/components/search/DateStrip";
+import { SearchForm } from "@/components/search/SearchForm";
 import { SearchMap } from "@/components/map/SearchMap";
 import { MapCanvasCard } from "@/components/map/MapCanvasCard";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { cn } from "@/components/ui/cn";
 
 export function SearchResults() {
   const params = useSearchParams();
@@ -32,7 +31,6 @@ export function SearchResults() {
   const quota = (params.get("quota") ?? "GN") as QuotaCode;
   const selectedTrain = params.get("train");
 
-  const [showDates, setShowDates] = useState(false);
   const [mapOpen, setMapOpen] = useState(true);
   const [filters, setFilters] = useState<Filters>({
     departureWindows: [],
@@ -155,7 +153,6 @@ export function SearchResults() {
     const nextParams = new URLSearchParams({ from, to, date: next, quota });
     if (selectedTrain) nextParams.set("train", selectedTrain);
     router.push(`/search?${nextParams}`);
-    setShowDates(false);
   };
 
   const selectTrain = (number: string) => {
@@ -173,151 +170,124 @@ export function SearchResults() {
 
   const originName = data?.stations[data.query.fromCodes[0]]?.name ?? from.replace("city:", "");
   const destinationName = data?.stations[data.query.toCodes[0]]?.name ?? to.replace("city:", "");
+  const searchDefaults = useMemo(
+    () => ({
+      from: { token: from, label: originName, sublabel: from.replace("city:", "") },
+      to: { token: to, label: destinationName, sublabel: to.replace("city:", "") },
+      date,
+      quota,
+    }),
+    [from, to, date, quota, originName, destinationName]
+  );
 
   return (
-    <div className="px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="min-w-0 max-w-3xl space-y-3">
-      {/* Journey summary, editable in place — the search is never a dead end you have to back out of. */}
-      <div className="card p-3.5 shadow-[var(--shadow-sm)]">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <p className="flex min-w-0 items-center gap-2 text-[0.9375rem] text-text">
-            <span className="truncate">{originName}</span>
-            <ArrowRight className="size-3.5 shrink-0 text-faint" aria-hidden />
-            <span className="truncate">{destinationName}</span>
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowDates((v) => !v)}
-            aria-expanded={showDates}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[0.75rem] transition-colors",
-              showDates ? "border-brand text-brand" : "border-border text-dim hover:border-border-strong"
-            )}
-          >
-            <CalendarDays className="size-3.5" aria-hidden />
-            {formatWeekday(date)} {formatDateShort(date)}
-          </button>
-          <span className="rounded-lg border border-border px-2.5 py-1.5 text-[0.75rem] text-dim">
-            {GLOSSARY[quota].short}
-          </span>
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="ml-auto text-[0.75rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
-          >
-            Change route
-          </button>
-        </div>
-
-        {showDates && (
-          <div className="mt-3.5 border-t border-border pt-3.5">
-            <DateStrip from={from} to={to} date={date} onPick={setDate} />
-          </div>
-        )}
+    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:overflow-hidden">
+      <div className="shrink-0 border-b border-border bg-surface px-4 py-2.5 sm:px-6">
+        <SearchForm variant="bar" defaults={searchDefaults} />
       </div>
 
-      {isPending && <SkeletonRows rows={5} />}
-      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]">
+        <div className="min-w-0 px-4 pb-20 pt-4 sm:px-6 lg:overflow-y-auto">
+          <div className="mb-3">
+            <DateStrip from={from} to={to} date={date} onPick={setDate} />
+          </div>
 
-      {data && (
-        <>
-          {data.journeys.length === 0 ? (
-            <EmptyRoute
-              originName={originName}
-              destinationName={destinationName}
-              noDirectTrain={Boolean(data.noDirectTrain)}
-            />
-          ) : (
+          {isPending && <SkeletonRows rows={5} />}
+          {isError && <ErrorState error={error} onRetry={() => refetch()} />}
+
+          {data && (
             <>
-              <div className="card overflow-hidden shadow-[var(--shadow-sm)]">
-                <div className="border-b border-border p-3.5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <SlidersHorizontal className="size-3.5 text-faint" aria-hidden />
-                    <span className="eyebrow">Narrow it down</span>
+              {data.journeys.length === 0 ? (
+                <EmptyRoute
+                  originName={originName}
+                  destinationName={destinationName}
+                  noDirectTrain={Boolean(data.noDirectTrain)}
+                />
+              ) : (
+                <>
+                  <div className="mb-3">
+                    <ResultFilters
+                      filters={filters}
+                      onChange={setFilters}
+                      availableClasses={availableClasses}
+                      matchCount={filtered.length}
+                      totalCount={data.journeys.length}
+                    />
                   </div>
-                  <ResultFilters
-                    filters={filters}
-                    onChange={setFilters}
-                    availableClasses={availableClasses}
-                    matchCount={filtered.length}
-                    totalCount={data.journeys.length}
-                  />
-                </div>
 
-                {!data.anyConfirmable && (
-                  <div className="flex items-start gap-2.5 border-b border-warn/30 bg-warn-soft p-3.5">
-                    <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
-                    <div>
-                      <p className="text-[0.875rem] text-text">Nothing on this date is likely to confirm</p>
-                      <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-dim">
-                        Every class on every train is either full or on a waiting list that rarely clears.
-                        The options below are what we&rsquo;d actually try next.
-                      </p>
+                  {!data.anyConfirmable && (
+                    <div className="card mb-3 flex items-start gap-2.5 border-warn/30 bg-warn-soft p-3.5">
+                      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
+                      <div>
+                        <p className="text-[0.875rem] text-text">Nothing on this date is likely to confirm</p>
+                        <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-dim">
+                          Every class on every train is either full or on a waiting list that rarely clears.
+                          The options below are what we&rsquo;d actually try next.
+                        </p>
+                      </div>
                     </div>
+                  )}
+
+                  {filtered.length === 0 ? (
+                    <p className="card p-8 text-center text-[0.875rem] text-dim">
+                      No train matches these filters.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setFilters({ ...filters, departureWindows: [], classes: [], confirmableOnly: false })}
+                        className="underline decoration-dotted underline-offset-2"
+                      >
+                        Clear them
+                      </button>
+                      .
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {filtered.map((journey) => (
+                        <JourneyRow
+                          key={`${journey.train.number}:${journey.fromCode}:${journey.toCode}`}
+                          journey={journey}
+                          stations={data.stations}
+                          date={date}
+                          quota={quota}
+                          selected={selectedTrain === journey.train.number}
+                          onSelect={() => selectTrain(journey.train.number)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-4">
+                    <GlossaryLegend classCodes={availableClasses} statusCodes={statusCodes} />
                   </div>
-                )}
 
-                {filtered.length === 0 ? (
-                  <p className="p-8 text-center text-[0.875rem] text-dim">
-                    No train matches these filters.{" "}
-                    <button
-                      type="button"
-                      onClick={() => setFilters({ ...filters, departureWindows: [], classes: [], confirmableOnly: false })}
-                      className="underline decoration-dotted underline-offset-2"
-                    >
-                      Clear them
-                    </button>
-                    .
-                  </p>
-                ) : (
-                  <div>
-                    {filtered.map((journey) => (
-                      <JourneyRow
-                        key={`${journey.train.number}:${journey.fromCode}:${journey.toCode}`}
-                        journey={journey}
-                        stations={data.stations}
-                        date={date}
-                        quota={quota}
-                        selected={selectedTrain === journey.train.number}
-                        onSelect={() => selectTrain(journey.train.number)}
-                        flush
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <GlossaryLegend classCodes={availableClasses} statusCodes={statusCodes} />
-              </div>
-
-              {data.alternatives.length > 0 && (
-                <div>
-                  <h2 className="mb-4 text-[1.0625rem] tracking-[-0.01em] text-text">Other ways to get there</h2>
-                  <AlternativesPanel groups={data.alternatives} stations={data.stations} />
-                </div>
+                  {data.alternatives.length > 0 && (
+                    <div className="mt-8">
+                      <h2 className="mb-4 text-[1.0625rem] tracking-[-0.01em] text-text">Other ways to get there</h2>
+                      <AlternativesPanel groups={data.alternatives} stations={data.stations} />
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
-        </>
-      )}
-      </div>
-      <aside className="hidden lg:sticky lg:top-20 lg:block">
-        <MapCanvasCard
-          label="Route map"
-          bodyClassName="h-[20rem] min-h-[16rem]"
-          onOpenChange={setMapOpen}
-        >
-          <SearchMap
-            origin={data?.stations[data.query.fromCodes[0]]}
-            destination={data?.stations[data.query.toCodes[0]]}
-            selectedTrain={selectedTrain}
-            date={date}
-            mapOpen={mapOpen}
-          />
-        </MapCanvasCard>
-      </aside>
+        </div>
+
+        <aside className="hidden min-h-0 border-l border-border lg:block">
+          <MapCanvasCard
+            label="Route map"
+            className="flex h-full flex-col rounded-none border-0 shadow-none"
+            bodyClassName="min-h-0 flex-1"
+            onOpenChange={setMapOpen}
+          >
+              <SearchMap
+                origin={data?.stations[data.query.fromCodes[0]]}
+                destination={data?.stations[data.query.toCodes[0]]}
+                selectedTrain={selectedTrain}
+                date={date}
+                mapOpen={mapOpen}
+              />
+            </MapCanvasCard>
+        </aside>
       </div>
     </div>
   );

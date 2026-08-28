@@ -55,14 +55,18 @@ export function MapCanvasCard({
   const toggleLabel = open ? collapseLabel : expandLabel;
 
   return (
-    <Collapsible open={open} onOpenChange={handleOpenChange} className={cn("card overflow-hidden shadow-[var(--shadow-sm)]", className)}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:text-text">
+    <Collapsible
+      open={open}
+      onOpenChange={handleOpenChange}
+      className={cn("card flex flex-col overflow-hidden shadow-[var(--shadow-sm)]", className)}
+    >
+      <CollapsibleTrigger className="flex w-full shrink-0 items-center justify-between px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:text-text">
         <span>{label}</span>
         <ChevronDown className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")} aria-hidden />
         <span className="sr-only">{toggleLabel}</span>
       </CollapsibleTrigger>
       {hydrated && open ? (
-        <div className={cn("relative overflow-hidden transition-[height] duration-200 ease-out", bodyClassName)}>{children}</div>
+        <div className={cn("relative min-h-0 flex-1 overflow-hidden", bodyClassName)}>{children}</div>
       ) : null}
     </Collapsible>
   );
