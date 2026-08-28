@@ -1,14 +1,27 @@
 /**
  * Sarvam speech services.
  *
- * Speech comes in through the translate model, which returns English text plus
- * the language actually spoken. That means one upstream call, one parser, and
- * every Indian language the model supports works without a separate grammar.
- * The reply is then translated back and spoken in the language the user used.
+ * STT uses Saaras v3 in transcribe mode so the user's native script lands in
+ * chat. TTS reads assistant replies aloud in the same language when requested.
  *
  * The key is server-side only and never reaches the browser.
  */
 const BASE = "https://api.sarvam.ai";
+
+/** Sarvam model IDs — keep in sync with Sarvam dashboard deprecations. */
+export const SAARAS_MODEL = "saaras:v3" as const;
+export const SAARAS_STT_MODE = "transcribe" as const;
+export const BULBUL_MODEL = "bulbul:v3" as const;
+export const BULBUL_SPEAKER = "shubh" as const;
+
+export function voiceModels() {
+  return {
+    stt: SAARAS_MODEL,
+    sttMode: SAARAS_STT_MODE,
+    tts: BULBUL_MODEL,
+    ttsSpeaker: BULBUL_SPEAKER,
+  };
+}
 
 export function isVoiceEnabled(): boolean {
   return Boolean(process.env.SARVAM_API_KEY);
@@ -71,7 +84,7 @@ export function normalizeAudioType(rawType: string): { contentType: string; exte
 }
 
 export interface Transcription {
-  /** Always English, whatever was spoken. */
+  /** Native-script transcript in the language spoken. */
   transcript: string;
   /** BCP-47 of the language actually spoken, e.g. "hi-IN". */
   languageCode: string;
@@ -85,9 +98,10 @@ export async function transcribe(audio: Blob): Promise<Transcription> {
 
   const form = new FormData();
   form.append("file", payload, `speech.${extension}`);
-  form.append("model", "saaras:v2.5");
+  form.append("model", SAARAS_MODEL);
+  form.append("mode", SAARAS_STT_MODE);
 
-  const response = await fetch(`${BASE}/speech-to-text-translate`, {
+  const response = await fetch(`${BASE}/speech-to-text`, {
     method: "POST",
     headers: { "api-subscription-key": key() },
     body: form,
@@ -143,10 +157,10 @@ export async function speak(text: string, languageCode = "en-IN"): Promise<Speec
     headers: { "api-subscription-key": key(), "Content-Type": "application/json" },
     body: JSON.stringify({
       // Keep it short: TTS latency scales with length and this is spoken aloud.
-      text: text.slice(0, 480),
+      text: text.slice(0, 2500),
       target_language_code: target,
-      speaker: "anushka",
-      model: "bulbul:v2",
+      speaker: BULBUL_SPEAKER,
+      model: BULBUL_MODEL,
     }),
     signal: AbortSignal.timeout(30_000),
   });

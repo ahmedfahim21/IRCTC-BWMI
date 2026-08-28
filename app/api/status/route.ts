@@ -1,5 +1,5 @@
 import { isLive, quotaStatus } from "@/lib/railradar/source";
-import { isVoiceEnabled } from "@/lib/voice/sarvam";
+import { isVoiceEnabled, voiceModels } from "@/lib/voice/sarvam";
 import { handler, json } from "@/lib/api/http";
 
 /**
@@ -13,6 +13,7 @@ export const GET = handler(async () => {
   return json({
     live,
     voice: isVoiceEnabled(),
+    voiceModels: isVoiceEnabled() ? voiceModels() : null,
     chatLive: Boolean(process.env.ANTHROPIC_API_KEY) && process.env.CHAT_FAKE !== "1",
     quota,
     sources: {

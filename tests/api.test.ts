@@ -504,5 +504,6 @@ describe("GET /api/status", () => {
   it("reports scripted chat when no Anthropic key is set", async () => {
     const body = await (await getStatus()).json();
     expect(body.chatLive).toBe(false);
+    expect(body.voiceModels).toBeNull();
   });
 });
