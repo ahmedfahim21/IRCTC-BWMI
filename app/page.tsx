@@ -18,7 +18,7 @@ export default function HomePage() {
   const [mapOpen, setMapOpen] = useState(false);
 
   return (
-    <div className="lg:grid lg:h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(20rem,28rem)_1fr]">
+    <div className="lg:grid lg:h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(24rem,38rem)_1fr]">
       <div className="flex min-h-0 flex-col overflow-y-auto px-4 pb-8 pt-6 sm:px-6 lg:pt-10">
         <header className="mb-6">
           <p className="eyebrow mb-2">Indian Railways</p>
