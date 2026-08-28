@@ -286,6 +286,9 @@ export function SearchResults() {
               <SearchMap
                 origin={data?.stations[data.query.fromCodes[0]]}
                 destination={data?.stations[data.query.toCodes[0]]}
+                fromToken={from}
+                toToken={to}
+                quota={quota}
                 selectedTrain={selectedTrain}
                 date={date}
                 mapOpen={mapOpen}
