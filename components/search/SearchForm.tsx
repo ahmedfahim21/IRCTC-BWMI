@@ -113,14 +113,12 @@ export function SearchForm({
             />
           </div>
         </div>
-        <label className="sr-only" htmlFor="search-bar-date">
-          {t("search.date")}
-        </label>
         <input
           id="search-bar-date"
           type="date"
           value={date}
           min={todayIso()}
+          aria-label={t("search.date")}
           onChange={(event) => setDate(event.target.value)}
           className="h-11 rounded-lg border border-border bg-surface px-3 text-[0.875rem] text-text"
         />
