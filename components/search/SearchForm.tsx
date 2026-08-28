@@ -9,6 +9,7 @@ import { QuotaPicker } from "./QuotaPicker";
 import type { QuotaCode } from "@/lib/types";
 import { todayIso } from "@/lib/domain/time";
 import { useLocale } from "@/lib/i18n/useLocale";
+import { agentStore, useAgentIntentDrain, useAgentPublish } from "@/lib/agent/agentStore";
 
 const LAST_KEY = "irctc.lastSearch";
 
@@ -19,6 +20,8 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
   const [to, setTo] = useState<StationValue | null>(null);
   const [date, setDate] = useState(todayIso());
   const [quota, setQuota] = useState<QuotaCode>("GN");
+
+  const publish = useAgentPublish();
 
   // Come back to a search you already started rather than an empty form.
   useEffect(() => {
@@ -32,6 +35,15 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
       // A corrupt saved search is not worth failing over; the form still works empty.
     }
   }, []);
+
+  useEffect(() => {
+    publish.current({
+      search:
+        from && to
+          ? { from: from.token, to: to.token, date, quota }
+          : null,
+    });
+  }, [from, to, date, quota, publish]);
 
   const canSearch = Boolean(from && to && from.token !== to.token);
 
