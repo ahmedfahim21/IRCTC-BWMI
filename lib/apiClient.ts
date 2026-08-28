@@ -20,7 +20,7 @@ import type { AlternativeGroup } from "@/lib/domain/alternatives";
 import type { StationResult } from "@/app/api/stations/route";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import type { RouteDay } from "@/app/api/route-availability/route";
-import type { PackedTrain } from "@/lib/railradar/liveMap";
+import type { PackedTrain } from "@/lib/railradar/packedTrain";
 
 /**
  * The UI talks to the app's own HTTP API and never reaches into the mock data

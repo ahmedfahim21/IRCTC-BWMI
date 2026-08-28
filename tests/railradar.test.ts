@@ -17,7 +17,7 @@ import {
   toTrainType,
   trainFromResponse,
 } from "@/lib/railradar/map";
-import { packedTrainKey, uniquePackedTrains, type PackedTrain } from "@/lib/railradar/liveMap";
+import { packedTrainKey, uniquePackedTrains, type PackedTrain } from "@/lib/railradar/packedTrain";
 import { resolveLiveStationCode, toLiveCode, toMockCode } from "@/lib/railradar/stations";
 import type {
   RrCoachesResponse,

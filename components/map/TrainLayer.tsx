@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { PackedTrain } from "@/lib/railradar/liveMap";
+import type { PackedTrain } from "@/lib/railradar/packedTrain";
 import { resolveToken, resolveTypeColours } from "@/lib/railradar/trainTypes";
 import { cn } from "@/components/ui/cn";
 import { useRailMap } from "./mapContext";
