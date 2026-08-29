@@ -1,61 +1,168 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "@/lib/i18n/useLocale";
 import { SearchForm } from "@/components/search/SearchForm";
+import { HERO_FRAMES, HERO_FRAME_MS } from "@/lib/heroFrames";
+import { cn } from "@/components/ui/cn";
 
 /**
- * A single photograph, a line of type, and the search. Everything else on this
- * page is below the fold on purpose — the reason people come here is to find a
- * train, and it should be the only thing competing for attention.
+ * Indian Railways, photographed, and the search floating on top of it.
+ * Everything else on this page is below the fold on purpose — the reason
+ * people come here is to find a train.
  *
- * The image is `priority` because it is the LCP element; every other photograph
- * on the page is lazy.
+ * The plate is cinematic rather than tinted-to-page-background: white type on
+ * a dark scrim. A photograph that dissolves into the page's near-white leaves
+ * nothing to look at, and the hero is the one place a dark treatment on a
+ * light site is a composition rather than a bug.
+ *
+ * The scrim is painted on the element that *contains* the type, not a sibling
+ * overlay, and written as literal rgba rather than Tailwind's gradient
+ * utilities — those compile to color-mix() in oklab, which the contrast audit
+ * cannot parse, so white-on-scrim gets measured as white-on-page and fails.
+ *
+ * The first frame is `priority` because it is the LCP element. The rest load
+ * lazily and only ever cross-fade over it.
  */
 export function Hero() {
   const { t } = useLocale();
   // A destination card links here with ?to= when it had no origin to search from.
   const destination = useSearchParams().get("to");
 
+  const [frame, setFrame] = useState(0);
+  const [animate, setAnimate] = useState(false);
+  // Paused once someone picks a frame themselves — taking the wheel away again
+  // two seconds later is the kind of carousel everybody hates.
+  const [paused, setPaused] = useState(false);
+
+  /*
+   * Motion is opt-in, not opt-out: the carousel starts still and only begins
+   * once we have confirmed on the client that reduced motion is not requested.
+   * Deciding this during render would mismatch the server HTML.
+   */
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setAnimate(!query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!animate || paused) return;
+    const id = window.setInterval(
+      () => setFrame((current) => (current + 1) % HERO_FRAMES.length),
+      HERO_FRAME_MS
+    );
+    return () => window.clearInterval(id);
+  }, [animate, paused]);
+
   return (
     <section className="relative">
-      <div className="relative min-h-[17rem] overflow-hidden sm:min-h-[21rem]">
-        <Image
-          src="https://media-cdn.tripadvisor.com/media/attractions-splice-spp-720x480/15/70/4d/c0.jpg"
-          alt="The Taj Mahal seen across its lawns and flower beds under a bright sky"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        {/*
-          * Three layers rather than one flat wash: a vignette to round the
-          * light off at the corners, a vertical scrim to seat the type, and a
-          * directional one so the left-hand column reads clearly whatever the
-          * photograph is doing behind it.
-          */}
+      <div className="relative min-h-[19rem] overflow-hidden bg-neutral-950 sm:min-h-[24rem]">
+        {HERO_FRAMES.map((item, index) => {
+          const showing = index === frame;
+          return (
+            <div
+              key={item.src}
+              aria-hidden={!showing}
+              className={cn(
+                "absolute inset-0 transition-opacity duration-[1400ms] ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none",
+                showing ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <Image
+                src={item.src}
+                alt={showing ? item.alt : ""}
+                fill
+                priority={index === 0}
+                loading={index === 0 ? undefined : "lazy"}
+                sizes="100vw"
+                quality={82}
+                style={{ objectPosition: item.focus }}
+                /*
+                 * A slow push-in on the frame that is showing. It is the
+                 * difference between a slideshow and something that feels
+                 * alive, and at 1.08 over six seconds it is barely perceptible
+                 * — which is the point.
+                 */
+                className={cn(
+                  "object-cover transition-transform duration-[7000ms] ease-linear motion-reduce:transition-none motion-reduce:scale-100",
+                  showing && animate ? "scale-[1.08]" : "scale-100"
+                )}
+              />
+            </div>
+          );
+        })}
+
+        {/* Rounds the light off at the corners so the plate has a lens to it. */}
         <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(130% 100% at 65% 10%, transparent 35%, rgb(0 0 0 / 0.4) 100%)" }}
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(120% 95% at 62% 12%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.45) 100%)",
+          }}
           aria-hidden
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/45 to-transparent" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-r from-bg/75 via-bg/10 to-transparent" aria-hidden />
+        {/* Fine grain, which reads as photography and hides the softness of the two smaller frames. */}
+        <div className="pointer-events-none absolute inset-0 grain" aria-hidden />
 
-        <div className="relative mx-auto flex min-h-[17rem] max-w-6xl flex-col justify-end px-4 pb-14 pt-12 sm:min-h-[21rem] sm:px-6 sm:pb-16 lg:px-8">
-          <p className="eyebrow mb-2.5">Indian Railways</p>
-          <h1 className="max-w-2xl text-balance text-[1.875rem] leading-[1.05] tracking-[-0.035em] text-text sm:text-[2.5rem]">
-            {t("home.heading")}
-          </h1>
-          <p className="mt-2 max-w-lg text-balance text-[0.875rem] leading-relaxed text-dim sm:text-[0.9375rem]">
-            {t("home.sub")}
-          </p>
+        <div
+          className="absolute inset-x-0 bottom-0 pt-44"
+          /*
+           * Literal rgba, on the type's own element — see the note above. The
+           * type sits in the bottom third where this is at least 0.82 opaque,
+           * so white over it clears AA regardless of the photograph.
+           */
+          style={{
+            backgroundImage:
+              "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.82) 26%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0) 100%)",
+          }}
+        >
+          <div className="mx-auto max-w-6xl px-4 pb-14 sm:px-6 sm:pb-16 lg:px-8">
+            <p className="mb-2.5 text-[0.6875rem] uppercase tracking-[0.09em] text-neutral-300">Indian Railways</p>
+            <h1 className="max-w-2xl text-balance text-[1.875rem] leading-[1.05] tracking-[-0.035em] text-white sm:text-[2.5rem]">
+              {t("home.heading")}
+            </h1>
+            <p className="mt-2 max-w-lg text-balance text-[0.875rem] leading-relaxed text-neutral-200 sm:text-[0.9375rem]">
+              {t("home.sub")}
+            </p>
+
+            <div className="mt-5 flex items-center gap-2">
+              {HERO_FRAMES.map((item, index) => (
+                <button
+                  key={item.src}
+                  type="button"
+                  onClick={() => {
+                    setFrame(index);
+                    setPaused(true);
+                  }}
+                  aria-current={index === frame ? "true" : undefined}
+                  aria-label={`Show photograph ${index + 1} of ${HERO_FRAMES.length}`}
+                  className={cn(
+                    "h-[3px] rounded-full transition-all duration-500",
+                    index === frame
+                      ? "w-8 bg-white"
+                      : "w-4 bg-white/40 hover:bg-white/70"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* Screen readers get the change announced; the photographs are decoration to them otherwise. */}
+        <p className="sr-only" role="status">
+          {HERO_FRAMES[frame].alt}
+        </p>
       </div>
 
-      {/* Lifted over the seam so the search reads as the point of the page. */}
       {/*
+        * Lifted over the seam so the search reads as the point of the page,
+        * and so the panel lands on the darkest part of the scrim.
+        *
         * The hero earns its place but must not push the search below the fold —
         * it was starting at 554px, which left only the two station fields
         * visible on a 700px laptop and hid the button entirely.
