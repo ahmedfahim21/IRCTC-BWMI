@@ -14,8 +14,10 @@
  * `--info` moved off blue and onto the tertiary ramp so a chart-prepared chip
  * can never be mistaken for a brand element now that the brand is blue.
  *
- * Dark-first, because half of train travel happens at night. The light theme
- * is fully realised, not an afterthought.
+ * One theme, light. A schedule product is read in daylight on a platform and
+ * under fluorescent light in a waiting room; a second palette to keep in step
+ * bought nothing that the single, fully-realised one does not already give.
+ * The hero photography carries its own dark plate, which is composition.
  *
  * Rules this palette enforces:
  *   - Typography carries hierarchy. Weight does not. Nothing above 500.
@@ -62,84 +64,13 @@
   --shadow-xl: 0 8px 16px rgb(15 19 26 / 0.08), 0 40px 80px -24px rgb(15 19 26 / 0.3);
   /* The edge a light would catch on a raised surface. */
   --edge: inset 0 1px 0 rgb(255 255 255 / 0.7);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: var(--ux4g-color-neutral-950);
-    --surface: var(--ux4g-color-neutral-900);
-    --surface-2: var(--ux4g-color-neutral-800);
-    --surface-3: #2f2f2f;
-    --border: #303030;
-    --border-strong: var(--ux4g-color-neutral-700);
-
-    --text: var(--ux4g-color-neutral-50);
-    --text-dim: var(--ux4g-color-neutral-300);
-    --text-faint: var(--ux4g-color-neutral-400);
-
-    --brand: var(--ux4g-color-blue-400);
-    --brand-soft: var(--ux4g-color-blue-950);
-    --on-brand: var(--ux4g-color-neutral-950);
-    --accent: var(--ux4g-color-orange-400);
-    --accent-soft: #33200a;
-
-    --ok: var(--ux4g-color-green-400);
-    --ok-soft: var(--ux4g-color-green-950);
-    --warn: var(--ux4g-color-orange-400);
-    --warn-soft: #33200a;
-    --danger: var(--ux4g-color-red-400);
-    --danger-soft: var(--ux4g-color-red-950);
-    --info: var(--ux4g-color-tertiary-400);
-    --info-soft: var(--ux4g-color-tertiary-950);
-
-    --track: var(--ux4g-color-neutral-700);
-    --track-live: var(--ux4g-color-blue-400);
-    --route: var(--ux4g-color-orange-400);
-
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 1px rgb(0 0 0 / 0.35);
-    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.45), 0 8px 20px -6px rgb(0 0 0 / 0.6);
-    --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.5), 0 24px 56px -16px rgb(0 0 0 / 0.7);
-    --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.55), 0 40px 80px -24px rgb(0 0 0 / 0.8);
-    --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: var(--ux4g-color-neutral-950);
-  --surface: var(--ux4g-color-neutral-900);
-  --surface-2: var(--ux4g-color-neutral-800);
-  --surface-3: #2f2f2f;
-  --border: #303030;
-  --border-strong: var(--ux4g-color-neutral-700);
-
-  --text: var(--ux4g-color-neutral-50);
-  --text-dim: var(--ux4g-color-neutral-300);
-  --text-faint: var(--ux4g-color-neutral-400);
-
-  --brand: var(--ux4g-color-blue-400);
-  --brand-soft: var(--ux4g-color-blue-950);
-  --on-brand: var(--ux4g-color-neutral-950);
-  --accent: var(--ux4g-color-orange-400);
-  --accent-soft: #33200a;
-
-  --ok: var(--ux4g-color-green-400);
-  --ok-soft: var(--ux4g-color-green-950);
-  --warn: var(--ux4g-color-orange-400);
-  --warn-soft: #33200a;
-  --danger: var(--ux4g-color-red-400);
-  --danger-soft: var(--ux4g-color-red-950);
-  --info: var(--ux4g-color-tertiary-400);
-  --info-soft: var(--ux4g-color-tertiary-950);
-
-  --track: var(--ux4g-color-neutral-700);
-  --track-live: var(--ux4g-color-blue-400);
-  --route: var(--ux4g-color-orange-400);
-
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 1px rgb(0 0 0 / 0.35);
-  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.45), 0 8px 20px -6px rgb(0 0 0 / 0.6);
-  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.5), 0 24px 56px -16px rgb(0 0 0 / 0.7);
-  --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.55), 0 40px 80px -24px rgb(0 0 0 / 0.8);
-  --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  /*
+   * Sticky chrome sits on top of scrolling content, so it is translucent and
+   * blurred rather than a flat plate — the page reads as continuous underneath
+   * it. Falls back to an opaque surface where backdrop-filter is unsupported.
+   */
+  --chrome: rgb(250 250 250 / 0.72);
+  --hairline: rgb(15 19 26 / 0.08);
 }
 
 @theme inline {
@@ -183,7 +114,7 @@
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -263,6 +194,41 @@ h1, h2, h3, h4, h5, h6, strong, b, th {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg), var(--edge);
   border-color: var(--border-strong);
+}
+
+/*
+ * Frosted sticky chrome — the header and the mobile tab bar. Content stays
+ * faintly visible underneath instead of hitting an opaque wall, which is the
+ * single cheapest thing that makes an interface read as considered.
+ *
+ * The background is opaque by default and only goes translucent where the
+ * blur will actually be applied, so browsers without backdrop-filter get a
+ * solid bar rather than unreadable text over scrolling content.
+ */
+@utility chrome {
+  background: var(--bg);
+  border-color: var(--hairline);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .chrome {
+    background: var(--chrome);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+}
+
+/*
+ * Fine photographic grain, as a tiled SVG turbulence rather than an image
+ * request. Two of the hero photographs are only ~500 px wide and get stretched
+ * across the plate; a little grain over the top is what stops the upscaling
+ * from reading as blur.
+ */
+@utility grain {
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
 }
 
 /* Skeletons, not spinners — content should never pop in from nothing. */

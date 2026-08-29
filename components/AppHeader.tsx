@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarSearch, Map, Ticket, TicketCheck } from "lucide-react";
 import { Logo } from "./ui/Logo";
-import { ThemeToggle } from "./ui/ThemeToggle";
 import { LanguageSetting } from "./ui/LanguageSetting";
 import { DataSourceBadge } from "./ui/DataSourceBadge";
 import { cn } from "./ui/cn";
@@ -26,7 +25,7 @@ export function AppHeader() {
   const { t } = useLocale();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg">
+    <header className="chrome sticky top-0 z-40 border-b">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 text-text" aria-label={t("nav.homeLabel")}>
           <Logo className="size-[26px] shrink-0" />
@@ -60,7 +59,6 @@ export function AppHeader() {
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <DataSourceBadge />
           <LanguageSetting />
-          <ThemeToggle />
         </div>
       </div>
     </header>
@@ -79,7 +77,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] sm:hidden"
+      className="chrome fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] sm:hidden"
     >
       <ul className="mx-auto flex max-w-md">
         {NAV.map((item) => {
