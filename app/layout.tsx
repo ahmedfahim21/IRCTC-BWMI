@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans } from "next/font/google";
 import { AppHeader, MobileNav } from "@/components/AppHeader";
+import { AppFooter } from "@/components/AppFooter";
 import { Providers } from "@/components/ui/Providers";
 import { LocaleProvider } from "@/lib/i18n/useLocale";
 import { OfflineSupport } from "@/components/ui/OfflineSupport";
@@ -57,9 +58,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ChatProvider>
               <AppHeader />
               <OfflineSupport />
-              <main id="main" className="pb-[3.75rem] sm:pb-0">
-                {children}
-              </main>
+              <main id="main">{children}</main>
+              <AppFooter />
               <MobileNav />
               <ChatPanel />
             </ChatProvider>

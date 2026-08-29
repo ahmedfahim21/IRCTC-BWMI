@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { useLocale } from "@/lib/i18n/useLocale";
 import { LandingMap } from "@/components/map/LandingMap";
 import { MapCanvasCard } from "@/components/map/MapCanvasCard";
@@ -59,25 +58,6 @@ export default function HomePage() {
 
       <Destinations className="mt-14 sm:mt-20" />
 
-      <p className="mx-auto mt-12 max-w-2xl px-4 text-center text-[0.6875rem] leading-relaxed text-faint sm:px-6">
-        <span className="text-dim">
-          An independent redesign concept. This is not the official IRCTC service, is not affiliated
-          with IRCTC or Indian Railways, and cannot issue a real ticket — payment is simulated and no
-          reservation is made.
-        </span>
-        <br />
-        Live timetables, running positions and station data come from the RailRadar API; seat
-        availability, fares and confirmation odds are modelled. Destination photography belongs to its
-        respective owners.{" "}
-        <Link href="/pnr" className="underline decoration-dotted underline-offset-2 hover:text-dim">
-          Look up a PNR
-        </Link>{" "}
-        or{" "}
-        <Link href="/trips" className="underline decoration-dotted underline-offset-2 hover:text-dim">
-          see the demo trips
-        </Link>
-        .
-      </p>
     </div>
   );
 }

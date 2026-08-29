@@ -121,6 +121,7 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
+  -webkit-tap-highlight-color: transparent;
   font-family: var(--font-sans);
   /* Every number in this app is a time, a fare, a berth or a distance. */
   font-variant-numeric: tabular-nums;
@@ -137,6 +138,17 @@ h1, h2, h3, h4, h5, h6, strong, b, th {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+}
+
+/* In-page anchors glide; killed with everything else under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
