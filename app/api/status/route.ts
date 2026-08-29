@@ -1,4 +1,5 @@
 import { isLive, quotaStatus } from "@/lib/railradar/source";
+import { chatBackend, chatModelId, hasLiveChatCredentials } from "@/lib/agent/chatBackend";
 import { isVoiceEnabled, voiceModels } from "@/lib/voice/sarvam";
 import { handler, json } from "@/lib/api/http";
 
@@ -14,7 +15,9 @@ export const GET = handler(async () => {
     live,
     voice: isVoiceEnabled(),
     voiceModels: isVoiceEnabled() ? voiceModels() : null,
-    chatLive: Boolean(process.env.ANTHROPIC_API_KEY) && process.env.CHAT_FAKE !== "1",
+    chatLive: hasLiveChatCredentials() && process.env.CHAT_FAKE !== "1",
+    chatProvider: chatBackend(),
+    chatModel: chatModelId(),
     quota,
     sources: {
       stationSearch: live ? "live" : "generated",

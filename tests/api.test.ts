@@ -501,7 +501,7 @@ describe("booking lifecycle", () => {
 });
 
 describe("GET /api/status", () => {
-  it("reports scripted chat when no Anthropic key is set", async () => {
+  it("reports scripted chat when no live-chat credentials are set", async () => {
     const body = await (await getStatus()).json();
     expect(body.chatLive).toBe(false);
     expect(body.voiceModels).toBeNull();

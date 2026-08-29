@@ -28,6 +28,7 @@ import {
   inputRows,
   stationMatches,
   statusLabel,
+  toolLabel,
   toolResultText,
   toolStatus,
   type ToolStatus,
@@ -79,7 +80,7 @@ export function ToolCallCard({
   const status = toolStatus({ state, output });
   const [open, setOpen] = useState(status !== "done");
   const Icon = iconFor(name);
-  const label = name.replaceAll("_", " ");
+  const label = toolLabel(name);
   const summary = headerSummary(input, locale);
   const stations = stationMatches(output);
   const resultText = toolResultText(output, locale);

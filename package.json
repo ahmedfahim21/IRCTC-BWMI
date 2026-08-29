@@ -15,7 +15,8 @@
     "test:all": "vitest run && playwright test"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.44",
+    "@ai-sdk/amazon-bedrock": "^5.0.67",
+    "@ai-sdk/anthropic": "^4.0.45",
     "@ai-sdk/react": "^4.0.86",
     "@radix-ui/react-collapsible": "^1.1.20",
     "@radix-ui/react-popover": "^1.1.6",

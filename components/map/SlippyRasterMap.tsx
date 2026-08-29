@@ -329,6 +329,18 @@ export function SlippyRasterMap({
     [setView]
   );
 
+  useEffect(() => {
+    if (!interactive) return;
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      zoomBy(zoomDeltaFromWheel(event.deltaY, event.deltaMode));
+    };
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+    return () => wrap.removeEventListener("wheel", onWheel);
+  }, [interactive, zoomBy]);
+
   const flyTo = useCallback(
     (lng: number, lat: number, zoom = 8) => {
       animateView({ centerLng: lng, centerLat: lat, zoom });
@@ -391,7 +403,10 @@ export function SlippyRasterMap({
     <RailMapContext.Provider value={api}>
       <div
         ref={wrapRef}
-        className={cn("relative size-full min-h-[12rem] overflow-hidden bg-surface-2", className)}
+        className={cn(
+          "relative size-full min-h-[12rem] overflow-hidden overscroll-contain bg-surface-2 [touch-action:none]",
+          className
+        )}
         onPointerDown={
           interactive
             ? (event) => {
@@ -425,14 +440,6 @@ export function SlippyRasterMap({
           }
           emit();
         }}
-        onWheel={
-          interactive
-            ? (event) => {
-                event.preventDefault();
-                zoomBy(zoomDeltaFromWheel(event.deltaY, event.deltaMode));
-              }
-            : undefined
-        }
       >
         <canvas ref={canvasRef} className="absolute inset-0 size-full cursor-grab" role="img" aria-label="Map of India" />
         <p className="pointer-events-none absolute bottom-1 left-1 z-[5] text-[0.5625rem] text-faint">

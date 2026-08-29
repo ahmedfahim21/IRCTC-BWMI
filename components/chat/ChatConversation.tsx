@@ -250,7 +250,7 @@ export function ChatConversation({ headerExtra }: { headerExtra?: ReactNode }) {
       </div>
 
       <form
-        className="flex items-end gap-2 border-t border-border p-2.5"
+        className="flex items-center gap-2 border-t border-border p-2.5"
         onSubmit={(event) => {
           event.preventDefault();
           submit(input);
@@ -259,20 +259,15 @@ export function ChatConversation({ headerExtra }: { headerExtra?: ReactNode }) {
         <label className="sr-only" htmlFor="booking-chat-input">
           {t("chat.messageLabel")}
         </label>
-        <textarea
+        <input
           id="booking-chat-input"
+          type="text"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              submit(input);
-            }
-          }}
-          rows={2}
           placeholder={t("chat.inputPlaceholder")}
           disabled={mic.listening || micBusy}
-          className="min-h-[2.75rem] flex-1 resize-none rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-[0.8125rem] text-text placeholder:text-faint disabled:opacity-60"
+          autoComplete="off"
+          className="h-10 flex-1 rounded-lg border border-border bg-surface-2 px-2.5 text-[0.8125rem] text-text placeholder:text-faint disabled:opacity-60"
         />
         {voiceEnabled && (
           <button

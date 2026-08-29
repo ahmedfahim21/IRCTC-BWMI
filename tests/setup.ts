@@ -6,3 +6,6 @@
 process.env.RAILRADAR_API_KEY = "";
 process.env.SARVAM_API_KEY = "";
 process.env.ANTHROPIC_API_KEY = "";
+process.env.AWS_BEARER_TOKEN_BEDROCK = "";
+process.env.AWS_ACCESS_KEY_ID = "";
+process.env.AWS_SECRET_ACCESS_KEY = "";
