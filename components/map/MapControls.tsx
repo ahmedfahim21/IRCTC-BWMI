@@ -5,6 +5,7 @@ import { Locate, Minus, Plus } from "lucide-react";
 import { cn } from "@/components/ui/cn";
 import { INDIA_BOUNDS } from "./indiaOverlay";
 import { useRailMap } from "./mapContext";
+import { useLocale } from "@/lib/i18n/useLocale";
 
 function isInIndia(lng: number, lat: number): boolean {
   const [[west, south], [east, north]] = INDIA_BOUNDS;
@@ -13,6 +14,7 @@ function isInIndia(lng: number, lat: number): boolean {
 
 /** Zoom, fit-India, and geolocate. Terrain (street) tiles only. */
 export function MapControls({ className }: { className?: string }) {
+  const { t } = useLocale();
   const { fitIndia, zoomBy, flyTo } = useRailMap();
 
   const locate = () => {
@@ -31,16 +33,16 @@ export function MapControls({ className }: { className?: string }) {
   return (
     <div className={cn("pointer-events-none absolute inset-0 z-10", className)}>
       <div className="pointer-events-auto absolute bottom-8 right-2.5 flex flex-col gap-1.5 sm:bottom-2.5">
-        <ControlButton label="Zoom in" onClick={() => zoomBy(1)}>
+        <ControlButton label={t("map.zoomIn")} onClick={() => zoomBy(1)}>
           <Plus className="size-3.5" aria-hidden />
         </ControlButton>
-        <ControlButton label="Zoom out" onClick={() => zoomBy(-1)}>
+        <ControlButton label={t("map.zoomOut")} onClick={() => zoomBy(-1)}>
           <Minus className="size-3.5" aria-hidden />
         </ControlButton>
-        <ControlButton label="Fit the whole country" onClick={fitIndia}>
+        <ControlButton label={t("map.fitCountry")} onClick={fitIndia}>
           <span className="text-[0.625rem]">IN</span>
         </ControlButton>
-        <ControlButton label="Show my location" onClick={locate}>
+        <ControlButton label={t("map.showMyLocation")} onClick={locate}>
           <Locate className="size-3.5" aria-hidden />
         </ControlButton>
       </div>

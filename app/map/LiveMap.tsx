@@ -16,6 +16,8 @@ import { TrainCallout } from "@/components/map/TrainCallout";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { todayIso } from "@/lib/domain/time";
+import { localizeTrainType } from "@/lib/railradar/trainTypes";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 interface LiveMapResponse {
@@ -34,6 +36,7 @@ interface LiveMapResponse {
  * train is keyboard-reachable here even if tiles never load.
  */
 export function LiveMap() {
+  const { t, locale } = useLocale();
   const router = useRouter();
   const params = useSearchParams();
   const selectedNumber = params.get("train");
@@ -101,25 +104,37 @@ export function LiveMap() {
         <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="flex items-center gap-2 text-[1.0625rem] tracking-[-0.01em]">
             <RadioTower className="size-4 text-brand" aria-hidden />
-            Live map
+            {t("map.title")}
           </h1>
-          {data && (
-            <p className="text-[0.75rem] text-dim">
-              <span className="tnum text-text">{visibleTrains.length.toLocaleString("en-IN")}</span> trains moving
-              {visibleTrains.length !== data.total && (
-                <span className="text-faint"> of {data.total.toLocaleString("en-IN")}</span>
-              )}
-            </p>
-          )}
+          {data &&
+            (locale === "hi" ? (
+              <p className="text-[0.75rem] text-dim">
+                {visibleTrains.length !== data.total && (
+                  <span className="text-faint">{data.total.toLocaleString("hi-IN")} में से </span>
+                )}
+                <span className="tnum text-text">{visibleTrains.length.toLocaleString("hi-IN")}</span>{" "}
+                {t("map.trainsMoving")}
+              </p>
+            ) : (
+              <p className="text-[0.75rem] text-dim">
+                <span className="tnum text-text">{visibleTrains.length.toLocaleString("en-IN")}</span>{" "}
+                {t("map.trainsMoving")}
+                {visibleTrains.length !== data.total && (
+                  <span className="text-faint"> of {data.total.toLocaleString("en-IN")}</span>
+                )}
+              </p>
+            ))}
           <span className="ml-auto flex items-center gap-1.5 text-[0.6875rem] text-faint">
             {isFetching && <span className="size-1.5 animate-pulse rounded-full bg-ok" aria-hidden />}
-            {data ? `updated ${new Date(data.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : ""}
+            {data
+              ? `${t("map.updated")} ${new Date(data.updatedAt).toLocaleTimeString(locale === "hi" ? "hi-IN" : "en-IN", { hour: "2-digit", minute: "2-digit" })}`
+              : ""}
           </span>
         </div>
 
         {data && (
           <TypeLegend
-            types={data.types}
+            types={data.types.map((label) => localizeTrainType(label, locale))}
             activeTypes={activeTypes}
             counts={counts}
             onToggle={(index) =>
@@ -143,7 +158,7 @@ export function LiveMap() {
                 type="search"
                 value={listFilter}
                 onChange={(event) => setListFilter(event.target.value)}
-                placeholder="Find a train"
+                placeholder={t("map.findATrain")}
                 className="field h-9 w-full rounded-full pl-8 pr-3 text-[0.8125rem] text-text outline-none placeholder:text-faint"
               />
             </label>
@@ -161,7 +176,7 @@ export function LiveMap() {
             )}
             {!isPending && !isError && listed.length === 0 && (
               <p className="px-3 py-6 text-center text-[0.8125rem] text-faint">
-                No running train matches &ldquo;{listFilter}&rdquo;.
+                {t("map.noMatch")} &ldquo;{listFilter}&rdquo;.
               </p>
             )}
             {listed.map((train, index) => {
@@ -187,14 +202,20 @@ export function LiveMap() {
                   <span className="tnum shrink-0 font-mono text-[0.75rem] text-brand">{item.number}</span>
                   <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-dim">{item.name}</span>
                   <span className="shrink-0 text-[0.5625rem] uppercase tracking-[0.08em] text-faint">
-                    {data?.types[item.type]}
+                    {data ? localizeTrainType(data.types[item.type], locale) : ""}
                   </span>
                 </button>
               );
             })}
           </div>
           <p className="sr-only" aria-live="polite">
-            {selected ? `Selected ${selected.number} ${selected.name}` : "No train selected"}
+            {selected
+              ? locale === "hi"
+                ? `चुनी गई: ${selected.number} ${selected.name}`
+                : `Selected ${selected.number} ${selected.name}`
+              : locale === "hi"
+                ? "कोई ट्रेन चुनी नहीं गई"
+                : "No train selected"}
           </p>
         </aside>
 
@@ -217,7 +238,7 @@ export function LiveMap() {
           {selected && (
             <TrainCallout
               train={selected}
-              typeName={data?.types[selected.type]}
+              typeName={data ? localizeTrainType(data.types[selected.type], locale) : undefined}
               onClose={() => selectTrain(null)}
               schedule={trainDetail?.train.schedule}
               stations={trainDetail?.stations}

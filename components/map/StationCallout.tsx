@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { formatMinute } from "@/lib/domain/time";
 import type { StationPin } from "@/components/map/StationPins";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 export function StationCallout({
@@ -22,6 +23,7 @@ export function StationCallout({
   onClose: () => void;
   className?: string;
 }) {
+  const { t } = useLocale();
   const hasArrival = arrivalMinute !== undefined && arrivalMinute !== null;
   const hasDeparture = departureMinute !== undefined && departureMinute !== null;
 
@@ -42,7 +44,7 @@ export function StationCallout({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
         >
           <X className="size-3.5" aria-hidden />
@@ -53,13 +55,13 @@ export function StationCallout({
         <dl className="mb-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[0.75rem]">
           {hasArrival && (
             <>
-              <dt className="text-faint">Arrival</dt>
+              <dt className="text-faint">{t("map.arrival")}</dt>
               <dd className="tnum text-text">{formatMinute(arrivalMinute)}</dd>
             </>
           )}
           {hasDeparture && (
             <>
-              <dt className="text-faint">Departure</dt>
+              <dt className="text-faint">{t("map.departure")}</dt>
               <dd className="tnum text-text">{formatMinute(departureMinute)}</dd>
             </>
           )}
@@ -70,7 +72,7 @@ export function StationCallout({
         href={searchFromHref ?? `/?from=${encodeURIComponent(pin.code)}`}
         className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim hover:text-text"
       >
-        Search from here
+        {t("map.searchFromHere")}
       </Link>
     </div>
   );
