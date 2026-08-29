@@ -26,15 +26,10 @@ import { useMicRecorder } from "@/components/voice/useMicRecorder";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ToolCallCard } from "./ToolCallCard";
 import { isRecord } from "./toolCallDisplay";
+import { useLocale } from "@/lib/i18n/useLocale";
 
 type Dock = "right" | "left" | "bottom";
 const DOCK_KEY = "irctc.chatDock";
-
-const STARTERS = [
-  "Trains from New Delhi to Mumbai tomorrow",
-  "Book 12951 from BCT to NDLS in 3A",
-  "Look up my PNR",
-];
 
 function readDock(pathname: string): Dock {
   if (typeof window === "undefined") return "left";
@@ -56,6 +51,8 @@ function toolPartError(part: { errorText?: unknown }): string | undefined {
  * Dockable agent panel with an in-composer mic and per-reply speak buttons.
  */
 export function ChatPanel() {
+  const { t } = useLocale();
+  const STARTERS = [t("chat.starter1"), t("chat.starter2"), t("chat.starter3")];
   const chat = useAgentChat();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -103,7 +100,7 @@ export function ChatPanel() {
         audio.onended = () => setSpeakingMessageId((current) => (current === messageId ? null : current));
       } catch (cause) {
         setSpeakingMessageId(null);
-        setSpeakError(cause instanceof Error ? cause.message : "Could not play that reply");
+        setSpeakError(cause instanceof Error ? cause.message : t("chat.couldNotPlay"));
       } finally {
         setLoadingMessageId(null);
       }
@@ -166,7 +163,7 @@ export function ChatPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Open booking chat"
+          aria-label={t("chat.openBooking")}
           className="fixed bottom-20 left-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-6 sm:left-6"
         >
           <MessageCircle className="size-5" aria-hidden />
@@ -175,7 +172,7 @@ export function ChatPanel() {
 
       {open && (
         <section
-          aria-label="Booking chat"
+          aria-label={t("chat.bookingChat")}
           className={cn(
             "fixed z-40 flex flex-col border border-border bg-surface shadow-[var(--shadow-lg)]",
             dock === "bottom" &&
@@ -187,19 +184,19 @@ export function ChatPanel() {
           )}
         >
           <header className="flex items-center gap-1.5 border-b border-border px-3 py-2">
-            <p className="min-w-0 flex-1 text-[0.8125rem] text-text">Chat</p>
+            <p className="min-w-0 flex-1 text-[0.8125rem] text-text">{t("chat.header")}</p>
             <button
               type="button"
               onClick={startNewChat}
               className="rounded-md px-1.5 py-0.5 text-[0.6875rem] text-faint hover:text-text"
             >
-              New
+              {t("chat.new")}
             </button>
             {busy && (
               <button
                 type="button"
                 onClick={() => void stop()}
-                aria-label="Stop generating"
+                aria-label={t("chat.stopGenerating")}
                 className="rounded-md p-1 text-faint hover:text-text"
               >
                 <Square className="size-3.5" aria-hidden />
@@ -209,22 +206,22 @@ export function ChatPanel() {
               <button
                 type="button"
                 onClick={() => void regenerate()}
-                aria-label="Regenerate response"
+                aria-label={t("chat.regenerate")}
                 className="rounded-md p-1 text-faint hover:text-text"
               >
                 <RotateCcw className="size-3.5" aria-hidden />
               </button>
             )}
-            <DockButton label="Dock left" current={dock === "left"} onClick={() => setDockAndStore("left")}>
+            <DockButton label={t("chat.dockLeft")} current={dock === "left"} onClick={() => setDockAndStore("left")}>
               <PanelLeft className="size-3.5" />
             </DockButton>
-            <DockButton label="Dock bottom" current={dock === "bottom"} onClick={() => setDockAndStore("bottom")}>
+            <DockButton label={t("chat.dockBottom")} current={dock === "bottom"} onClick={() => setDockAndStore("bottom")}>
               <PanelBottom className="size-3.5" />
             </DockButton>
-            <DockButton label="Dock right" current={dock === "right"} onClick={() => setDockAndStore("right")}>
+            <DockButton label={t("chat.dockRight")} current={dock === "right"} onClick={() => setDockAndStore("right")}>
               <PanelRight className="size-3.5" />
             </DockButton>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat" className="rounded-md p-1 text-faint hover:text-text">
+            <button type="button" onClick={() => setOpen(false)} aria-label={t("chat.close")} className="rounded-md p-1 text-faint hover:text-text">
               <X className="size-3.5" aria-hidden />
             </button>
           </header>
@@ -232,9 +229,7 @@ export function ChatPanel() {
           <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
             {messages.length === 0 && (
               <div className="space-y-3">
-                <p className="text-[0.8125rem] leading-relaxed text-dim">
-                  Ask for a train the way you would say it. The form and the map move with the answer.
-                </p>
+                <p className="text-[0.8125rem] leading-relaxed text-dim">{t("chat.intro")}</p>
                 <div className="flex flex-col gap-1.5">
                   {STARTERS.map((starter) => (
                     <button
@@ -261,12 +256,12 @@ export function ChatPanel() {
                       <div className="flex items-center justify-between gap-2">
                         <p className="flex items-center gap-1 text-[0.625rem] uppercase tracking-wider text-faint">
                           <MessageCircle className="size-3" aria-hidden />
-                          Assistant
+                          {t("chat.assistant")}
                         </p>
                         {voiceEnabled && replyText && (
                           <button
                             type="button"
-                            aria-label={isSpeaking ? "Playing this reply" : "Play this reply"}
+                            aria-label={isSpeaking ? t("chat.playingReply") : t("chat.playReply")}
                             aria-pressed={isSpeaking}
                             disabled={isLoadingSpeech}
                             onClick={() => void speakMessage(message.id, replyText)}
@@ -312,8 +307,8 @@ export function ChatPanel() {
                 </div>
               );
             })}
-            {pendingTools && !busy && <p className="text-[0.75rem] text-faint">Updating the screen…</p>}
-            {busy && <p className="text-[0.75rem] text-faint">Working…</p>}
+            {pendingTools && !busy && <p className="text-[0.75rem] text-faint">{t("chat.updatingScreen")}</p>}
+            {busy && <p className="text-[0.75rem] text-faint">{t("chat.working")}</p>}
             {error && (
               <div className="space-y-1">
                 <p className="text-[0.8125rem] text-danger">{error.message}</p>
@@ -325,7 +320,7 @@ export function ChatPanel() {
                   }}
                   className="text-[0.75rem] text-brand underline decoration-dotted underline-offset-2"
                 >
-                  Retry
+                  {t("chat.retry")}
                 </button>
               </div>
             )}
@@ -339,7 +334,7 @@ export function ChatPanel() {
             }}
           >
             <label className="sr-only" htmlFor="booking-chat-input">
-              Message
+              {t("chat.messageLabel")}
             </label>
             <textarea
               id="booking-chat-input"
@@ -352,7 +347,7 @@ export function ChatPanel() {
                 }
               }}
               rows={2}
-              placeholder="From NDLS to MAS…"
+              placeholder={t("chat.inputPlaceholder")}
               disabled={mic.listening || micBusy}
               className="min-h-[2.75rem] flex-1 resize-none rounded-lg border border-border bg-surface-2 px-2.5 py-2 text-[0.8125rem] text-text placeholder:text-faint disabled:opacity-60"
             />
@@ -361,7 +356,7 @@ export function ChatPanel() {
                 type="button"
                 onClick={mic.toggle}
                 disabled={micBusy || (busy && !mic.listening)}
-                aria-label={mic.listening ? "Stop listening" : "Speak your message"}
+                aria-label={mic.listening ? t("chat.stopListening") : t("chat.speakMessage")}
                 className={cn(
                   "relative flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-dim disabled:opacity-40",
                   mic.listening && "border-danger/40 text-danger"
@@ -388,7 +383,7 @@ export function ChatPanel() {
             <button
               type="submit"
               disabled={busy || pendingTools || micBusy || mic.listening || !input.trim()}
-              aria-label="Send message"
+              aria-label={t("chat.sendMessage")}
               className="btn btn-primary size-10 shrink-0 disabled:opacity-40"
             >
               <Send className="size-4" aria-hidden />
@@ -402,7 +397,7 @@ export function ChatPanel() {
                 onClick={() => setSpeakError(null)}
                 className="shrink-0 text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
               >
-                Dismiss
+                {t("chat.dismiss")}
               </button>
             </div>
           )}
@@ -414,7 +409,7 @@ export function ChatPanel() {
                 onClick={mic.reset}
                 className="shrink-0 text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
               >
-                Dismiss
+                {t("chat.dismiss")}
               </button>
             </div>
           )}
@@ -428,7 +423,7 @@ export function ChatPanel() {
                 }}
                 className="text-[0.6875rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
               >
-                Edit last message
+                {t("chat.editLastMessage")}
               </button>
             </div>
           )}

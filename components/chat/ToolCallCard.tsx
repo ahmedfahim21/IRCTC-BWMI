@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/components/ui/cn";
+import { useLocale } from "@/lib/i18n/useLocale";
 import {
   headerSummary,
   inputRows,
@@ -74,13 +75,14 @@ export function ToolCallCard({
   output: unknown;
   errorText?: string;
 }) {
+  const { locale } = useLocale();
   const status = toolStatus({ state, output });
   const [open, setOpen] = useState(status !== "done");
   const Icon = iconFor(name);
   const label = name.replaceAll("_", " ");
-  const summary = headerSummary(input);
+  const summary = headerSummary(input, locale);
   const stations = stationMatches(output);
-  const resultText = toolResultText(output);
+  const resultText = toolResultText(output, locale);
   const rows = inputRows(input);
   const failureText = errorText ?? (status === "failed" ? resultText : null);
   const hasBody = rows.length > 0 || stations.length > 0 || Boolean(resultText) || Boolean(failureText);
@@ -107,6 +109,7 @@ export function ToolCallCard({
           summary={summary}
           stations={stations}
           open={open}
+          locale={locale}
         />
         {hasBody && (
           <CollapsibleContent>
@@ -151,6 +154,7 @@ function Header({
   summary,
   stations,
   open,
+  locale,
 }: {
   collapsible: boolean;
   icon: LucideIcon;
@@ -159,6 +163,7 @@ function Header({
   summary: string;
   stations: Array<{ code: string; name: string }>;
   open: boolean;
+  locale: "en" | "hi";
 }) {
   const tone = status === "failed" ? "text-danger" : status === "done" ? "text-ok" : "text-faint";
   const inner = (
@@ -194,7 +199,7 @@ function Header({
       </span>
       <span className={cn("flex shrink-0 items-center gap-1 text-[0.625rem] tracking-wide", tone)}>
         {status === "calling" && <Loader2 className="size-3 animate-spin" aria-hidden />}
-        {statusLabel(status)}
+        {statusLabel(status, locale)}
       </span>
       {collapsible && (
         <ChevronDown
@@ -213,7 +218,7 @@ function Header({
   }
 
   return (
-    <CollapsibleTrigger className={classes} aria-label={`${label}, ${statusLabel(status)}`}>
+    <CollapsibleTrigger className={classes} aria-label={`${label}, ${statusLabel(status, locale)}`}>
       {inner}
     </CollapsibleTrigger>
   );
