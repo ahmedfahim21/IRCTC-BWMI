@@ -147,7 +147,7 @@ test("new chat clears the transcript", async ({ page }) => {
   await openChat(page);
   await say(page, "from New Delhi to Mumbai tomorrow");
   await expect(page.getByLabel("Booking chat")).toContainText(/Searching NDLS/i, { timeout: 15_000 });
-  await page.getByRole("button", { name: "New" }).click();
+  await page.getByLabel("Booking chat").getByRole("button", { name: "New", exact: true }).click();
   await expect(page.getByLabel("Booking chat")).not.toContainText(/Searching NDLS/i);
   await expect(page.getByText("Ask for a train the way you would say it")).toBeVisible();
 });

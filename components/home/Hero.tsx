@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { MessageCircle, Search } from "lucide-react";
 import { useLocale } from "@/lib/i18n/useLocale";
 import { SearchForm } from "@/components/search/SearchForm";
+import { ChatConversation } from "@/components/chat/ChatConversation";
+import { useAgentChat } from "@/lib/agent/ChatProvider";
 import { HERO_FRAMES, HERO_FRAME_MS } from "@/lib/heroFrames";
 import { cn } from "@/components/ui/cn";
 import { Flourish } from "@/components/ui/Ornament";
@@ -31,6 +34,8 @@ export function Hero() {
   const { t, locale } = useLocale();
   // A destination card links here with ?to= when it had no origin to search from.
   const destination = useSearchParams().get("to");
+  const chat = useAgentChat();
+  const chatOpen = Boolean(chat?.open);
 
   const [frame, setFrame] = useState(0);
   const [animate, setAnimate] = useState(false);
@@ -179,9 +184,61 @@ export function Hero() {
         */}
       <div className="relative z-10 mx-auto -mt-8 max-w-6xl px-4 sm:-mt-10 sm:px-6 lg:px-8">
         <div className="card-floating p-1.5 sm:p-2">
-          <SearchForm variant="panel" prefillTo={destination} />
+          <div role="tablist" aria-label={t("home.tabsLabel")} className="mb-1.5 flex gap-1 px-0.5 pt-0.5">
+            <HeroTab
+              active={!chatOpen}
+              icon={Search}
+              label={t("home.tabSearch")}
+              onClick={() => chat?.setOpen(false)}
+            />
+            <HeroTab
+              active={chatOpen}
+              icon={MessageCircle}
+              label={t("home.tabChat")}
+              onClick={() => chat?.setOpen(true)}
+            />
+          </div>
+
+          {chatOpen ? (
+            <div
+              aria-label={t("chat.bookingChat")}
+              className="card flex h-[26rem] flex-col overflow-hidden shadow-[var(--shadow-sm)] sm:h-[30rem]"
+            >
+              <ChatConversation />
+            </div>
+          ) : (
+            <SearchForm variant="panel" prefillTo={destination} />
+          )}
         </div>
       </div>
     </section>
+  );
+}
+
+function HeroTab({
+  active,
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: typeof Search;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[0.8125rem] transition-colors",
+        active ? "bg-surface-2 text-text" : "text-faint hover:text-dim"
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden />
+      {label}
+    </button>
   );
 }

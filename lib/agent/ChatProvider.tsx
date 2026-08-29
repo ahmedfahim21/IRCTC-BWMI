@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { useChat } from "@ai-sdk/react";
@@ -33,6 +34,9 @@ type ChatApi = ReturnType<typeof useChat>;
 type AgentChatContextValue = ChatApi & {
   newChat: () => void;
   editLastUserMessage: (text: string) => void;
+  /** Whether the chat surface (floating panel, or the home hero's Chat tab) is showing. */
+  open: boolean;
+  setOpen: (open: boolean) => void;
 };
 
 const ChatContext = createContext<AgentChatContextValue | null>(null);
@@ -61,6 +65,7 @@ function toolInputReady(part: { state?: string; input?: unknown }): boolean {
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   useAgentNavigation();
+  const [open, setOpen] = useState(false);
   const completed = useRef(new Set<string>());
   const executing = useRef(new Map<string, Promise<void>>());
   const clientResolvedTurn = useRef(false);
@@ -223,8 +228,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       ...chat,
       newChat,
       editLastUserMessage,
+      open,
+      setOpen,
     }),
-    [chat, newChat, editLastUserMessage]
+    [chat, newChat, editLastUserMessage, open]
   );
 
   return (
