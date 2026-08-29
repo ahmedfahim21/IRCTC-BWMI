@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Fraunces, Noto_Sans } from "next/font/google";
 import { AppHeader, MobileNav } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { Providers } from "@/components/ui/Providers";
@@ -23,6 +23,21 @@ const notoSans = Noto_Sans({
   fallback: ["system-ui", "sans-serif"],
 });
 
+/*
+ * Fraunces carries the display layer — a soft, warm serif in the tradition of
+ * hand-lettered Indian signage, used only for headings. Body text, numbers
+ * and controls stay in Noto Sans; a timetable set in a serif would be a
+ * costume, but a headline in one is a voice. Devanagari headings fall through
+ * to Noto Sans, which the stack below arranges.
+ */
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-fraunces",
+  axes: ["opsz"],
+  fallback: ["Georgia", "serif"],
+});
+
 export const metadata: Metadata = {
   title: "IRCTC — Indian Railways, reimagined",
   description:
@@ -42,7 +57,7 @@ const LOCALE_SCRIPT = `(function(){try{var l=localStorage.getItem('irctc.locale'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={notoSans.variable} suppressHydrationWarning>
+    <html lang="en" className={`${notoSans.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: LOCALE_SCRIPT }} />
       </head>

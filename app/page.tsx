@@ -33,7 +33,7 @@ export default function HomePage() {
 
       <section className="mx-auto mt-12 max-w-6xl px-4 sm:mt-16 sm:px-6 lg:px-8" aria-labelledby="network-heading">
         <div className="mb-5">
-          <h2 id="network-heading" className="text-[1.25rem] tracking-[-0.02em] text-text sm:text-[1.5rem]">
+          <h2 id="network-heading" className="font-display text-[1.375rem] text-text sm:text-[1.625rem]">
             The whole network, right now
           </h2>
           <p className="mt-1 max-w-lg text-[0.875rem] leading-relaxed text-dim">

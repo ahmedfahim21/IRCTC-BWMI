@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./ui/Logo";
+import { Flourish, Mandala } from "./ui/Ornament";
 
 /**
  * Every page ends somewhere on purpose. The footer carries the crest, the
@@ -8,8 +9,10 @@ import { Logo } from "./ui/Logo";
  */
 export function AppFooter() {
   return (
-    <footer className="border-t border-border bg-surface pb-[3.75rem] sm:pb-0">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <footer className="relative overflow-hidden border-t border-border bg-surface pb-[3.75rem] sm:pb-0">
+      <Mandala className="pointer-events-none absolute -bottom-24 -right-16 size-72 text-accent opacity-[0.07]" />
+      <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <Flourish className="mx-auto mb-8 block text-accent/60" />
         <div className="flex flex-wrap items-start justify-between gap-x-12 gap-y-8">
           <div className="max-w-md">
             <div className="flex items-center gap-2 text-text">

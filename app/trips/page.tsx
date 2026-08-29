@@ -41,7 +41,7 @@ export default function TripsPage() {
     <div className="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6">
       <header className="mb-8">
         <p className="eyebrow mb-2">Your journeys</p>
-        <h1 className="text-[1.625rem] leading-none tracking-[-0.02em]">{t("trips.title")}</h1>
+        <h1 className="font-display text-[1.75rem] leading-none">{t("trips.title")}</h1>
       </header>
 
       {data.bookings.length === 0 ? (

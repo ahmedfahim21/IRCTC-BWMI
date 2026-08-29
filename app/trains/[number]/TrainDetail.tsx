@@ -87,7 +87,7 @@ export function TrainDetail({ number }: { number: string }) {
           <span className="tnum rounded-md border border-border bg-surface px-1.5 py-0.5 font-mono text-[0.75rem] tracking-[0.06em] text-brand">
             {train.number}
           </span>
-          <h1 className="text-[1.25rem] tracking-[-0.01em] text-text">{train.name}</h1>
+          <h1 className="font-display text-[1.375rem] text-text">{train.name}</h1>
         </div>
 
         <div className="mt-3.5 flex max-w-xs items-center gap-4">

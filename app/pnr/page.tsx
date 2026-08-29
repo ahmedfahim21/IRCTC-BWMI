@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { formatDateShort } from "@/lib/domain/time";
+import { Flourish } from "@/components/ui/Ornament";
 
 /** PNR lookup with no login. Checking a ticket should never need an account. */
 export default function PnrLookupPage() {
@@ -19,10 +20,16 @@ export default function PnrLookupPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-14 sm:px-6">
-      <header className="mb-7">
-        <p className="eyebrow mb-2">Ticket status</p>
-        <h1 className="text-[1.625rem] leading-none tracking-[-0.02em]">Check a PNR</h1>
-        <p className="mt-2.5 text-[0.875rem] leading-relaxed text-dim">
+      {/* A single-purpose page earns a centred composition. */}
+      <header className="mb-8 flex flex-col items-center text-center">
+        <Flourish className="mb-3 text-accent/70" />
+        <p className="flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.14em] text-faint">
+          <span className="h-px w-8 bg-border-strong" aria-hidden />
+          Ticket status
+          <span className="h-px w-8 bg-border-strong" aria-hidden />
+        </p>
+        <h1 className="font-display mt-2.5 text-[1.875rem] leading-none">Check a PNR</h1>
+        <p className="mt-2.5 max-w-xs text-[0.875rem] leading-relaxed text-dim">
           Ten digits from your ticket. No sign-in, no CAPTCHA.
         </p>
       </header>
@@ -32,7 +39,7 @@ export default function PnrLookupPage() {
           e.preventDefault();
           if (valid) router.push(`/trips/${pnr.trim()}`);
         }}
-        className="card-raised flex items-center gap-2 p-2"
+        className="field card-raised flex items-center gap-2 rounded-full p-1.5 pl-3"
       >
         <input
           value={pnr}
@@ -41,19 +48,19 @@ export default function PnrLookupPage() {
           autoComplete="off"
           placeholder="1234567890"
           aria-label="PNR number"
-          className="tnum h-12 min-w-0 flex-1 bg-transparent px-3 text-[1.1875rem] tracking-[0.16em] text-text outline-none placeholder:tracking-[0.16em] placeholder:text-faint/60"
+          className="tnum h-12 min-w-0 flex-1 bg-transparent px-2 text-center text-[1.1875rem] tracking-[0.16em] text-text outline-none placeholder:tracking-[0.16em] placeholder:text-faint/60"
         />
         <button
           type="submit"
           disabled={!valid}
-          className="flex h-12 shrink-0 items-center gap-1.5 rounded-xl bg-brand px-5 text-[0.875rem] text-on-brand transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="btn btn-primary h-12 shrink-0 px-6 text-[0.875rem]"
         >
           <Search className="size-4" aria-hidden />
           Check
         </button>
       </form>
       {/* Says how far along you are, not that you are wrong. */}
-      <p className="mt-2 h-4 px-1 text-[0.6875rem] text-faint" aria-live="polite">
+      <p className="mt-2 h-4 px-1 text-center text-[0.6875rem] text-faint" aria-live="polite">
         {digits > 0 && !valid && `${10 - digits} more digit${10 - digits === 1 ? "" : "s"}`}
       </p>
 

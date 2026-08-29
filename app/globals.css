@@ -159,6 +159,17 @@ h1, h2, h3, h4, h5, h6, strong, b, th {
   }
 }
 
+/*
+ * The display voice: a soft warm serif for headings and nothing else.
+ * Devanagari falls through to Noto Sans — Fraunces has no Devanagari, and a
+ * mismatched serif would be worse than an honest sans.
+ */
+@utility font-display {
+  font-family: var(--font-fraunces), Georgia, var(--font-noto-sans), serif;
+  font-weight: 420;
+  letter-spacing: -0.01em;
+}
+
 @utility tnum {
   font-variant-numeric: tabular-nums;
 }
@@ -241,6 +252,86 @@ h1, h2, h3, h4, h5, h6, strong, b, th {
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   background-size: 140px 140px;
+}
+
+/*
+ * Buttons, normalised — the same pill everywhere instead of five hand-rolled
+ * rectangles. The press is physical: down a pixel on :active, never a fade.
+ */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 80ms ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Deep ink with a lit top edge — a solid object, not a coloured area. */
+@utility btn-primary {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--brand) 88%, white),
+    var(--brand) 55%
+  );
+  color: var(--on-brand);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+@utility btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+/*
+ * A field's focus is a ring, not just a recoloured border — visible from the
+ * corner of an eye, calm enough to live inside a form full of neighbours.
+ */
+@utility field {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.field:hover:not(:focus-within) {
+  border-color: var(--border-strong);
+}
+
+.field:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+/*
+ * The container announces focus for the whole field; a second outline on the
+ * inner input draws two blue rectangles around one control.
+ */
+.field :focus-visible {
+  outline: none;
 }
 
 /* Skeletons, not spinners — content should never pop in from nothing. */

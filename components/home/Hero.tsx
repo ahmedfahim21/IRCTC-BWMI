@@ -7,6 +7,7 @@ import { useLocale } from "@/lib/i18n/useLocale";
 import { SearchForm } from "@/components/search/SearchForm";
 import { HERO_FRAMES, HERO_FRAME_MS } from "@/lib/heroFrames";
 import { cn } from "@/components/ui/cn";
+import { Flourish } from "@/components/ui/Ornament";
 
 /**
  * Indian Railways, photographed, and the search floating on top of it.
@@ -121,16 +122,21 @@ export function Hero() {
               "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.82) 26%, rgba(0,0,0,0.5) 58%, rgba(0,0,0,0) 100%)",
           }}
         >
-          <div className="mx-auto max-w-6xl px-4 pb-14 sm:px-6 sm:pb-16 lg:px-8">
-            <p className="mb-2.5 text-[0.6875rem] uppercase tracking-[0.09em] text-neutral-300">Indian Railways</p>
-            <h1 className="max-w-2xl text-balance text-[1.875rem] leading-[1.05] tracking-[-0.035em] text-white sm:text-[2.5rem]">
+          <div className="mx-auto flex max-w-6xl flex-col items-center px-4 pb-14 text-center sm:px-6 sm:pb-16 lg:px-8">
+            <Flourish className="mb-3 text-white/70" />
+            <p className="flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.14em] text-neutral-300">
+              <span className="h-px w-8 bg-white/30" aria-hidden />
+              Indian Railways
+              <span className="h-px w-8 bg-white/30" aria-hidden />
+            </p>
+            <h1 className="font-display mt-2.5 max-w-2xl text-balance text-[2rem] leading-[1.08] text-white sm:text-[2.75rem]">
               {t("home.heading")}
             </h1>
-            <p className="mt-2 max-w-lg text-balance text-[0.875rem] leading-relaxed text-neutral-200 sm:text-[0.9375rem]">
+            <p className="mt-2.5 max-w-lg text-balance text-[0.875rem] leading-relaxed text-neutral-200 sm:text-[0.9375rem]">
               {t("home.sub")}
             </p>
 
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-5 flex items-center justify-center gap-2">
               {HERO_FRAMES.map((item, index) => (
                 <button
                   key={item.src}

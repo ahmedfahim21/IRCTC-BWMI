@@ -31,6 +31,15 @@ export function TicketCard({
 }) {
   return (
     <div className={cn("card overflow-hidden", booking.status === "cancelled" && "opacity-70")}>
+      {/* The saffron security trim a printed reservation slip carries. */}
+      <div
+        aria-hidden
+        className="h-1.5 border-b border-border"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 75%, transparent) 0 5px, var(--accent-soft) 5px 10px)",
+        }}
+      />
       {/*
         * The dashed rules are perforations, so they get the die-cut notches a
         * real ticket has — two half-moons punched out of the card edge. The
