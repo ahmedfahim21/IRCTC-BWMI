@@ -2,6 +2,7 @@
 
 import type { Availability, AvailabilityState } from "@/lib/types";
 import { explainStatus, parseStatusLabel } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { Term } from "./Term";
 import { cn } from "./cn";
 
@@ -51,7 +52,8 @@ export function StatusChip({
 
 /** The sentence that sits under every status code. */
 export function StatusExplanation({ availability, className }: { availability: Availability; className?: string }) {
-  return <span className={cn("text-[0.6875rem] leading-tight text-faint", className)}>{explainStatus(availability.label)}</span>;
+  const { locale } = useLocale();
+  return <span className={cn("text-[0.6875rem] leading-tight text-faint", className)}>{explainStatus(availability.label, locale)}</span>;
 }
 
 /**
@@ -67,21 +69,28 @@ export function ProbabilityBar({
   sampleSize: number;
   className?: string;
 }) {
+  const { locale } = useLocale();
   const percent = Math.round(probability * 100);
   const tone = percent >= 70 ? "bg-ok" : percent >= 40 ? "bg-warn" : "bg-danger";
   const toneText = percent >= 70 ? "text-ok" : percent >= 40 ? "text-warn" : "text-danger";
+  const ariaLabel =
+    locale === "hi"
+      ? `${sampleSize} मिलती-जुलती यात्राओं के आधार पर कन्फर्म होने की ${percent} प्रतिशत संभावना`
+      : `${percent} percent chance of confirming, based on ${sampleSize} similar journeys`;
 
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
       <div
         className="h-1 w-9 overflow-hidden rounded-full bg-surface-3"
         role="img"
-        aria-label={`${percent} percent chance of confirming, based on ${sampleSize} similar journeys`}
+        aria-label={ariaLabel}
       >
         <div className={cn("h-full rounded-full transition-[width] duration-500", tone)} style={{ width: `${Math.max(3, percent)}%` }} />
       </div>
       <span className={cn("tnum text-[0.6875rem]", toneText)}>{percent}%</span>
-      <span className="text-[0.6875rem] text-faint">· {sampleSize} trips</span>
+      <span className="text-[0.6875rem] text-faint">
+        · {sampleSize} {locale === "hi" ? "यात्राएँ" : "trips"}
+      </span>
     </div>
   );
 }

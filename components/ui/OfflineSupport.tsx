@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { CloudOff } from "lucide-react";
 import { STALE_EVENT } from "@/lib/apiClient";
+import { useLocale } from "@/lib/i18n/useLocale";
 
 /**
  * Registers the service worker and tells the user plainly when they're offline
  * — a stale screen that looks live is worse than one that says so.
  */
 export function OfflineSupport() {
+  const { t } = useLocale();
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export function OfflineSupport() {
       className="sticky top-14 z-30 flex items-center justify-center gap-2 bg-warn px-4 py-1.5 text-[0.75rem] text-[color:var(--surface)]"
     >
       <CloudOff className="size-3.5" aria-hidden />
-      No network — showing what was saved. Your tickets still work.
+      {t("offline.banner")}
     </div>
   );
 }

@@ -10,14 +10,14 @@ import { cn } from "./cn";
  * page on arrival before you've even said what you want.
  */
 export function LanguageSetting() {
-  const { locale, setLocale } = useLocale();
+  const { t, locale, setLocale } = useLocale();
 
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
         <button
           type="button"
-          aria-label={`Language: ${LOCALES[locale].label}`}
+          aria-label={`${t("lang.label")}: ${LOCALES[locale].label}`}
           className="flex items-center gap-1.5 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-[0.6875rem] text-dim transition-colors hover:text-text"
         >
           <Languages className="size-3.5" aria-hidden />
@@ -31,7 +31,7 @@ export function LanguageSetting() {
           collisionPadding={12}
           className="z-50 w-52 rounded-xl border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
         >
-          <p className="eyebrow px-2 pb-1.5 pt-1">Language</p>
+          <p className="eyebrow px-2 pb-1.5 pt-1">{t("lang.label")}</p>
           {(Object.keys(LOCALES) as Locale[]).map((key) => (
             <button
               key={key}
@@ -46,9 +46,7 @@ export function LanguageSetting() {
               {locale === key && <Check className="size-3.5 text-brand" aria-hidden />}
             </button>
           ))}
-          <p className="px-2 pb-1 pt-2 text-[0.6875rem] leading-relaxed text-faint">
-            Changes apply immediately and are remembered on this device.
-          </p>
+          <p className="px-2 pb-1 pt-2 text-[0.6875rem] leading-relaxed text-faint">{t("lang.appliesImmediately")}</p>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

@@ -40,7 +40,7 @@ export function AppHeader() {
         </Link>
 
         {/* Desktop navigation. On mobile this lives in the bottom bar instead. */}
-        <nav className="ml-1 hidden shrink-0 items-center gap-0.5 sm:flex" aria-label="Main">
+        <nav className="ml-1 hidden shrink-0 items-center gap-0.5 sm:flex" aria-label={t("nav.mainLandmark")}>
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -76,7 +76,7 @@ export function MobileNav() {
 
   return (
     <nav
-      aria-label="Main"
+      aria-label={t("nav.mainLandmark")}
       className="chrome fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] sm:hidden"
     >
       <ul className="mx-auto flex max-w-md">

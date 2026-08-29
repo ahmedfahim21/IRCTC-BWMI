@@ -1,3 +1,6 @@
+"use client";
+
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "./cn";
 
 /** Loading states over sudden content pops. */
@@ -6,8 +9,9 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 export function SkeletonRows({ rows = 4, className }: { rows?: number; className?: string }) {
+  const { t } = useLocale();
   return (
-    <div className={cn("space-y-3", className)} role="status" aria-label="Loading">
+    <div className={cn("space-y-3", className)} role="status" aria-label={t("common.loading")}>
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="card p-4">
           <div className="flex items-center justify-between gap-4">
@@ -19,7 +23,7 @@ export function SkeletonRows({ rows = 4, className }: { rows?: number; className
           </div>
         </div>
       ))}
-      <span className="sr-only">Loading</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
