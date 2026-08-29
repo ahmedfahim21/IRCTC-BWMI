@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { EyeOff, Eye } from "lucide-react";
 import type { LiveStatus, ScheduleStop, Station } from "@/lib/types";
-import { formatDelay, formatDuration, formatMinute } from "@/lib/domain/time";
+import { formatDateShort, formatDelay, formatDuration, formatMinute } from "@/lib/domain/time";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 export interface SpineTimeline {
@@ -36,6 +37,7 @@ export function RailSpine({
   highlightFrom?: string;
   highlightTo?: string;
 }) {
+  const { t, locale } = useLocale();
   const [haltsOnly, setHaltsOnly] = useState(false);
 
   const actualByStation = useMemo(
@@ -62,7 +64,7 @@ export function RailSpine({
   const dayLabel = (offset: number) => {
     const d = new Date(startDate);
     d.setUTCDate(d.getUTCDate() + offset);
-    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
+    return formatDateShort(d.toISOString().slice(0, 10), locale);
   };
 
   let lastDay = -1;
@@ -71,8 +73,13 @@ export function RailSpine({
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="eyebrow">
-          {visible.length} stops
-          {!haltsOnly && hiddenCount > 0 && <span className="normal-case"> · {hiddenCount} passed without stopping</span>}
+          {visible.length} {t("trip.stops")}
+          {!haltsOnly && hiddenCount > 0 && (
+            <span className="normal-case">
+              {" "}
+              · {hiddenCount} {locale === "hi" ? "बिना रुके गुज़री" : "passed without stopping"}
+            </span>
+          )}
         </p>
         <button
           type="button"
@@ -81,7 +88,7 @@ export function RailSpine({
           className="flex items-center gap-1.5 rounded-lg border border-border px-2 py-1 text-[0.6875rem] text-dim transition-colors hover:border-border-strong"
         >
           {haltsOnly ? <Eye className="size-3" aria-hidden /> : <EyeOff className="size-3" aria-hidden />}
-          {haltsOnly ? "Show every station" : "Halts only"}
+          {haltsOnly ? t("spine.showEvery") : t("spine.haltsOnly")}
         </button>
       </div>
 
@@ -107,7 +114,7 @@ export function RailSpine({
                 <div className="flex items-center gap-2 py-2 pl-[4.25rem]">
                   <span className="h-px flex-1 bg-border" aria-hidden />
                   <span className="eyebrow">
-                    Day {stop.dayOffset + 1} · {dayLabel(stop.dayOffset)}
+                    {locale === "hi" ? `दिन ${stop.dayOffset + 1}` : `Day ${stop.dayOffset + 1}`} · {dayLabel(stop.dayOffset)}
                   </span>
                   <span className="h-px flex-1 bg-border" aria-hidden />
                 </div>
@@ -164,17 +171,21 @@ export function RailSpine({
                     </p>
                     {stop.platform !== null && (
                       <span className="tnum shrink-0 rounded bg-surface-3 px-1.5 py-0.5 text-[0.625rem] text-dim">
-                        PF {stop.platform}
+                        {locale === "hi" ? `प्ल. ${stop.platform}` : `PF ${stop.platform}`}
                       </span>
                     )}
                   </div>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[0.6875rem] text-faint">
                     <span className="font-mono">{stop.stationCode}</span>
-                    <span className="tnum">{stop.distanceKm} km</span>
-                    {stop.haltMins > 0 && <span className="text-dim">{stop.haltMins} min halt</span>}
-                    {!stop.isHalt && <span>passes through</span>}
+                    <span className="tnum">{stop.distanceKm} {t("common.km")}</span>
+                    {stop.haltMins > 0 && (
+                      <span className="text-dim">
+                        {locale === "hi" ? `${stop.haltMins} मिनट ठहराव` : `${stop.haltMins} min halt`}
+                      </span>
+                    )}
+                    {!stop.isHalt && <span>{t("spine.passesThrough")}</span>}
                     {actual && actual.delayMins > 2 && (
-                      <span className="text-warn">{formatDelay(actual.delayMins)}</span>
+                      <span className="text-warn">{formatDelay(actual.delayMins, locale)}</span>
                     )}
                   </p>
                 </div>
@@ -193,6 +204,7 @@ export function RailSpine({
 }
 
 function RunningMarker({ live, nextStationName }: { live: LiveStatus; nextStationName?: string }) {
+  const { t, locale } = useLocale();
   return (
     <li className="sticky bottom-3 z-20 mt-3 list-none">
       <div className="mx-auto flex w-fit items-center gap-2.5 rounded-full border border-ok/40 bg-surface px-3 py-1.5 shadow-[var(--shadow-md)]">
@@ -203,11 +215,12 @@ function RunningMarker({ live, nextStationName }: { live: LiveStatus; nextStatio
           </span>
         )}
         <span className="text-[0.75rem] text-dim">
-          <span className="tnum">{Math.round(live.distanceCoveredKm)}</span> km in
-          {nextStationName ? ` · next ${nextStationName}` : ""}
+          <span className="tnum">{Math.round(live.distanceCoveredKm)}</span> {t("common.km")}{" "}
+          {locale === "hi" ? "आगे" : "in"}
+          {nextStationName ? ` · ${t("trip.next")} ${nextStationName}` : ""}
         </span>
         <span className={cn("text-[0.75rem]", live.delayMins > 5 ? "text-warn" : "text-ok")}>
-          {formatDelay(live.delayMins)}
+          {formatDelay(live.delayMins, locale)}
         </span>
       </div>
     </li>

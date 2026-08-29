@@ -4,24 +4,28 @@ import type { Crossing, Station } from "@/lib/types";
 import { formatMinute } from "@/lib/domain/time";
 import { ArrowLeftRight, ChevronsRight, ChevronsLeft } from "lucide-react";
 import Link from "next/link";
+import { useLocale } from "@/lib/i18n/useLocale";
+import type { StringKey } from "@/lib/i18n/strings";
 import { cn } from "@/components/ui/cn";
 
-const KIND = {
-  crosses: { icon: ArrowLeftRight, label: "passes the other way", tone: "text-info" },
-  overtakes: { icon: ChevronsRight, label: "you overtake", tone: "text-ok" },
-  overtakenBy: { icon: ChevronsLeft, label: "overtakes you", tone: "text-warn" },
-} as const;
+const KIND: Record<Crossing["kind"], { icon: typeof ArrowLeftRight; labelKey: StringKey; tone: string }> = {
+  crosses: { icon: ArrowLeftRight, labelKey: "crossings.crosses", tone: "text-info" },
+  overtakes: { icon: ChevronsRight, labelKey: "crossings.overtakes", tone: "text-ok" },
+  overtakenBy: { icon: ChevronsLeft, labelKey: "crossings.overtakenBy", tone: "text-warn" },
+};
 
 /** Trains you meet along the way. Pure delight, and genuinely useful on a long run. */
 export function CrossingsList({ crossings, stations }: { crossings: Crossing[]; stations: Record<string, Station> }) {
+  const { t, locale } = useLocale();
   if (crossings.length === 0) {
-    return <p className="text-[0.8125rem] text-faint">No other trains on this line meet you today.</p>;
+    return <p className="text-[0.8125rem] text-faint">{t("crossings.none")}</p>;
   }
 
   return (
     <ol className="space-y-1.5">
       {crossings.map((crossing, index) => {
-        const { icon: Icon, label, tone } = KIND[crossing.kind];
+        const { icon: Icon, labelKey, tone } = KIND[crossing.kind];
+        const stationName = stations[crossing.stationCode]?.name ?? crossing.stationCode;
         return (
           <li key={`${crossing.trainNumber}-${index}`} className="flex items-center gap-2.5">
             <span className="tnum w-11 shrink-0 text-right text-[0.75rem] text-dim">{formatMinute(crossing.atMinute)}</span>
@@ -31,7 +35,7 @@ export function CrossingsList({ crossings, stations }: { crossings: Crossing[]; 
                 <span className="tnum text-brand">{crossing.trainNumber}</span> {crossing.trainName}
               </Link>
               <span className="block text-[0.6875rem] text-faint">
-                {label} near {stations[crossing.stationCode]?.name ?? crossing.stationCode}
+                {locale === "hi" ? `${stationName} के पास ${t(labelKey)}` : `${t(labelKey)} near ${stationName}`}
               </span>
             </span>
           </li>
