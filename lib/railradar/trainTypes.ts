@@ -18,6 +18,30 @@ export const TRAIN_TYPES = [
   "Other",
 ] as const;
 
+/**
+ * These category names arrive as English strings from the live-map API
+ * (`data.types`), so they can't route through the flat STRINGS dictionary
+ * the way static labels do. The set is fixed and small, so a lookup table
+ * translates the ones the API can actually send; anything unrecognised
+ * (a future category) passes through untranslated rather than disappearing.
+ */
+const TRAIN_TYPE_HI: Record<string, string> = {
+  Rajdhani: "राजधानी",
+  Shatabdi: "शताब्दी",
+  "Vande Bharat": "वंदे भारत",
+  Duronto: "दूरंतो",
+  Superfast: "सुपरफास्ट",
+  Express: "एक्सप्रेस",
+  Passenger: "पैसेंजर",
+  Special: "स्पेशल",
+  Other: "अन्य",
+};
+
+export function localizeTrainType(label: string, locale: "en" | "hi"): string {
+  if (locale !== "hi") return label;
+  return TRAIN_TYPE_HI[label] ?? label;
+}
+
 /** CSS custom-property names (without `var()`) keyed by `TRAIN_TYPES` index. */
 export const TYPE_COLOUR_VARS = [
   "--danger",
