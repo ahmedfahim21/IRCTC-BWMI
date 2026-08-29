@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, MapPin, X } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 export interface StationValue {
@@ -49,6 +50,7 @@ export function StationCombobox({
   icon: React.ReactNode;
   compact?: boolean;
 }) {
+  const { t, locale } = useLocale();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -179,7 +181,7 @@ export function StationCombobox({
         {value && (
           <button
             type="button"
-            aria-label={`Clear ${label}`}
+            aria-label={`${t("search.clear")} ${label}`}
             onClick={() => {
               onChange(null);
               setQuery("");
@@ -211,11 +213,17 @@ export function StationCombobox({
             style={{ top: menuBox.top, left: menuBox.left, width: menuBox.width }}
             className="fixed z-[60] overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-lg)]"
           >
-            {showRecents && <p className="eyebrow px-3 pb-1 pt-2.5">Recent</p>}
+            {showRecents && <p className="eyebrow px-3 pb-1 pt-2.5">{t("search.recent")}</p>}
             <ul className="max-h-72 overflow-y-auto py-1">
               {options.length === 0 && (
                 <li className="px-3 py-6 text-center text-[0.8125rem] text-faint">
-                  {isFetching ? "Searching…" : trimmed ? `No station matching “${trimmed}”` : "Type a city or station code"}
+                  {isFetching
+                    ? t("search.searching")
+                    : trimmed
+                      ? locale === "hi"
+                        ? `“${trimmed}” से मिलता कोई स्टेशन नहीं`
+                        : `No station matching “${trimmed}”`
+                      : t("search.typeStation")}
                 </li>
               )}
               {options.map((option, index) => {
@@ -239,7 +247,7 @@ export function StationCombobox({
                         <span className="block truncate text-[0.6875rem] text-faint">{option.sublabel}</span>
                       </span>
                       {isCity && (
-                        <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-[0.625rem] text-brand">All stations</span>
+                        <span className="shrink-0 rounded bg-brand-soft px-1.5 py-0.5 text-[0.625rem] text-brand">{t("search.allStations")}</span>
                       )}
                     </button>
                   </li>

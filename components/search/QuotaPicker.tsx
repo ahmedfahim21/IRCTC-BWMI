@@ -3,7 +3,8 @@
 import * as Popover from "@radix-ui/react-popover";
 import { Check, ChevronDown } from "lucide-react";
 import type { QuotaCode } from "@/lib/types";
-import { GLOSSARY } from "@/lib/glossary";
+import { lookup } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 const QUOTAS: QuotaCode[] = ["GN", "TQ", "PT", "LD", "SS"];
@@ -18,6 +19,7 @@ export function QuotaPicker({
   onChange: (q: QuotaCode) => void;
   disabled?: boolean;
 }) {
+  const { locale, t } = useLocale();
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
@@ -27,8 +29,8 @@ export function QuotaPicker({
           aria-disabled={disabled}
           className="field flex items-center gap-1.5 rounded-lg px-3 py-2 text-[0.8125rem] text-dim hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
         >
-          <span className="text-faint">Quota</span>
-          <span className="text-text">{GLOSSARY[value].short}</span>
+          <span className="text-faint">{t("search.quota")}</span>
+          <span className="text-text">{lookup(value, locale)?.short}</span>
           <ChevronDown className="size-3 text-faint" aria-hidden />
         </button>
       </Popover.Trigger>
@@ -40,7 +42,7 @@ export function QuotaPicker({
           className="z-50 w-72 rounded-xl border border-border bg-surface p-1.5 shadow-[var(--shadow-lg)]"
         >
           {QUOTAS.map((quota) => {
-            const entry = GLOSSARY[quota];
+            const entry = lookup(quota, locale)!;
             return (
               <button
                 key={quota}

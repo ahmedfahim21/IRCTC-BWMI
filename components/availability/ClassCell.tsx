@@ -1,8 +1,9 @@
 "use client";
 
 import type { Availability } from "@/lib/types";
-import { explainStatus, GLOSSARY } from "@/lib/glossary";
+import { explainStatus, lookup } from "@/lib/glossary";
 import { ProbabilityBar } from "@/components/ui/StatusChip";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 import { Armchair } from "lucide-react";
 
@@ -43,11 +44,13 @@ export function ClassCell({
   compact?: boolean;
   className?: string;
 }) {
+  const { locale } = useLocale();
   const tone = TONE[availability.state];
   const bookable =
     availability.state === "available" || availability.state === "rac" || availability.state === "waitlist";
-  const entry = GLOSSARY[availability.classCode];
-  const reading = explainStatus(availability.label);
+  const entry = lookup(availability.classCode, locale);
+  const reading = explainStatus(availability.label, locale);
+  const bookThisSuffix = bookable && onSelect ? (locale === "hi" ? ". इसे बुक करें" : ". Book this") : "";
 
   return (
     <button
@@ -55,7 +58,7 @@ export function ClassCell({
       onClick={onSelect}
       disabled={!bookable || !onSelect}
       title={entry ? `${entry.short} — ${entry.full}` : undefined}
-      aria-label={`${entry?.short ?? availability.classCode}, ${availability.label}, ${reading}, ${formatRupees(availability.fare.total)}${bookable && onSelect ? ". Book this" : ""}`}
+      aria-label={`${entry?.short ?? availability.classCode}, ${availability.label}, ${reading}, ${formatRupees(availability.fare.total)}${bookThisSuffix}`}
       className={cn(
         "flex shrink-0 flex-col text-left transition-[border-color,box-shadow] duration-150",
         compact ? "w-[6.25rem] gap-1 rounded-lg border px-2 py-1.5" : "w-[8.5rem] gap-1.5 rounded-xl border p-2.5",

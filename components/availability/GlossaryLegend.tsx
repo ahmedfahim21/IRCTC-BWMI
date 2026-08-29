@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { BookOpen, ChevronDown } from "lucide-react";
 import { Term } from "@/components/ui/Term";
-import { GLOSSARY } from "@/lib/glossary";
+import { GLOSSARY, lookup } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -13,6 +14,7 @@ import { cn } from "@/components/ui/cn";
  */
 export function GlossaryLegend({ classCodes, statusCodes }: { classCodes: string[]; statusCodes: string[] }) {
   const [open, setOpen] = useState(false);
+  const { locale } = useLocale();
   const codes = [...classCodes, ...statusCodes].filter((code) => GLOSSARY[code]);
   if (codes.length === 0) return null;
 
@@ -25,7 +27,7 @@ export function GlossaryLegend({ classCodes, statusCodes }: { classCodes: string
         className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left transition-colors hover:bg-surface-2"
       >
         <BookOpen className="size-3.5 shrink-0 text-faint" aria-hidden />
-        <span className="text-[0.75rem] text-dim">What do these codes mean?</span>
+        <span className="text-[0.75rem] text-dim">{locale === "hi" ? "इन कोडों का मतलब क्या है?" : "What do these codes mean?"}</span>
         <ChevronDown className={cn("ml-auto size-3.5 text-faint transition-transform", open && "rotate-180")} aria-hidden />
       </button>
 
@@ -36,7 +38,7 @@ export function GlossaryLegend({ classCodes, statusCodes }: { classCodes: string
               <dt className="w-12 shrink-0">
                 <Term code={code} className="font-mono text-[0.75rem] text-brand" />
               </dt>
-              <dd className="min-w-0 text-[0.75rem] leading-relaxed text-dim">{GLOSSARY[code].short}</dd>
+              <dd className="min-w-0 text-[0.75rem] leading-relaxed text-dim">{lookup(code, locale)?.short ?? GLOSSARY[code].short}</dd>
             </div>
           ))}
         </dl>

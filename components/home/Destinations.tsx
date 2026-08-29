@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, LocateFixed, Loader2 } from "lucide-react";
-import { DESTINATIONS } from "@/lib/destinations";
+import { DESTINATIONS, localizedDestination } from "@/lib/destinations";
 import { addDays, todayIso } from "@/lib/domain/time";
 import { useOrigin } from "@/lib/location/useOrigin";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -18,6 +19,7 @@ import { cn } from "@/components/ui/cn";
  * nothing, the cards say so and offer to find you rather than guessing.
  */
 export function Destinations({ className }: { className?: string }) {
+  const { t, locale } = useLocale();
   const { station: origin, source, locating, error, useMyLocation } = useOrigin();
   const date = addDays(todayIso(), 7);
 
@@ -26,18 +28,20 @@ export function Destinations({ className }: { className?: string }) {
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="destinations-heading" className="font-display text-[1.375rem] text-text sm:text-[1.625rem]">
-            Worth the journey
+            {t("home.destHeading")}
           </h2>
-          <p className="mt-1 text-[0.875rem] text-dim">
-            Six places, and the station you&rsquo;d actually get off at.
-          </p>
+          <p className="mt-1 text-[0.875rem] text-dim">{t("home.destSub")}</p>
         </div>
         {origin ? (
           <p className="flex flex-wrap items-center gap-x-1.5 text-[0.75rem] text-faint">
-            From <span className="text-dim">{origin.name}</span>
-            {source === "coords" && <span className="text-ok">· nearest to you</span>}
-            {source === "network" && <span>· going by your connection</span>}
-            {source === "recent" && <span>· your last search</span>}
+            {locale === "hi" ? "यहाँ से" : "From"} <span className="text-dim">{origin.name}</span>
+            {source === "coords" && (
+              <span className="text-ok">· {locale === "hi" ? "आपके सबसे पास" : "nearest to you"}</span>
+            )}
+            {source === "network" && (
+              <span>· {locale === "hi" ? "आपके कनेक्शन के आधार पर" : "going by your connection"}</span>
+            )}
+            {source === "recent" && <span>· {locale === "hi" ? "आपकी पिछली खोज" : "your last search"}</span>}
             <button
               type="button"
               onClick={useMyLocation}
@@ -45,7 +49,7 @@ export function Destinations({ className }: { className?: string }) {
               className="btn ml-1 gap-1 border border-border bg-surface px-2 py-0.5 text-[0.6875rem] text-dim hover:border-border-strong hover:text-text disabled:opacity-60"
             >
               {locating ? <Loader2 className="size-3 animate-spin" aria-hidden /> : <LocateFixed className="size-3" aria-hidden />}
-              {source === "coords" ? "Update" : "Use my location"}
+              {source === "coords" ? t("home.updateLocation") : t("home.useMyLocation")}
             </button>
           </p>
         ) : (
@@ -56,7 +60,7 @@ export function Destinations({ className }: { className?: string }) {
             className="btn btn-secondary gap-1.5 px-3 py-1.5 text-[0.75rem] text-dim hover:text-text"
           >
             {locating ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <LocateFixed className="size-3.5" aria-hidden />}
-            Find my nearest station
+            {t("home.findNearest")}
           </button>
         )}
       </div>
@@ -68,7 +72,9 @@ export function Destinations({ className }: { className?: string }) {
       )}
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {DESTINATIONS.map((destination, index) => (
+        {DESTINATIONS.map((destination, index) => {
+          const local = localizedDestination(destination, locale);
+          return (
           <li key={destination.slug}>
             <Link
               href={
@@ -107,17 +113,19 @@ export function Destinations({ className }: { className?: string }) {
                       "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.62) 45%, rgba(0,0,0,0) 100%)",
                   }}
                 >
-                  <p className="text-[1.0625rem] leading-tight tracking-[-0.01em] text-white">{destination.name}</p>
-                  <p className="mt-0.5 text-[0.75rem] text-white">{destination.region}</p>
+                  <p className="text-[1.0625rem] leading-tight tracking-[-0.01em] text-white">{local.name}</p>
+                  <p className="mt-0.5 text-[0.75rem] text-white">{local.region}</p>
                 </div>
               </div>
 
               {/* A caption, set like one: label, station, then the last leg. */}
               <div className="px-4 pb-3.5 pt-3">
-                <p className="text-[0.625rem] uppercase tracking-[0.09em] text-faint">Alight at</p>
+                <p className="text-[0.625rem] uppercase tracking-[0.09em] text-faint">
+                  {locale === "hi" ? "यहाँ उतरें" : "Alight at"}
+                </p>
                 <div className="mt-1 flex items-baseline justify-between gap-3">
                   <p className="min-w-0 truncate text-[0.875rem] text-text">
-                    {destination.railheadName}{" "}
+                    {local.railheadName}{" "}
                     <span className="tnum font-mono text-[0.6875rem] text-faint">{destination.railhead}</span>
                   </p>
                   <ArrowUpRight
@@ -126,12 +134,17 @@ export function Destinations({ className }: { className?: string }) {
                   />
                 </div>
                 <p className="mt-1 border-t border-border pt-1.5 text-[0.75rem] leading-relaxed text-faint">
-                  {destination.lastLeg ? `Then ${destination.lastLeg}.` : "The station is the destination."}
+                  {local.lastLeg
+                    ? locale === "hi"
+                      ? `फिर ${local.lastLeg}।`
+                      : `Then ${local.lastLeg}.`
+                    : t("home.destStationIsIt")}
                 </p>
               </div>
             </Link>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );

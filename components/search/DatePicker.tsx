@@ -4,23 +4,9 @@ import { useMemo, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/components/ui/cn";
-import { addDays, todayIso } from "@/lib/domain/time";
+import { addDays, monthFullNames, todayIso, weekdayAbbrevsMondayFirst } from "@/lib/domain/time";
+import { useLocale, type Locale } from "@/lib/i18n/useLocale";
 
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] as const;
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
 const MAX_ADVANCE_DAYS = 120;
 
 function parts(iso: string): { y: number; m: number; d: number } {
@@ -41,13 +27,14 @@ function mondayIndex(y: number, m: number, d: number): number {
   return (dow + 6) % 7;
 }
 
-function formatTrigger(iso: string): string {
+function formatTrigger(iso: string, locale: Locale): string {
   const { y, m, d } = parts(iso);
-  const weekday = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", {
+  const intlLocale = locale === "hi" ? "hi-IN" : "en-GB";
+  const weekday = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(intlLocale, {
     weekday: "short",
     timeZone: "UTC",
   });
-  const month = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-GB", {
+  const month = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(intlLocale, {
     month: "short",
     timeZone: "UTC",
   });
@@ -76,6 +63,9 @@ export function DatePicker({
   disabled?: boolean;
   onPick: (iso: string) => void;
 }) {
+  const { t, locale } = useLocale();
+  const WEEKDAYS = useMemo(() => weekdayAbbrevsMondayFirst(locale), [locale]);
+  const MONTHS = useMemo(() => monthFullNames(locale), [locale]);
   const min = todayIso();
   const max = addDays(min, MAX_ADVANCE_DAYS);
   const selected = parts(date);
@@ -136,11 +126,11 @@ export function DatePicker({
         <button
           type="button"
           disabled={disabled}
-          aria-label="Journey date"
+          aria-label={t("date.journeyDateAria")}
           className="field inline-flex h-11 min-w-[10.5rem] items-center gap-2 rounded-xl px-3 text-left text-sm text-text disabled:opacity-50"
         >
           <Calendar className="size-4 shrink-0 text-dim" aria-hidden />
-          <span className="truncate">{formatTrigger(date)}</span>
+          <span className="truncate">{formatTrigger(date, locale)}</span>
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -153,7 +143,7 @@ export function DatePicker({
         <div className="mb-2 flex items-center gap-1">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={t("date.previousMonth")}
             disabled={!canPrev}
             onClick={() => goMonth(-1)}
             className="grid size-8 place-items-center rounded-lg text-text hover:bg-surface-2 disabled:opacity-30"
@@ -161,12 +151,12 @@ export function DatePicker({
             <ChevronLeft className="size-4" />
           </button>
           <label className="sr-only" htmlFor="cal-month">
-            Month
+            {t("date.month")}
           </label>
           <select
             id="cal-month"
             value={viewM}
-            aria-label="Month"
+            aria-label={t("date.month")}
             onChange={(e) => {
               const next = clampView(viewY, Number(e.target.value), minP.y, minP.m, maxP.y, maxP.m);
               setViewY(next.y);
@@ -181,12 +171,12 @@ export function DatePicker({
             ))}
           </select>
           <label className="sr-only" htmlFor="cal-year">
-            Year
+            {t("date.year")}
           </label>
           <select
             id="cal-year"
             value={viewY}
-            aria-label="Year"
+            aria-label={t("date.year")}
             onChange={(e) => {
               const next = clampView(Number(e.target.value), viewM, minP.y, minP.m, maxP.y, maxP.m);
               setViewY(next.y);
@@ -202,7 +192,7 @@ export function DatePicker({
           </select>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={t("date.nextMonth")}
             disabled={!canNext}
             onClick={() => goMonth(1)}
             className="grid size-8 place-items-center rounded-lg text-text hover:bg-surface-2 disabled:opacity-30"

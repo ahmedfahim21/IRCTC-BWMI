@@ -28,7 +28,7 @@ import { Flourish } from "@/components/ui/Ornament";
  * lazily and only ever cross-fade over it.
  */
 export function Hero() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   // A destination card links here with ?to= when it had no origin to search from.
   const destination = useSearchParams().get("to");
 
@@ -126,7 +126,7 @@ export function Hero() {
             <Flourish className="mb-3 text-white/70" />
             <p className="flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.14em] text-neutral-300">
               <span className="h-px w-8 bg-white/30" aria-hidden />
-              Indian Railways
+              {t("home.eyebrow")}
               <span className="h-px w-8 bg-white/30" aria-hidden />
             </p>
             <h1 className="font-display mt-2.5 max-w-2xl text-balance text-[2rem] leading-[1.08] text-white sm:text-[2.75rem]">
@@ -146,7 +146,11 @@ export function Hero() {
                     setPaused(true);
                   }}
                   aria-current={index === frame ? "true" : undefined}
-                  aria-label={`Show photograph ${index + 1} of ${HERO_FRAMES.length}`}
+                  aria-label={
+                    locale === "hi"
+                      ? `तस्वीर ${index + 1} में से ${HERO_FRAMES.length} दिखाएँ`
+                      : `Show photograph ${index + 1} of ${HERO_FRAMES.length}`
+                  }
                   className={cn(
                     "h-[3px] rounded-full transition-all duration-500",
                     index === frame

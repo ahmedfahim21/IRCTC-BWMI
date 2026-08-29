@@ -35,7 +35,7 @@ export function SearchForm({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [from, setFrom] = useState<StationValue | null>(defaults?.from ?? null);
   const [to, setTo] = useState<StationValue | null>(defaults?.to ?? null);
   const [date, setDate] = useState(defaults?.date ?? todayIso());
@@ -153,7 +153,7 @@ export function SearchForm({
             label={t("search.from")}
             value={from}
             onChange={setFrom}
-            placeholder="Delhi, NDLS…"
+            placeholder={locale === "hi" ? "दिल्ली, NDLS…" : "Delhi, NDLS…"}
             icon={<CircleDot className="size-4" />}
           />
         </div>
@@ -164,7 +164,7 @@ export function SearchForm({
             label={t("search.to")}
             value={to}
             onChange={setTo}
-            placeholder="Mumbai, BCT…"
+            placeholder={locale === "hi" ? "मुंबई, BCT…" : "Mumbai, BCT…"}
             icon={<MapPin className="size-4" />}
           />
         </div>
@@ -223,7 +223,7 @@ export function SearchForm({
         </button>
         {!compact && (
           <p className="mt-2 min-h-[1.125rem] text-center text-[0.75rem] text-faint">
-            {from && to && from.token === to.token ? "Pick two different stations" : t("home.noLogin")}
+            {from && to && from.token === to.token ? t("search.pickTwoDifferent") : t("home.noLogin")}
           </p>
         )}
       </form>
@@ -237,7 +237,7 @@ export function SearchForm({
           label={t("search.from")}
           value={from}
           onChange={setFrom}
-          placeholder="Delhi, NDLS…"
+          placeholder={locale === "hi" ? "दिल्ली, NDLS…" : "Delhi, NDLS…"}
           icon={<CircleDot className="size-4" />}
         />
         <button
@@ -253,7 +253,7 @@ export function SearchForm({
           label={t("search.to")}
           value={to}
           onChange={setTo}
-          placeholder="Mumbai, BCT…"
+          placeholder={locale === "hi" ? "मुंबई, BCT…" : "Mumbai, BCT…"}
           icon={<MapPin className="size-4" />}
         />
       </div>
@@ -283,7 +283,7 @@ export function SearchForm({
 
       {!compact && (
         <p className="mt-2.5 min-h-[1.125rem] text-center text-[0.75rem] text-faint">
-          {from && to && from.token === to.token ? "Pick two different stations" : t("home.noLogin")}
+          {from && to && from.token === to.token ? t("search.pickTwoDifferent") : t("home.noLogin")}
         </p>
       )}
     </form>

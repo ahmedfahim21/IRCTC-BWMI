@@ -34,11 +34,9 @@ export default function HomePage() {
       <section className="mx-auto mt-12 max-w-6xl px-4 sm:mt-16 sm:px-6 lg:px-8" aria-labelledby="network-heading">
         <div className="mb-5">
           <h2 id="network-heading" className="font-display text-[1.375rem] text-text sm:text-[1.625rem]">
-            The whole network, right now
+            {t("home.networkHeading")}
           </h2>
-          <p className="mt-1 max-w-lg text-[0.875rem] leading-relaxed text-dim">
-            Every train running across India this minute. Tap one to follow it stop by stop.
-          </p>
+          <p className="mt-1 max-w-lg text-[0.875rem] leading-relaxed text-dim">{t("home.networkSub")}</p>
         </div>
 
         {/*
@@ -47,7 +45,7 @@ export default function HomePage() {
           * 160px letterbox slit.
           */}
         <MapCanvasCard
-          label="Live map"
+          label={t("nav.map")}
           className="card-raised flex h-[26rem] flex-col sm:h-[32rem] lg:h-[38rem]"
           expandLabel={t("home.mapExpand")}
           collapseLabel={t("home.mapCollapse")}

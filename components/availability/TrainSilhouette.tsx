@@ -1,4 +1,5 @@
 import type { TrainType } from "@/lib/types";
+import { localizeTrainType } from "@/lib/railradar/trainTypes";
 
 export const TRAIN_TYPE_LABEL: Record<TrainType, string> = {
   rajdhani: "Rajdhani",
@@ -9,6 +10,10 @@ export const TRAIN_TYPE_LABEL: Record<TrainType, string> = {
   express: "Express",
   passenger: "Passenger",
 };
+
+export function trainTypeLabel(type: TrainType, locale: "en" | "hi"): string {
+  return localizeTrainType(TRAIN_TYPE_LABEL[type], locale);
+}
 
 export const TRAIN_TYPE_TONE: Record<TrainType, { color: string; chip: string }> = {
   rajdhani: { color: "var(--danger)", chip: "bg-danger-soft text-danger" },

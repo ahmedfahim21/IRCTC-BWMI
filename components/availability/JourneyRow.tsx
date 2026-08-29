@@ -6,14 +6,13 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, Utensils } from "lucide-react";
 import type { JourneyDto } from "@/lib/api/dto";
 import type { Availability, QuotaCode, Station } from "@/lib/types";
-import { formatDelay, formatDuration, formatMinute } from "@/lib/domain/time";
+import { DAY_LETTERS, formatDelay, formatDuration, formatMinute } from "@/lib/domain/time";
 import { ClassCell, formatRupees } from "./ClassCell";
-import { TrainSilhouette, TRAIN_TYPE_LABEL, TRAIN_TYPE_TONE } from "./TrainSilhouette";
+import { TrainSilhouette, TRAIN_TYPE_TONE, trainTypeLabel } from "./TrainSilhouette";
 import { api } from "@/lib/apiClient";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 import { RouteGlyph } from "@/components/rail/RouteGlyph";
-
-const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const FARE_TONE = {
   available: "text-ok",
@@ -53,6 +52,7 @@ export function JourneyRow({
   flush?: boolean;
 }) {
   const router = useRouter();
+  const { t, locale } = useLocale();
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -105,7 +105,7 @@ export function JourneyRow({
           <ChevronRight className="size-3 shrink-0 text-faint transition-transform group-hover:translate-x-0.5" aria-hidden />
         </Link>
         {!journey.runsToday && (
-          <span className="ml-auto shrink-0 text-[0.6875rem] text-warn">Doesn&rsquo;t run this date</span>
+          <span className="ml-auto shrink-0 text-[0.6875rem] text-warn">{t("book.doesntRunDate")}</span>
         )}
       </div>
 
@@ -148,11 +148,11 @@ export function JourneyRow({
         {fare && (
           <div className="w-[6.25rem] shrink-0 border-l border-border pl-3 text-right">
             <p className={cn("inline-block rounded-md px-1.5 py-0.5 text-[0.625rem] leading-none", TRAIN_TYPE_TONE[train.type].chip)}>
-              {TRAIN_TYPE_LABEL[train.type]}
+              {trainTypeLabel(train.type, locale)}
             </p>
             <p className="tnum mt-1.5 text-[1.25rem] leading-none text-text">{formatRupees(fare.fare.total)}</p>
             <p className="mt-1 truncate text-[0.6875rem] text-dim">
-              from {fare.classCode}
+              {locale === "hi" ? fare.classCode : `from ${fare.classCode}`}
               <span className="text-faint"> · </span>
               <span className={FARE_TONE[fare.state]}>{fare.label}</span>
             </p>
@@ -172,17 +172,23 @@ export function JourneyRow({
           className="flex w-full items-center gap-1 px-4 py-1.5 pl-5 text-[0.6875rem] text-faint hover:text-dim"
         >
           <ChevronDown className={cn("size-3 transition-transform", open && "rotate-180")} aria-hidden />
-          {open ? "Hide extras" : "Days, delay, stations"}
+          {open ? t("common.hideExtras") : t("book.daysDelayStations")}
         </button>
         {open && (
           <div className="space-y-1.5 px-4 pb-3 pl-5 text-[0.6875rem] text-dim">
             <p>
               {name(journey.fromCode)} → {name(journey.toCode)}
               <span className="mx-1.5 text-faint">·</span>
-              {journey.distanceKm} km
+              {journey.distanceKm} {t("common.km")}
             </p>
-            <p aria-label={`Runs on ${train.runsOn.length} days a week`}>
-              {DAY_LETTERS.map((letter, index) => (
+            <p
+              aria-label={
+                locale === "hi"
+                  ? `सप्ताह में ${train.runsOn.length} दिन चलती है`
+                  : `Runs on ${train.runsOn.length} days a week`
+              }
+            >
+              {DAY_LETTERS[locale].map((letter, index) => (
                 <span
                   key={index}
                   className={cn("mr-0.5 inline-block w-2.5 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/40")}
@@ -191,13 +197,15 @@ export function JourneyRow({
                 </span>
               ))}
               <span className={cn("ml-2", train.avgDelayMins > 30 ? "text-warn" : "text-faint")}>
-                usually {formatDelay(train.avgDelayMins).toLowerCase()}
+                {locale === "hi"
+                  ? `सामान्यतः ${formatDelay(train.avgDelayMins, locale)}`
+                  : `usually ${formatDelay(train.avgDelayMins, locale).toLowerCase()}`}
               </span>
             </p>
             {train.hasPantry && (
               <p className="flex items-center gap-1 text-faint">
                 <Utensils className="size-3" aria-hidden />
-                Pantry car
+                {t("train.pantryCar")}
               </p>
             )}
           </div>
