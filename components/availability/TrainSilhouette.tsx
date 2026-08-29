@@ -47,7 +47,7 @@ export function TrainSilhouette({ type }: { type: TrainType }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -left-6 -top-3 w-[7.5rem] -rotate-[22deg] text-current opacity-[0.28] [@media(prefers-color-scheme:dark)]:opacity-[0.45] [[data-theme=dark]_&]:opacity-[0.45] [[data-theme=light]_&]:opacity-[0.28]"
+      className="pointer-events-none absolute -left-6 -top-3 w-[7.5rem] -rotate-[22deg] text-current opacity-[0.28]"
       style={{ color: TRAIN_TYPE_TONE[type].color }}
     >
       {renderBody(kind)}

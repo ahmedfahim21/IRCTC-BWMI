@@ -26,26 +26,20 @@ test.beforeEach(async ({ page }) => {
   await stubMapTiles(page);
 });
 
-for (const theme of ["light", "dark"] as const) {
-  for (const page_ of PAGES) {
-    test(`${page_.name} meets WCAG AA contrast in ${theme}`, async ({ page }) => {
-      await page.addInitScript(
-        ([t]) => localStorage.setItem("irctc.theme", t as string),
-        [theme]
-      );
-      await page.goto(resolvePath(page_.path));
-      await page.waitForLoadState("domcontentloaded");
-      await page.waitForTimeout(400);
+for (const page_ of PAGES) {
+  test(`${page_.name} meets WCAG AA contrast`, async ({ page }) => {
+    await page.goto(resolvePath(page_.path));
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(400);
 
-      await page.evaluate(AUDIT);
-      const result = await page.evaluate(() => (window as unknown as { __audit(): unknown }).__audit());
-      const report = result as { checked: number; failCount: number; fails: unknown[] };
+    await page.evaluate(AUDIT);
+    const result = await page.evaluate(() => (window as unknown as { __audit(): unknown }).__audit());
+    const report = result as { checked: number; failCount: number; fails: unknown[] };
 
-      expect(report.checked, "audit found text to check").toBeGreaterThan(10);
-      expect(report.fails, `${page_.name} / ${theme}`).toEqual([]);
-      expect(report.failCount).toBe(0);
-    });
-  }
+    expect(report.checked, "audit found text to check").toBeGreaterThan(10);
+    expect(report.fails, page_.name).toEqual([]);
+    expect(report.failCount).toBe(0);
+  });
 }
 
 for (const width of [360, 414, 768, 1280]) {

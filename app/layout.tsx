@@ -31,22 +31,19 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  themeColor: "#fafafa",
   width: "device-width",
   initialScale: 1,
 };
 
-/** Applied before first paint so the theme never flashes. */
-const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('irctc.theme');if(t&&t!=='system')document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('irctc.locale');if(l)document.documentElement.lang=l;}catch(e){}})();`;
+/** Applied before first paint so the language never flashes. */
+const LOCALE_SCRIPT = `(function(){try{var l=localStorage.getItem('irctc.locale');if(l)document.documentElement.lang=l;}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={notoSans.variable} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: LOCALE_SCRIPT }} />
       </head>
       <body className="min-h-dvh">
         <a
