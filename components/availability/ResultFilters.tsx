@@ -1,7 +1,9 @@
 "use client";
 
 import type { ClassCode } from "@/lib/types";
-import { GLOSSARY } from "@/lib/glossary";
+import { lookup } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
+import type { StringKey } from "@/lib/i18n/strings";
 import { cn } from "@/components/ui/cn";
 import { Check, Moon, Sun, Sunrise, Sunset, TicketCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -17,25 +19,25 @@ export interface Filters {
 
 export const DEPARTURE_WINDOWS: Array<{
   id: string;
-  label: string;
-  short: string;
+  labelKey: StringKey;
+  shortKey: StringKey;
   from: number;
   to: number;
   icon: LucideIcon;
   iconClass: string;
   activeClass: string;
 }> = [
-  { id: "early", label: "Before 06:00", short: "Before 6", from: 0, to: 360, icon: Sunrise, iconClass: "text-accent", activeClass: "border-accent bg-accent-soft text-accent" },
-  { id: "morning", label: "06:00 – 12:00", short: "6–12", from: 360, to: 720, icon: Sun, iconClass: "text-warn", activeClass: "border-warn bg-warn-soft text-warn" },
-  { id: "afternoon", label: "12:00 – 18:00", short: "12–6", from: 720, to: 1080, icon: Sunset, iconClass: "text-brand", activeClass: "border-brand bg-brand-soft text-brand" },
-  { id: "night", label: "After 18:00", short: "After 6", from: 1080, to: 1440, icon: Moon, iconClass: "text-info", activeClass: "border-info bg-info-soft text-info" },
+  { id: "early", labelKey: "filters.windowBefore6Full", shortKey: "filters.windowBefore6", from: 0, to: 360, icon: Sunrise, iconClass: "text-accent", activeClass: "border-accent bg-accent-soft text-accent" },
+  { id: "morning", labelKey: "filters.window6to12Full", shortKey: "filters.window6to12", from: 360, to: 720, icon: Sun, iconClass: "text-warn", activeClass: "border-warn bg-warn-soft text-warn" },
+  { id: "afternoon", labelKey: "filters.window12to6Full", shortKey: "filters.window12to6", from: 720, to: 1080, icon: Sunset, iconClass: "text-brand", activeClass: "border-brand bg-brand-soft text-brand" },
+  { id: "night", labelKey: "filters.windowAfter6Full", shortKey: "filters.windowAfter6", from: 1080, to: 1440, icon: Moon, iconClass: "text-info", activeClass: "border-info bg-info-soft text-info" },
 ];
 
-const SORTS: Array<{ key: SortKey; label: string }> = [
-  { key: "departure", label: "Leaves" },
-  { key: "duration", label: "Fastest" },
-  { key: "arrival", label: "Arrives" },
-  { key: "fare", label: "Cheapest" },
+const SORTS: Array<{ key: SortKey; labelKey: StringKey }> = [
+  { key: "departure", labelKey: "filters.sortDeparture" },
+  { key: "duration", labelKey: "filters.sortDuration" },
+  { key: "arrival", labelKey: "filters.sortArrival" },
+  { key: "fare", labelKey: "filters.sortFare" },
 ];
 
 export function ResultFilters({
@@ -51,6 +53,7 @@ export function ResultFilters({
   matchCount: number;
   totalCount: number;
 }) {
+  const { t, locale } = useLocale();
   const toggle = <T,>(list: T[], value: T): T[] =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
@@ -63,14 +66,14 @@ export function ResultFilters({
         <p className="text-[0.9375rem] text-text">
           <span className="tnum">{matchCount}</span>
           <span className="ml-1 text-[0.8125rem] text-faint">
-            {matchCount === 1 ? "train" : "trains"}
-            {anyFilter ? ` of ${totalCount}` : ""}
+            {t(matchCount === 1 ? "results.train" : "results.trains")}
+            {anyFilter ? ` ${locale === "hi" ? "में से" : "of"} ${totalCount}` : ""}
           </span>
         </p>
         <div className="ml-auto flex flex-wrap items-center gap-1">
           {SORTS.map((sort) => (
             <Chip key={sort.key} active={filters.sort === sort.key} onClick={() => onChange({ ...filters, sort: sort.key })}>
-              {sort.label}
+              {t(sort.labelKey)}
             </Chip>
           ))}
         </div>
@@ -84,11 +87,11 @@ export function ResultFilters({
               key={window.id}
               active={filters.departureWindows.includes(window.id)}
               onClick={() => onChange({ ...filters, departureWindows: toggle(filters.departureWindows, window.id) })}
-              ariaLabel={window.label}
+              ariaLabel={t(window.labelKey)}
               activeClass={window.activeClass}
             >
               <Icon className={cn("size-3.5", !filters.departureWindows.includes(window.id) && window.iconClass)} aria-hidden />
-              {window.short}
+              {t(window.shortKey)}
             </Chip>
           );
         })}
@@ -100,7 +103,7 @@ export function ResultFilters({
             key={classCode}
             active={filters.classes.includes(classCode)}
             onClick={() => onChange({ ...filters, classes: toggle(filters.classes, classCode) })}
-            title={GLOSSARY[classCode]?.short}
+            title={lookup(classCode, locale)?.short}
           >
             <span className="font-mono">{classCode}</span>
           </Chip>
@@ -117,7 +120,7 @@ export function ResultFilters({
           )}
         >
           <TicketCheck className="size-3.5" aria-hidden />
-          Seats I can get
+          {t("filters.confirmableOnly")}
           {filters.confirmableOnly && <Check className="size-3" strokeWidth={2.5} aria-hidden />}
         </button>
         {anyFilter && (
@@ -126,7 +129,7 @@ export function ResultFilters({
             onClick={() => onChange({ ...filters, departureWindows: [], classes: [], confirmableOnly: false })}
             className="text-[0.75rem] text-faint underline decoration-dotted underline-offset-2 hover:text-dim"
           >
-            Clear
+            {t("search.clear")}
           </button>
         )}
       </div>

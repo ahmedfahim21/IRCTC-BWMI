@@ -172,7 +172,7 @@ the entire application, and it would break the one requirement that matters most
 give the same visual language for **3.6 KB gzipped**. Regenerate with
 `node scripts/extract-ux4g-tokens.mjs`.
 
-On top of that: dark-first, because half of train travel happens at night. Typography carries
+On top of that: one theme, light. Typography carries
 hierarchy — nothing above weight 450. Tabular numerals everywhere. The rail spine is one motif at
 three densities: full height on the train page, a ribbon in results, compact in the trip card.
 Status colour is never the only signal.

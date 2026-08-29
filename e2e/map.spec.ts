@@ -45,10 +45,17 @@ test("search map pins and callouts are interactive", async ({ page }) => {
 
   const trainCanvas = page.getByRole("img", { name: "Running trains on the map" });
   await expect(trainCanvas).toBeVisible();
+  /*
+   * Train positions are modelled from the wall clock, so no fixed pixel is
+   * guaranteed to have a train under it. The layer publishes where it drew
+   * the first train; click exactly there.
+   */
+  await expect(trainCanvas).toHaveAttribute("data-train-x", /\d+/, { timeout: 10_000 });
   const box = await trainCanvas.boundingBox();
-  if (box) {
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  }
+  expect(box).toBeTruthy();
+  const trainX = Number(await trainCanvas.getAttribute("data-train-x"));
+  const trainY = Number(await trainCanvas.getAttribute("data-train-y"));
+  await page.mouse.click(box!.x + trainX, box!.y + trainY);
   const trainDialog = page.getByRole("dialog").filter({ hasText: /\d{5}/ });
   await expect(trainDialog.first()).toBeVisible({ timeout: 10_000 });
 });

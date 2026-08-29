@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftRight, ArrowUpDown, CircleDot, MapPin, Search } from "lucide-react";
 import { StationCombobox, type StationValue } from "./StationCombobox";
+import { useOrigin } from "@/lib/location/useOrigin";
 import { DateStrip } from "./DateStrip";
 import { DatePicker } from "./DatePicker";
 import { QuotaPicker } from "./QuotaPicker";
@@ -19,9 +20,12 @@ export function SearchForm({
   compact = false,
   variant = "stacked",
   defaults,
+  prefillTo,
 }: {
   compact?: boolean;
   variant?: "stacked" | "bar" | "panel";
+  /** Station code to drop into the destination field when it is still empty. */
+  prefillTo?: string | null;
   defaults?: {
     from: StationValue;
     to: StationValue;
@@ -31,13 +35,14 @@ export function SearchForm({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [from, setFrom] = useState<StationValue | null>(defaults?.from ?? null);
   const [to, setTo] = useState<StationValue | null>(defaults?.to ?? null);
   const [date, setDate] = useState(defaults?.date ?? todayIso());
   const [quota, setQuota] = useState<QuotaCode>(defaults?.quota ?? "GN");
 
   const publish = useAgentPublish();
+  const origin = useOrigin();
 
   useEffect(() => {
     if (defaults) {
@@ -85,6 +90,23 @@ export function SearchForm({
     };
   }, [defaults, searchParams]);
 
+  /*
+   * Fill an empty origin with wherever we think the traveller is. Only ever
+   * into a blank field — it must never overwrite a station someone chose.
+   */
+  const suggested = origin.station;
+  useEffect(() => {
+    if (defaults || !suggested) return;
+    setFrom((current) =>
+      current ?? { token: suggested.code, label: suggested.name, sublabel: `${suggested.code} · ${suggested.city}` }
+    );
+  }, [defaults, suggested]);
+
+  useEffect(() => {
+    if (!prefillTo) return;
+    setTo((current) => current ?? { token: prefillTo, label: prefillTo, sublabel: "" });
+  }, [prefillTo]);
+
   useEffect(() => {
     publish.current({
       search:
@@ -131,7 +153,7 @@ export function SearchForm({
             label={t("search.from")}
             value={from}
             onChange={setFrom}
-            placeholder="Delhi, NDLS…"
+            placeholder={locale === "hi" ? "दिल्ली, NDLS…" : "Delhi, NDLS…"}
             icon={<CircleDot className="size-4" />}
           />
         </div>
@@ -142,7 +164,7 @@ export function SearchForm({
             label={t("search.to")}
             value={to}
             onChange={setTo}
-            placeholder="Mumbai, BCT…"
+            placeholder={locale === "hi" ? "मुंबई, BCT…" : "Mumbai, BCT…"}
             icon={<MapPin className="size-4" />}
           />
         </div>
@@ -167,7 +189,7 @@ export function SearchForm({
           <button
             type="submit"
             disabled={!canSearch}
-            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn btn-primary h-11 shrink-0 px-6 text-[0.9375rem]"
           >
             <Search className="size-4" aria-hidden />
             {t("search.submit")}
@@ -194,14 +216,14 @@ export function SearchForm({
         <button
           type="submit"
           disabled={!canSearch}
-          className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn btn-primary mt-4 h-12 w-full text-[0.9375rem]"
         >
           <Search className="size-4" aria-hidden />
           {t("search.submit")}
         </button>
         {!compact && (
           <p className="mt-2 min-h-[1.125rem] text-center text-[0.75rem] text-faint">
-            {from && to && from.token === to.token ? "Pick two different stations" : t("home.noLogin")}
+            {from && to && from.token === to.token ? t("search.pickTwoDifferent") : t("home.noLogin")}
           </p>
         )}
       </form>
@@ -215,7 +237,7 @@ export function SearchForm({
           label={t("search.from")}
           value={from}
           onChange={setFrom}
-          placeholder="Delhi, NDLS…"
+          placeholder={locale === "hi" ? "दिल्ली, NDLS…" : "Delhi, NDLS…"}
           icon={<CircleDot className="size-4" />}
         />
         <button
@@ -231,7 +253,7 @@ export function SearchForm({
           label={t("search.to")}
           value={to}
           onChange={setTo}
-          placeholder="Mumbai, BCT…"
+          placeholder={locale === "hi" ? "मुंबई, BCT…" : "Mumbai, BCT…"}
           icon={<MapPin className="size-4" />}
         />
       </div>
@@ -253,7 +275,7 @@ export function SearchForm({
       <button
         type="submit"
         disabled={!canSearch}
-        className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[1rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn btn-primary mt-6 h-14 w-full text-[1rem]"
       >
         <Search className="size-4" aria-hidden />
         {t("search.submit")}
@@ -261,7 +283,7 @@ export function SearchForm({
 
       {!compact && (
         <p className="mt-2.5 min-h-[1.125rem] text-center text-[0.75rem] text-faint">
-          {from && to && from.token === to.token ? "Pick two different stations" : t("home.noLogin")}
+          {from && to && from.token === to.token ? t("search.pickTwoDifferent") : t("home.noLogin")}
         </p>
       )}
     </form>

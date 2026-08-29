@@ -306,4 +306,15 @@ JSG|Jharsuguda Jn|Jharsuguda|OD|SECR|5|21.8600|84.0300
 ROU|Rourkela|Rourkela|OD|SER|5|22.2200|84.8600
 CKP|Chakradharpur|Chakradharpur|JH|SER|4||
 TATA|Tatanagar Jn|Jamshedpur|JH|SER|6|22.7800|86.2000
+SC|Secunderabad Jn|Hyderabad|TG|SCR|10|17.4344|78.5013
+HYB|Hyderabad Deccan|Hyderabad|TG|SCR|6|17.3850|78.4867
+KCG|Kacheguda|Hyderabad|TG|SCR|11|17.3924|78.4939
+INDB|Indore Jn|Indore|MP|WR|6|22.7196|75.8577
+GHY|Guwahati|Guwahati|AS|NFR|7|26.1830|91.7500
+CDG|Chandigarh|Chandigarh|CH|NR|5|30.7000|76.8200
+ASR|Amritsar Jn|Amritsar|PB|NR|6|31.6330|74.8700
+RNC|Ranchi Jn|Ranchi|JH|SER|5|23.3700|85.3300
+DDN|Dehradun|Dehradun|UK|NR|4|30.3200|78.0300
+MDU|Madurai Jn|Madurai|TN|SR|6|9.9200|78.1200
+SINA|Srinagar|Srinagar|JK|NR|2|34.0740|74.8000
 `.trim();

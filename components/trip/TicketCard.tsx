@@ -4,6 +4,8 @@ import type { Booking, ScheduleStop, Station } from "@/lib/types";
 import { formatDateShort, formatMinute, formatWeekday } from "@/lib/domain/time";
 import { Barcode } from "./Barcode";
 import { explainStatus } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
+import type { StringKey } from "@/lib/i18n/strings";
 import { cn } from "@/components/ui/cn";
 import { Ticket } from "lucide-react";
 
@@ -29,9 +31,25 @@ export function TicketCard({
   boardingStop: ScheduleStop;
   alightingStop: ScheduleStop;
 }) {
+  const { t, locale } = useLocale();
   return (
     <div className={cn("card overflow-hidden", booking.status === "cancelled" && "opacity-70")}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border px-4 py-3">
+      {/* The saffron security trim a printed reservation slip carries. */}
+      <div
+        aria-hidden
+        className="h-1.5 border-b border-border"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 75%, transparent) 0 5px, var(--accent-soft) 5px 10px)",
+        }}
+      />
+      {/*
+        * The dashed rules are perforations, so they get the die-cut notches a
+        * real ticket has — two half-moons punched out of the card edge. The
+        * card's overflow-hidden clips them to semicircles.
+        */}
+      <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border px-4 py-3">
+        <Notches />
         <div>
           <p className="eyebrow inline-flex items-center gap-1.5">
             <Ticket className="size-3 text-faint" aria-hidden />
@@ -41,8 +59,8 @@ export function TicketCard({
         </div>
         <div className="text-right">
           <p className="eyebrow">{booking.classCode} · {booking.quota}</p>
-          <p className={cn("text-[0.8125rem] capitalize", booking.status === "cancelled" ? "text-faint" : booking.status === "waitlist" ? "text-danger" : "text-ok")}>
-            {booking.status === "partiallyConfirmed" ? "Partly confirmed" : booking.status}
+          <p className={cn("text-[0.8125rem]", booking.status === "cancelled" ? "text-faint" : booking.status === "waitlist" ? "text-danger" : "text-ok")}>
+            {t(`status.${booking.status}` as const)}
           </p>
         </div>
       </div>
@@ -72,7 +90,7 @@ export function TicketCard({
       <p className="border-t border-border px-4 py-2.5 text-[0.8125rem] text-dim">
         <span className="tnum text-faint">{booking.trainNumber}</span> {booking.trainName}
         <span className="mx-2 text-faint">·</span>
-        {formatWeekday(booking.journeyDate)} {formatDateShort(booking.journeyDate)}
+        {formatWeekday(booking.journeyDate, locale)} {formatDateShort(booking.journeyDate, locale)}
       </p>
 
       <ul className="divide-y divide-border border-t border-border">
@@ -85,19 +103,31 @@ export function TicketCard({
             <span className={cn("tnum ml-auto text-[0.8125rem]", STATUS_TONE[passenger.status])}>
               {passenger.statusLabel}
             </span>
-            {explainStatus(passenger.statusLabel) && (
-              <span className="w-full text-[0.6875rem] text-faint">{explainStatus(passenger.statusLabel)}</span>
+            {explainStatus(passenger.statusLabel, locale) && (
+              <span className="w-full text-[0.6875rem] text-faint">{explainStatus(passenger.statusLabel, locale)}</span>
             )}
           </li>
         ))}
       </ul>
 
-      <div className="border-t border-dashed border-border px-4 pb-3 pt-3.5">
-        <Barcode value={booking.pnr} />
-        <p className="mt-2 text-center text-[0.625rem] text-faint">
-          Show this to the ticket examiner. Works without a network.
-        </p>
+      <div className="relative border-t border-dashed border-border px-4 pb-3 pt-3.5">
+        <Notches side="top" />
+        <Barcode
+          value={booking.pnr}
+          label={locale === "hi" ? `पीएनआर ${booking.pnr} के लिए बारकोड` : `Barcode for PNR ${booking.pnr}`}
+        />
+        <p className="mt-2 text-center text-[0.625rem] text-faint">{t("trip.showThisToExaminer")}</p>
       </div>
     </div>
+  );
+}
+
+function Notches({ side = "bottom" }: { side?: "top" | "bottom" }) {
+  const y = side === "bottom" ? "-bottom-[7px]" : "-top-[7px]";
+  return (
+    <>
+      <span aria-hidden className={`absolute -left-[7px] ${y} z-10 size-3.5 rounded-full border border-border bg-bg`} />
+      <span aria-hidden className={`absolute -right-[7px] ${y} z-10 size-3.5 rounded-full border border-border bg-bg`} />
+    </>
   );
 }

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarSearch, Map, Ticket, TicketCheck } from "lucide-react";
 import { Logo } from "./ui/Logo";
-import { ThemeToggle } from "./ui/ThemeToggle";
 import { LanguageSetting } from "./ui/LanguageSetting";
 import { DataSourceBadge } from "./ui/DataSourceBadge";
 import { cn } from "./ui/cn";
@@ -26,12 +25,10 @@ export function AppHeader() {
   const { t } = useLocale();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-bg">
+    <header className="chrome sticky top-0 z-40 border-b">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2 text-text" aria-label={t("nav.homeLabel")}>
-          <span className="text-brand">
-            <Logo className="size-[22px]" />
-          </span>
+          <Logo className="size-[26px] shrink-0" />
           <span className="flex items-baseline gap-1.5">
             <span className="text-[0.95rem] tracking-[-0.01em]">IRCTC</span>
             {/*
@@ -43,7 +40,7 @@ export function AppHeader() {
         </Link>
 
         {/* Desktop navigation. On mobile this lives in the bottom bar instead. */}
-        <nav className="ml-1 hidden shrink-0 items-center gap-0.5 sm:flex" aria-label="Main">
+        <nav className="ml-1 hidden shrink-0 items-center gap-0.5 sm:flex" aria-label={t("nav.mainLandmark")}>
           {NAV.map((item) => (
             <Link
               key={item.href}
@@ -62,7 +59,6 @@ export function AppHeader() {
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <DataSourceBadge />
           <LanguageSetting />
-          <ThemeToggle />
         </div>
       </div>
     </header>
@@ -80,8 +76,8 @@ export function MobileNav() {
 
   return (
     <nav
-      aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg pb-[env(safe-area-inset-bottom)] sm:hidden"
+      aria-label={t("nav.mainLandmark")}
+      className="chrome fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] sm:hidden"
     >
       <ul className="mx-auto flex max-w-md">
         {NAV.map((item) => {

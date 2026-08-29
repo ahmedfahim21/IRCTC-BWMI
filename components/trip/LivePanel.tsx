@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { LiveStatus, ScheduleStop, Station } from "@/lib/types";
 import type { PlatformPosition } from "@/lib/domain/platform";
 import { formatDelay, formatMinute } from "@/lib/domain/time";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -29,6 +30,7 @@ export function LivePanel({
   arrivalDelayMins: number;
   coachPosition: PlatformPosition | null;
 }) {
+  const { t, locale } = useLocale();
   const running = live.state === "running" || live.state === "halted";
   const lastStation = live.lastStationCode ? stations[live.lastStationCode] : null;
   const nextStation = live.nextStopCode ? stations[live.nextStopCode] : null;
@@ -40,14 +42,15 @@ export function LivePanel({
           <span className="flex items-center gap-2 text-ok">
             <span className="live-ring relative size-1.5 rounded-full bg-ok" aria-hidden />
             <span className="text-[0.75rem] uppercase tracking-wider">
-              {live.state === "halted" ? "Standing" : "Running"}
+              {t(live.state === "halted" ? "trip.standing" : "trip.running")}
             </span>
           </span>
         ) : (
-          <span className="eyebrow">{live.state === "arrived" ? "Journey complete" : "Not started yet"}</span>
+          <span className="eyebrow">{t(live.state === "arrived" ? "trip.journeyComplete" : "trip.notStartedYet")}</span>
         )}
         <span className="ml-auto text-[0.6875rem] text-faint">
-          Updated {new Date(live.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+          {t("trip.updated")}{" "}
+          {new Date(live.updatedAt).toLocaleTimeString(locale === "hi" ? "hi-IN" : "en-IN", { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
 
@@ -56,31 +59,37 @@ export function LivePanel({
           <p className="flex flex-wrap items-baseline gap-x-2 text-[0.875rem] text-dim">
             <Train className="size-3.5 shrink-0 translate-y-0.5 text-faint" aria-hidden />
             {live.state === "halted" ? (
-              <>Standing at <span className="text-text">{lastStation?.name}</span></>
+              <>
+                {t("trip.standingAt")} <span className="text-text">{lastStation?.name}</span>
+              </>
             ) : (
               <>
-                Past <span className="text-text">{lastStation?.name}</span> at{" "}
+                {t("trip.past")} <span className="text-text">{lastStation?.name}</span> {locale === "hi" ? "पर" : "at"}{" "}
                 <span className="tnum text-text">{live.speedKmph} km/h</span>
               </>
             )}
-            {nextStation && <span className="text-faint">· next {nextStation.name}</span>}
+            {nextStation && (
+              <span className="text-faint">
+                · {t("trip.next")} {nextStation.name}
+              </span>
+            )}
           </p>
         )}
 
         <dl className="grid gap-2.5 sm:grid-cols-2">
           <Fact
             icon={Navigation}
-            label={`Reaches ${stations[boardingStop.stationCode]?.name}`}
+            label={`${locale === "hi" ? "पहुँचता है" : "Reaches"} ${stations[boardingStop.stationCode]?.name}`}
             value={formatMinute((boardingStop.departureMinute ?? 0) + boardingDelayMins)}
             tone={boardingDelayMins > 15 ? "warn" : "ok"}
-            note={formatDelay(boardingDelayMins)}
+            note={formatDelay(boardingDelayMins, locale)}
           />
           <Fact
             icon={MapPin}
-            label={`Arrives ${stations[alightingStop.stationCode]?.name}`}
+            label={`${t("results.arrives")} ${stations[alightingStop.stationCode]?.name}`}
             value={formatMinute((alightingStop.arrivalMinute ?? 0) + arrivalDelayMins)}
             tone={arrivalDelayMins > 15 ? "warn" : "ok"}
-            note={formatDelay(arrivalDelayMins)}
+            note={formatDelay(arrivalDelayMins, locale)}
           />
         </dl>
 
@@ -88,9 +97,13 @@ export function LivePanel({
           <div className="rounded-lg border border-border bg-surface-2 p-3">
             <p className="mb-1 flex items-center gap-2 text-[0.875rem] text-text">
               <span className="rounded bg-brand px-1.5 py-0.5 text-[0.6875rem] text-on-brand">
-                Coach {coachPosition.coach.code}
+                {t("trip.coach")} {coachPosition.coach.code}
               </span>
-              {boardingStop.platform !== null && <span className="text-dim">Platform {boardingStop.platform}</span>}
+              {boardingStop.platform !== null && (
+                <span className="text-dim">
+                  {t("common.platform")} {boardingStop.platform}
+                </span>
+              )}
             </p>
             <p className="text-[0.8125rem] leading-relaxed text-dim">{coachPosition.hint}.</p>
           </div>
@@ -142,6 +155,7 @@ export function Alarms({
   boardingMinute: number;
   arrivalMinute: number;
 }) {
+  const { t, locale } = useLocale();
   const [boarding, setBoarding] = useState(true);
   const [arrival, setArrival] = useState(true);
   const [leadMins, setLeadMins] = useState(30);
@@ -150,27 +164,35 @@ export function Alarms({
     <div className="card p-4">
       <h2 className="mb-3 flex items-center gap-2 text-[0.9375rem] text-text">
         <Bell className="size-4 text-faint" aria-hidden />
-        Alarms
+        {t("trip.alarms")}
       </h2>
 
       <div className="space-y-2">
         <AlarmRow
           enabled={boarding}
           onToggle={setBoarding}
-          title={`Leave for ${boardingName}`}
-          detail={`${formatMinute(boardingMinute - 90)} — about 90 minutes before departure`}
+          title={locale === "hi" ? `${boardingName} के लिए निकलें` : `Leave for ${boardingName}`}
+          detail={
+            locale === "hi"
+              ? `${formatMinute(boardingMinute - 90)} — प्रस्थान से लगभग 90 मिनट पहले`
+              : `${formatMinute(boardingMinute - 90)} — about 90 minutes before departure`
+          }
         />
         <AlarmRow
           enabled={arrival}
           onToggle={setArrival}
-          title={`Wake me before ${destinationName}`}
-          detail={`${formatMinute(arrivalMinute - leadMins)} — ${leadMins} minutes before arrival`}
+          title={locale === "hi" ? `${destinationName} से पहले मुझे जगाएँ` : `Wake me before ${destinationName}`}
+          detail={
+            locale === "hi"
+              ? `${formatMinute(arrivalMinute - leadMins)} — आगमन से ${leadMins} मिनट पहले`
+              : `${formatMinute(arrivalMinute - leadMins)} — ${leadMins} minutes before arrival`
+          }
         />
       </div>
 
       {arrival && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
-          <span className="mr-1 text-[0.6875rem] text-faint">Wake me</span>
+          <span className="mr-1 text-[0.6875rem] text-faint">{t("trip.wakeMe")}</span>
           {[15, 30, 45, 60].map((mins) => (
             <button
               key={mins}
@@ -182,15 +204,13 @@ export function Alarms({
                 leadMins === mins ? "border-brand bg-brand-soft text-brand" : "border-border text-dim hover:border-border-strong"
               )}
             >
-              {mins} min before
+              {mins} {t("trip.minutesBefore")}
             </button>
           ))}
         </div>
       )}
 
-      <p className="mt-3 text-[0.6875rem] leading-relaxed text-faint">
-        Alarms track the train&rsquo;s actual running, not the timetable — if it runs late, they move with it.
-      </p>
+      <p className="mt-3 text-[0.6875rem] leading-relaxed text-faint">{t("trip.alarmsFootnote")}</p>
     </div>
   );
 }

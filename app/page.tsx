@@ -1,69 +1,61 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { useLocale } from "@/lib/i18n/useLocale";
 import { LandingMap } from "@/components/map/LandingMap";
 import { MapCanvasCard } from "@/components/map/MapCanvasCard";
 import { NextTripCard } from "@/components/trip/NextTripCard";
-import { SearchForm } from "@/components/search/SearchForm";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Hero } from "@/components/home/Hero";
+import { Destinations } from "@/components/home/Destinations";
 
 /**
- * Book: a compact search panel beside a live map that fills the rest of the
- * screen, matching the search-results split rather than a tall stacked form.
+ * A photograph, the search, then the whole network moving.
+ *
+ * The live map sits directly under the search rather than at the foot of the
+ * page: it is the thing this does that nothing else does, so it should be the
+ * first thing a new visitor sees after the form. Destinations come after it.
+ *
+ * Hero is behind a Suspense boundary because it reads search params — both for
+ * its own ?to= prefill and for the SearchForm it contains.
  */
 export default function HomePage() {
   const { t } = useLocale();
 
   return (
-    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:overflow-hidden">
-      <header className="shrink-0 px-4 pt-5 sm:px-6 lg:px-8">
-        <p className="eyebrow mb-1">Indian Railways</p>
-        <h1 className="text-[1.375rem] tracking-[-0.02em] text-text sm:text-[1.5rem]">{t("home.heading")}</h1>
-        <p className="mt-1 max-w-xl text-[0.875rem] text-dim">{t("home.sub")}</p>
-      </header>
+    <div className="pb-16">
+      <Suspense fallback={<div className="min-h-[17rem] sm:min-h-[21rem]" />}>
+        <Hero />
+      </Suspense>
 
-      <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(26rem,0.95fr)] lg:px-8">
-        <div className="flex min-w-0 flex-col gap-4 lg:overflow-y-auto lg:pb-8">
-          <Suspense
-            fallback={
-              <div className="card p-4 shadow-[var(--shadow-sm)] sm:p-5">
-                <Skeleton className="h-40 w-full" />
-              </div>
-            }
-          >
-            <SearchForm variant="panel" />
-          </Suspense>
-          <NextTripCard />
-          <p className="text-[0.6875rem] leading-relaxed text-faint">
-            An independent redesign concept. This is not the official IRCTC service, is not affiliated
-            with IRCTC or Indian Railways, and cannot issue a real ticket — payment is simulated and no
-            reservation is made. Live timetables, running positions and station data come from the
-            RailRadar API; seat availability, fares and confirmation odds are modelled.{" "}
-            <Link href="/pnr" className="underline decoration-dotted underline-offset-2 hover:text-dim">
-              Look up a PNR
-            </Link>{" "}
-            or{" "}
-            <Link href="/trips" className="underline decoration-dotted underline-offset-2 hover:text-dim">
-              see the demo trips
-            </Link>
-            .
-          </p>
+      <div className="mx-auto mt-6 max-w-6xl px-4 sm:px-6 lg:px-8">
+        <NextTripCard />
+      </div>
+
+      <section className="mx-auto mt-12 max-w-6xl px-4 sm:mt-16 sm:px-6 lg:px-8" aria-labelledby="network-heading">
+        <div className="mb-5">
+          <h2 id="network-heading" className="font-display text-[1.375rem] text-text sm:text-[1.625rem]">
+            {t("home.networkHeading")}
+          </h2>
+          <p className="mt-1 max-w-lg text-[0.875rem] leading-relaxed text-dim">{t("home.networkSub")}</p>
         </div>
 
-        <aside className="min-h-[16rem] lg:min-h-0">
-          <MapCanvasCard
-            label="Live map"
-            className="flex h-full min-h-[16rem] flex-col lg:min-h-0"
-            expandLabel={t("home.mapExpand")}
-            collapseLabel={t("home.mapCollapse")}
-            bodyClassName="h-[20rem] min-h-[16rem] lg:h-auto lg:min-h-0 lg:flex-1"
-          >
-            <LandingMap />
-          </MapCanvasCard>
-        </aside>
-      </div>
+        {/*
+          * Height goes on the card, not the body: the body is `flex-1 min-h-0`,
+          * so a height there loses to flex-basis and the map collapses to a
+          * 160px letterbox slit.
+          */}
+        <MapCanvasCard
+          label={t("nav.map")}
+          className="card-raised flex h-[26rem] flex-col sm:h-[32rem] lg:h-[38rem]"
+          expandLabel={t("home.mapExpand")}
+          collapseLabel={t("home.mapCollapse")}
+        >
+          <LandingMap />
+        </MapCanvasCard>
+      </section>
+
+      <Destinations className="mt-14 sm:mt-20" />
+
     </div>
   );
 }

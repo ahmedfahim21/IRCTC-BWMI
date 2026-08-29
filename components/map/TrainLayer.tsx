@@ -41,7 +41,7 @@ export function TrainLayer({
   onSelect: (train: MapTrain | null) => void;
   dimmed?: boolean;
 }) {
-  const { project, viewEpoch, theme } = useRailMap();
+  const { project, viewEpoch } = useRailMap();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hitsRef = useRef<{ train: MapTrain; x: number; y: number }[]>([]);
   const pointerDown = useRef<{ x: number; y: number } | null>(null);
@@ -64,7 +64,7 @@ export function TrainLayer({
     ctx.clearRect(0, 0, width, height);
 
     const colours = resolveTypeColours();
-    const stroke = resolveToken("--text") || (theme === "dark" ? "#fff" : "#111");
+    const stroke = resolveToken("--text") || "#111";
     const hits: { train: MapTrain; x: number; y: number }[] = [];
 
     for (const packed of trains) {
@@ -86,7 +86,20 @@ export function TrainLayer({
       hits.push({ train: unpack(packed), x: pt.x, y: pt.y });
     }
     hitsRef.current = hits;
-  }, [trains, activeTypes, selectedNumber, project, viewEpoch, theme]);
+    /*
+     * Where the first train landed, in canvas px — so a test (or a human
+     * debugging why a click missed) can find a real target instead of
+     * guessing at pixels whose occupants move with the wall clock.
+     */
+    canvas.dataset.trainCount = String(hits.length);
+    if (hits[0]) {
+      canvas.dataset.trainX = String(Math.round(hits[0].x));
+      canvas.dataset.trainY = String(Math.round(hits[0].y));
+    } else {
+      delete canvas.dataset.trainX;
+      delete canvas.dataset.trainY;
+    }
+  }, [trains, activeTypes, selectedNumber, project, viewEpoch]);
 
   const hitTest = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;

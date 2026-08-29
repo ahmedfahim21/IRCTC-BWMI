@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Fraunces, Noto_Sans } from "next/font/google";
 import { AppHeader, MobileNav } from "@/components/AppHeader";
+import { AppFooter } from "@/components/AppFooter";
 import { Providers } from "@/components/ui/Providers";
 import { LocaleProvider } from "@/lib/i18n/useLocale";
 import { OfflineSupport } from "@/components/ui/OfflineSupport";
@@ -22,6 +23,21 @@ const notoSans = Noto_Sans({
   fallback: ["system-ui", "sans-serif"],
 });
 
+/*
+ * Fraunces carries the display layer — a soft, warm serif in the tradition of
+ * hand-lettered Indian signage, used only for headings. Body text, numbers
+ * and controls stay in Noto Sans; a timetable set in a serif would be a
+ * costume, but a headline in one is a voice. Devanagari headings fall through
+ * to Noto Sans, which the stack below arranges.
+ */
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-fraunces",
+  axes: ["opsz"],
+  fallback: ["Georgia", "serif"],
+});
+
 export const metadata: Metadata = {
   title: "IRCTC — Indian Railways, reimagined",
   description:
@@ -31,22 +47,19 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-  ],
+  themeColor: "#fafafa",
   width: "device-width",
   initialScale: 1,
 };
 
-/** Applied before first paint so the theme never flashes. */
-const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('irctc.theme');if(t&&t!=='system')document.documentElement.setAttribute('data-theme',t);var l=localStorage.getItem('irctc.locale');if(l)document.documentElement.lang=l;}catch(e){}})();`;
+/** Applied before first paint so the language never flashes. */
+const LOCALE_SCRIPT = `(function(){try{var l=localStorage.getItem('irctc.locale');if(l)document.documentElement.lang=l;}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={notoSans.variable} suppressHydrationWarning>
+    <html lang="en" className={`${notoSans.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: LOCALE_SCRIPT }} />
       </head>
       <body className="min-h-dvh">
         <a
@@ -60,9 +73,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ChatProvider>
               <AppHeader />
               <OfflineSupport />
-              <main id="main" className="pb-[3.75rem] sm:pb-0">
-                {children}
-              </main>
+              <main id="main">{children}</main>
+              <AppFooter />
               <MobileNav />
               <ChatPanel />
             </ChatProvider>

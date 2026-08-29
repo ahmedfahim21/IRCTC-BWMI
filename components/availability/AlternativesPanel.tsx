@@ -7,6 +7,7 @@ import type { AlternativeGroup, AlternativeItem, AlternativeKind } from "@/lib/d
 import type { Station } from "@/lib/types";
 import { formatDateShort } from "@/lib/domain/time";
 import { formatRupees } from "./ClassCell";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 const ICONS: Record<AlternativeKind, typeof CalendarDays> = {
@@ -79,6 +80,7 @@ function AlternativeCard({
   stationName: (code: string) => string;
 }) {
   const [open, setOpen] = useState(false);
+  const { t, locale } = useLocale();
 
   return (
     <li className="card flex h-full flex-col overflow-hidden">
@@ -103,12 +105,12 @@ function AlternativeCard({
           className="flex w-full items-center gap-1 px-3 py-1.5 text-[0.6875rem] text-faint hover:text-dim"
         >
           <ChevronDown className={cn("size-3 transition-transform", open && "rotate-180")} aria-hidden />
-          {open ? "Hide extras" : "Date, stations"}
+          {open ? t("common.hideExtras") : (locale === "hi" ? "तारीख़, स्टेशन" : "Date, stations")}
         </button>
         {open && (
           <div className="space-y-1 px-3 pb-3 text-[0.6875rem] text-dim">
             <p className="text-faint">
-              {formatDateShort(item.dateIso)} · {stationName(item.fromCode)} → {stationName(item.toCode)}
+              {formatDateShort(item.dateIso, locale)} · {stationName(item.fromCode)} → {stationName(item.toCode)}
             </p>
             {item.tradeoff && <p className="leading-relaxed text-warn">{item.tradeoff}</p>}
           </div>

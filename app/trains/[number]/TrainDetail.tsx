@@ -4,10 +4,13 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from "lucide-react";
+import { ChevronDown, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from "lucide-react";
 import { api } from "@/lib/apiClient";
-import { formatDuration, formatMinute, todayIso } from "@/lib/domain/time";
+import { DAY_LETTERS, formatDuration, formatMinute, todayIso } from "@/lib/domain/time";
+import { useLocale } from "@/lib/i18n/useLocale";
+import type { StringKey } from "@/lib/i18n/strings";
 import { RailSpine } from "@/components/rail/RailSpine";
+import { RouteGlyph } from "@/components/rail/RouteGlyph";
 import { TrainHeroMap } from "@/components/map/TrainHeroMap";
 import { CoachStrip, PlatformDiagram } from "@/components/coach/CoachStrip";
 import { BerthMap } from "@/components/coach/BerthMap";
@@ -17,17 +20,17 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { cn } from "@/components/ui/cn";
 
-const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 const TABS = ["route", "coaches", "crossings", "punctuality"] as const;
 type Tab = (typeof TABS)[number];
-const TAB_LABEL: Record<Tab, string> = {
-  route: "Route",
-  coaches: "Coaches",
-  crossings: "Trains you meet",
-  punctuality: "How late it runs",
+const TAB_LABEL_KEY: Record<Tab, StringKey> = {
+  route: "train.tabRoute",
+  coaches: "train.tabCoaches",
+  crossings: "train.tabCrossings",
+  punctuality: "train.tabPunctuality",
 };
 
 export function TrainDetail({ number }: { number: string }) {
+  const { t, locale } = useLocale();
   const params = useSearchParams();
   const date = params.get("date") ?? todayIso();
   const from = params.get("from") ?? undefined;
@@ -82,20 +85,22 @@ export function TrainDetail({ number }: { number: string }) {
   return (
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
       <header className="mb-4">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="tnum text-[1.0625rem] text-brand">{train.number}</span>
-          <h1 className="text-[1.25rem] tracking-[-0.01em] text-text">{train.name}</h1>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          <span className="tnum rounded-md border border-border bg-surface px-1.5 py-0.5 font-mono text-[0.75rem] tracking-[0.06em] text-brand">
+            {train.number}
+          </span>
+          <h1 className="font-display text-[1.375rem] text-text">{train.name}</h1>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-2">
+        <div className="mt-3.5 flex max-w-xs items-center gap-4">
           <div>
-            <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(first.departureMinute)}</p>
-            <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{first.stationCode}</p>
+            <p className="tnum text-[1.5rem] leading-none tracking-[-0.02em] text-text">{formatMinute(first.departureMinute)}</p>
+            <p className="mt-1.5 font-mono text-[0.6875rem] tracking-wide text-faint">{first.stationCode}</p>
           </div>
-          <ArrowRight className="mb-4 size-3.5 text-faint" aria-hidden />
-          <div>
-            <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(last.arrivalMinute)}</p>
-            <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{last.stationCode}</p>
+          <RouteGlyph className="mb-5" />
+          <div className="text-right">
+            <p className="tnum text-[1.5rem] leading-none tracking-[-0.02em] text-text">{formatMinute(last.arrivalMinute)}</p>
+            <p className="mt-1.5 font-mono text-[0.6875rem] tracking-wide text-faint">{last.stationCode}</p>
           </div>
         </div>
 
@@ -107,15 +112,18 @@ export function TrainDetail({ number }: { number: string }) {
             className="flex items-center gap-1 py-1 text-[0.6875rem] text-faint hover:text-dim"
           >
             <ChevronDown className={cn("size-3 transition-transform", extrasOpen && "rotate-180")} aria-hidden />
-            {extrasOpen ? "Hide extras" : "Days, pantry, stations"}
+            {extrasOpen ? t("common.hideExtras") : t("train.daysPantryStations")}
           </button>
           {extrasOpen && (
             <div className="space-y-1.5 pb-1 text-[0.75rem] text-dim">
               <p>
                 {stations[first.stationCode]?.name} → {stations[last.stationCode]?.name}
               </p>
-              <p className="flex items-center gap-1.5 text-faint" aria-label="Days it runs">
-                {DAY_LETTERS.map((letter, index) => (
+              <p
+                className="flex items-center gap-1.5 text-faint"
+                aria-label={locale === "hi" ? "जिन दिनों यह चलती है" : "Days it runs"}
+              >
+                {DAY_LETTERS[locale].map((letter, index) => (
                   <span
                     key={index}
                     className={cn("inline-block w-3 text-center", train.runsOn.includes(index) ? "text-dim" : "text-faint/35")}
@@ -126,7 +134,7 @@ export function TrainDetail({ number }: { number: string }) {
               </p>
               {train.hasPantry && (
                 <p className="flex items-center gap-1 text-faint">
-                  <Utensils className="size-3" aria-hidden /> Pantry car
+                  <Utensils className="size-3" aria-hidden /> {t("train.pantryCar")}
                 </p>
               )}
             </div>
@@ -138,17 +146,25 @@ export function TrainDetail({ number }: { number: string }) {
           className="mt-1 inline-flex items-center gap-1.5 text-[0.75rem] text-faint transition-colors hover:text-brand"
         >
           <Repeat className="size-3" aria-hidden />
-          Return: <span className="tnum">{train.returnTrainNumber}</span>
+          {t("train.return")}: <span className="tnum">{train.returnTrainNumber}</span>
         </Link>
       </header>
 
-      <dl className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-        <Stat icon={Route} label="Distance" value={`${train.distanceKm} km`} />
-        <Stat icon={Timer} label="Duration" value={formatDuration(train.durationMins)} />
-        <Stat icon={MapPin} label="Halts" value={`${train.haltCount}`} sub={`of ${train.schedule.length} stops`} />
-        <Stat icon={Gauge} label="Avg speed" value={`${train.avgSpeedKmph}`} sub="km/h" />
-        <Stat icon={Gauge} label="Fastest leg" value={`${train.maxSpeedKmph}`} sub="km/h" />
-      </dl>
+      {/* One instrument strip, not five loose boxes — hairlines, not gaps. */}
+      <div className="card mb-4 overflow-hidden">
+        <dl className="grid grid-cols-2 gap-px bg-border sm:grid-cols-5">
+          <Stat icon={Route} label={t("train.distance")} value={`${train.distanceKm} ${t("common.km")}`} />
+          <Stat icon={Timer} label={t("train.duration")} value={formatDuration(train.durationMins)} />
+          <Stat
+            icon={MapPin}
+            label={t("train.halts")}
+            value={`${train.haltCount}`}
+            sub={locale === "hi" ? `${train.schedule.length} में से` : `of ${train.schedule.length} stops`}
+          />
+          <Stat icon={Gauge} label={t("train.avgSpeed")} value={`${train.avgSpeedKmph}`} sub="km/h" />
+          <Stat icon={Gauge} label={t("train.fastestLeg")} value={`${train.maxSpeedKmph}`} sub="km/h" className="col-span-2 sm:col-span-1" />
+        </dl>
+      </div>
 
       <TrainHeroMap
         trainNumber={train.number}
@@ -160,24 +176,25 @@ export function TrainDetail({ number }: { number: string }) {
         className="mb-4 aspect-[3/2] w-full sm:aspect-[16/7]"
       />
 
-      <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border" role="tablist">
-        {TABS.map((key) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={tab === key}
-            onClick={() => setTab(key)}
-            className={cn(
-              "shrink-0 border-b-2 px-3 py-2 text-[0.8125rem] transition-colors",
-              tab === key ? "border-brand text-text" : "border-transparent text-faint hover:text-dim"
-            )}
-          >
-            {TAB_LABEL[key]}
-          </button>
-        ))}
-      </div>
+      <div className="card min-w-0 overflow-hidden">
+        <div className="flex gap-1 overflow-x-auto border-b border-border bg-surface-2 px-2" role="tablist">
+          {TABS.map((key) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={cn(
+                "shrink-0 border-b-2 px-3 py-2.5 text-[0.8125rem] transition-colors",
+                tab === key ? "border-brand text-text" : "border-transparent text-faint hover:text-dim"
+              )}
+            >
+              {t(TAB_LABEL_KEY[key])}
+            </button>
+          ))}
+        </div>
 
-      <div className="card min-w-0 overflow-hidden p-4">
+        <div className="min-w-0 p-4">
         {tab === "route" && (
           <RailSpine
             schedule={train.schedule}
@@ -193,15 +210,13 @@ export function TrainDetail({ number }: { number: string }) {
         {tab === "coaches" && (
           <div className="space-y-5">
             <div>
-              <p className="eyebrow mb-2">Rake order, from the engine</p>
+              <p className="eyebrow mb-2">{t("train.rakeOrder")}</p>
               <CoachStrip
                 rake={train.rake}
                 selectedCode={selectedCoach}
                 onSelect={(coach) => setSelectedCoach(coach.code === selectedCoach ? null : coach.code)}
               />
-              <p className="mt-2 text-[0.75rem] text-faint">
-                Tap a coach to see its berths and where it stops on the boarding platform.
-              </p>
+              <p className="mt-2 text-[0.75rem] text-faint">{t("train.tapCoachHint")}</p>
             </div>
 
             {coachData ? (
@@ -217,7 +232,7 @@ export function TrainDetail({ number }: { number: string }) {
 
             {coachData && selectedLayout && (
               <div>
-                <p className="eyebrow mb-2">Berths in {selectedLayout.code}</p>
+                <p className="eyebrow mb-2">{t("train.berthsIn")} {selectedLayout.code}</p>
                 <BerthMap
                   coach={selectedLayout}
                   selections={[]}
@@ -232,14 +247,13 @@ export function TrainDetail({ number }: { number: string }) {
 
         {tab === "crossings" &&
           (data.crossingsAvailable === false ? (
-            <Unavailable
-              title="Not available for live timetables"
-              body="Working out which trains you cross means reading the timetable of every other train on the line. Against a live API that is one request per train, which the sandbox quota can't carry. It works on the generated timetable — try 12951 or 16511."
-            />
+            <Unavailable title={t("train.notAvailableLive")} body={t("train.crossingsUnavailableBody")} />
           ) : (
             <div>
               <p className="mb-3 text-[0.8125rem] leading-relaxed text-dim">
-                Other trains on this line that you pass, overtake, or get overtaken by.
+                {locale === "hi"
+                  ? "इस लाइन की वे ट्रेनें जिन्हें आप पार करते हैं, आगे निकलते हैं, या जो आपसे आगे निकल जाती हैं।"
+                  : "Other trains on this line that you pass, overtake, or get overtaken by."}
               </p>
               <CrossingsList crossings={crossings} stations={stations} />
             </div>
@@ -247,13 +261,11 @@ export function TrainDetail({ number }: { number: string }) {
 
         {tab === "punctuality" &&
           (data.punctualityAvailable === false ? (
-            <Unavailable
-              title="Not available for live timetables"
-              body="This needs the running history of the last 30 journeys — one request each. It works on the generated timetable, where the history is computed rather than fetched."
-            />
+            <Unavailable title={t("train.notAvailableLive")} body={t("train.punctualityUnavailableBody")} />
           ) : (
             <PunctualitySparkline history={punctuality} />
           ))}
+        </div>
       </div>
     </div>
   );
@@ -276,14 +288,16 @@ function Stat({
   label,
   value,
   sub,
+  className,
 }: {
   icon: typeof Route;
   label: string;
   value: string;
   sub?: string;
+  className?: string;
 }) {
   return (
-    <div className="card px-3 py-2.5">
+    <div className={cn("bg-surface px-3.5 py-3", className)}>
       <dt className="mb-1 flex items-center gap-1.5 text-[0.625rem] uppercase tracking-wider text-faint">
         <Icon className="size-3" aria-hidden />
         {label}

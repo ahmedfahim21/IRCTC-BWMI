@@ -19,11 +19,13 @@ import { SearchMap } from "@/components/map/SearchMap";
 import { MapCanvasCard } from "@/components/map/MapCanvasCard";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useLocale } from "@/lib/i18n/useLocale";
 
 export function SearchResults() {
   const params = useSearchParams();
   const router = useRouter();
   const publish = useAgentPublish();
+  const { t } = useLocale();
 
   const from = params.get("from") ?? "";
   const to = params.get("to") ?? "";
@@ -167,7 +169,7 @@ export function SearchResults() {
   if (!from || !to) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
-        <p className="text-dim">No route chosen.</p>
+        <p className="text-dim">{t("results.noRoute")}</p>
       </div>
     );
   }
@@ -223,10 +225,9 @@ export function SearchResults() {
                     <div className="card mb-3 flex items-start gap-2.5 border-warn/30 bg-warn-soft p-3.5">
                       <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
                       <div>
-                        <p className="text-[0.875rem] text-text">Nothing on this date is likely to confirm</p>
+                        <p className="text-[0.875rem] text-text">{t("results.noneConfirmable")}</p>
                         <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-dim">
-                          Every class on every train is either full or on a waiting list that rarely clears.
-                          The options below are what we&rsquo;d actually try next.
+                          {t("results.noneConfirmableBody")}
                         </p>
                       </div>
                     </div>
@@ -234,13 +235,13 @@ export function SearchResults() {
 
                   {filtered.length === 0 ? (
                     <p className="card p-8 text-center text-[0.875rem] text-dim">
-                      No train matches these filters.{" "}
+                      {t("results.noMatch")}{" "}
                       <button
                         type="button"
                         onClick={() => setFilters({ ...filters, departureWindows: [], classes: [], confirmableOnly: false })}
                         className="underline decoration-dotted underline-offset-2"
                       >
-                        Clear them
+                        {t("search.clear")}
                       </button>
                       .
                     </p>
@@ -266,7 +267,7 @@ export function SearchResults() {
 
                   {data.alternatives.length > 0 && (
                     <div className="mt-8">
-                      <h2 className="mb-4 text-[1.0625rem] tracking-[-0.01em] text-text">Other ways to get there</h2>
+                      <h2 className="mb-4 text-[1.0625rem] tracking-[-0.01em] text-text">{t("results.otherWays")}</h2>
                       <AlternativesPanel groups={data.alternatives} stations={data.stations} />
                     </div>
                   )}
@@ -278,7 +279,7 @@ export function SearchResults() {
 
         <aside className="hidden min-h-0 border-l border-border lg:block">
           <MapCanvasCard
-            label="Route map"
+            label={t("results.routeMap")}
             className="flex h-full flex-col rounded-none border-0 shadow-none"
             bodyClassName="min-h-0 flex-1"
             onOpenChange={setMapOpen}
@@ -309,15 +310,14 @@ function EmptyRoute({
   destinationName: string;
   noDirectTrain: boolean;
 }) {
+  const { t } = useLocale();
   return (
     <div className="card p-8 text-center">
       <p className="text-[0.9375rem] text-text">
-        No direct train runs {originName} → {destinationName}
+        {t("results.noDirect")} {originName} → {destinationName}
       </p>
       <p className="mx-auto mt-2 max-w-sm text-[0.8125rem] leading-relaxed text-dim">
-        {noDirectTrain
-          ? "Both stations exist and the timetable was checked — Indian Railways simply doesn't run a through train on this pair. You'll need to change somewhere along the way."
-          : "Nothing in the timetable connects these two stations without a change. Try a nearby junction, or a different pair of cities."}
+        {noDirectTrain ? t("results.noDirectExplained") : t("results.noConnection")}
       </p>
     </div>
   );

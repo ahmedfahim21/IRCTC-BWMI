@@ -19,7 +19,7 @@ const PATTERNS: Record<string, string> = {
   "*": "nnwnwnwnn",
 };
 
-export function Barcode({ value, height = 44 }: { value: string; height?: number }) {
+export function Barcode({ value, height = 44, label }: { value: string; height?: number; label?: string }) {
   const chars = `*${value.replace(/[^0-9]/g, "")}*`.split("");
   const narrow = 2;
   const wide = narrow * 3;
@@ -44,7 +44,7 @@ export function Barcode({ value, height = 44 }: { value: string; height?: number
       height={height}
       preserveAspectRatio="none"
       role="img"
-      aria-label={`Barcode for PNR ${value}`}
+      aria-label={label ?? `Barcode for PNR ${value}`}
       className="text-text"
     >
       {bars.map((bar, index) => (

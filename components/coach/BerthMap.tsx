@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { DoorOpen, Plug, Droplets } from "lucide-react";
 import type { Berth, CoachLayout, CoachType } from "@/lib/types";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 export interface BerthSelection {
@@ -28,6 +29,7 @@ export function BerthMap({
   /** When false, the diagram is visible but berths cannot be claimed. */
   selectable?: boolean;
 }) {
+  const { t, locale } = useLocale();
   const bays = useMemo(() => {
     const grouped = new Map<number, Berth[]>();
     for (const berth of coach.berths) {
@@ -50,11 +52,22 @@ export function BerthMap({
         <p className="text-[0.8125rem] text-dim">
           <span className="text-text">{coach.code}</span> · {coach.type}
           <span className="ml-2 text-faint">
-            <span className="tnum">{freeCount}</span> of <span className="tnum">{coach.berths.length}</span> free
+            {locale === "hi" ? (
+              <>
+                <span className="tnum">{coach.berths.length}</span> में से{" "}
+                <span className="tnum">{freeCount}</span> खाली
+              </>
+            ) : (
+              <>
+                <span className="tnum">{freeCount}</span> of <span className="tnum">{coach.berths.length}</span> free
+              </>
+            )}
           </span>
         </p>
         <p className="text-[0.6875rem] text-faint">
-          {selectedNumbers.size} of {passengerCount} chosen here
+          {locale === "hi"
+            ? `${passengerCount} में से ${selectedNumbers.size} यहाँ चुनी गईं`
+            : `${selectedNumbers.size} of ${passengerCount} chosen here`}
         </p>
       </div>
 
@@ -88,11 +101,12 @@ function isSeated(type: CoachType) {
 }
 
 function EndCap() {
+  const { t } = useLocale();
   return (
     <div className="flex w-9 shrink-0 flex-col items-center justify-center gap-2.5 rounded-md border border-dashed border-border text-faint">
       <DoorOpen className="size-3.5" aria-hidden />
       <Droplets className="size-3.5" aria-hidden />
-      <span className="sr-only">Door and toilets</span>
+      <span className="sr-only">{t("berth.doorToilets")}</span>
     </div>
   );
 }
@@ -174,12 +188,15 @@ function BerthButton({
   atCapacity: boolean;
   selectable: boolean;
 }) {
+  const { t, locale } = useLocale();
   const disabled = !selectable || berth.isBooked || (atCapacity && !selected);
 
   const notes = [
-    berth.nearToilet ? "near the toilet" : null,
-    berth.hasCharging ? "charging point" : null,
+    berth.nearToilet ? t("berth.nearToilet") : null,
+    berth.hasCharging ? t("berth.chargingPoint").toLowerCase() : null,
   ].filter(Boolean);
+  const berthWord = locale === "hi" ? "बर्थ" : "Berth";
+  const takenWord = locale === "hi" ? "ली जा चुकी" : "taken";
 
   return (
     <button
@@ -189,10 +206,10 @@ function BerthButton({
       aria-pressed={selected}
       title={
         berth.isBooked
-          ? `Berth ${berth.number} (${berth.type}) — taken`
-          : `Berth ${berth.number}, ${berth.type}${notes.length ? ` — ${notes.join(", ")}` : ""}`
+          ? `${berthWord} ${berth.number} (${berth.type}) — ${takenWord}`
+          : `${berthWord} ${berth.number}, ${berth.type}${notes.length ? ` — ${notes.join(", ")}` : ""}`
       }
-      aria-label={`Berth ${berth.number}, ${berth.type}${berth.isBooked ? ", taken" : notes.length ? `, ${notes.join(", ")}` : ""}`}
+      aria-label={`${berthWord} ${berth.number}, ${berth.type}${berth.isBooked ? `, ${takenWord}` : notes.length ? `, ${notes.join(", ")}` : ""}`}
       className={cn(
         "relative flex h-11 w-[2.85rem] flex-col items-center justify-center rounded-md border text-[0.625rem] leading-none transition-colors",
         berth.isBooked
@@ -213,22 +230,23 @@ function BerthButton({
 }
 
 function Legend() {
+  const { t } = useLocale();
   return (
     <ul className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[0.75rem] text-faint">
       <li className="flex items-center gap-1.5">
-        <span className="size-3 rounded-sm border border-ok/30 bg-ok-soft" aria-hidden /> Free
+        <span className="size-3 rounded-sm border border-ok/30 bg-ok-soft" aria-hidden /> {t("berth.free")}
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="size-3 rounded-sm border border-brand bg-brand" aria-hidden /> Yours
+        <span className="size-3 rounded-sm border border-brand bg-brand" aria-hidden /> {t("berth.yours")}
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="size-3 rounded-sm border border-border bg-surface-3" aria-hidden /> Taken
+        <span className="size-3 rounded-sm border border-border bg-surface-3" aria-hidden /> {t("berth.taken")}
       </li>
       <li className="flex items-center gap-1.5">
-        <Plug className="size-3" aria-hidden /> Charging point
+        <Plug className="size-3" aria-hidden /> {t("berth.chargingPoint")}
       </li>
       <li className="flex items-center gap-1.5">
-        <DoorOpen className="size-3" aria-hidden /> Door and toilets
+        <DoorOpen className="size-3" aria-hidden /> {t("berth.doorToilets")}
       </li>
     </ul>
   );

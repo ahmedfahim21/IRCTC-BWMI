@@ -7,6 +7,7 @@ import type { ScheduleStop, Station } from "@/lib/types";
 import { typeColourVar } from "@/lib/railradar/trainTypes";
 import { RailSpine } from "@/components/rail/RailSpine";
 import type { MapTrain } from "@/components/map/TrainLayer";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 export function TrainCallout({
@@ -28,6 +29,7 @@ export function TrainCallout({
   dateIso?: string;
   className?: string;
 }) {
+  const { t, locale } = useLocale();
   const [extrasOpen, setExtrasOpen] = useState(false);
   const originCode = schedule?.[0]?.stationCode ?? "";
   const hasStations = Boolean(!compact && schedule && stations && dateIso);
@@ -57,7 +59,7 @@ export function TrainCallout({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="shrink-0 rounded-md p-1 text-faint transition-colors hover:text-text"
         >
           <X className="size-3.5" aria-hidden />
@@ -73,14 +75,18 @@ export function TrainCallout({
             className="flex w-full items-center gap-1 py-1 text-left text-[0.6875rem] text-faint hover:text-dim"
           >
             <ChevronDown className={cn("size-3 transition-transform", extrasOpen && "rotate-180")} aria-hidden />
-            {extrasOpen ? "Hide extras" : hasStations ? "Type, stations" : "Type"}
+            {extrasOpen
+              ? t("common.hideExtras")
+              : hasStations
+                ? locale === "hi" ? "प्रकार, स्टेशन" : "Type, stations"
+                : t("map.type")}
           </button>
           {extrasOpen && (
             <div className="space-y-2">
               {typeName && (
                 <p className="text-[0.6875rem] text-faint">
                   {typeName}
-                  {!compact && " · moving now"}
+                  {!compact && ` · ${t("map.movingNow")}`}
                 </p>
               )}
               {hasStations && (
@@ -96,9 +102,9 @@ export function TrainCallout({
       <div className={cn("flex gap-2", compact && "mt-1")}>
         <Link
           href={`/trains/${train.number}`}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand py-2 text-[0.8125rem] text-on-brand transition-opacity hover:opacity-90"
+          className="btn btn-primary flex-1 py-2 text-[0.8125rem] transition-opacity hover:opacity-90"
         >
-          Full route
+          {t("trip.fullRoute")}
           <ArrowRight className="size-3.5" aria-hidden />
         </Link>
         {!compact && originCode && (
@@ -106,7 +112,7 @@ export function TrainCallout({
             href={`/?from=${originCode}`}
             className="flex items-center justify-center rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim hover:text-text"
           >
-            Search from here
+            {t("map.searchFromHere")}
           </Link>
         )}
       </div>

@@ -1,4 +1,5 @@
 import type { TrainType } from "@/lib/types";
+import { localizeTrainType } from "@/lib/railradar/trainTypes";
 
 export const TRAIN_TYPE_LABEL: Record<TrainType, string> = {
   rajdhani: "Rajdhani",
@@ -9,6 +10,10 @@ export const TRAIN_TYPE_LABEL: Record<TrainType, string> = {
   express: "Express",
   passenger: "Passenger",
 };
+
+export function trainTypeLabel(type: TrainType, locale: "en" | "hi"): string {
+  return localizeTrainType(TRAIN_TYPE_LABEL[type], locale);
+}
 
 export const TRAIN_TYPE_TONE: Record<TrainType, { color: string; chip: string }> = {
   rajdhani: { color: "var(--danger)", chip: "bg-danger-soft text-danger" },
@@ -47,7 +52,7 @@ export function TrainSilhouette({ type }: { type: TrainType }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -left-6 -top-3 w-[7.5rem] -rotate-[22deg] text-current opacity-[0.28] [@media(prefers-color-scheme:dark)]:opacity-[0.45] [[data-theme=dark]_&]:opacity-[0.45] [[data-theme=light]_&]:opacity-[0.28]"
+      className="pointer-events-none absolute -left-4 -top-2 w-[8.5rem] -rotate-[22deg] text-current opacity-[0.09]"
       style={{ color: TRAIN_TYPE_TONE[type].color }}
     >
       {renderBody(kind)}

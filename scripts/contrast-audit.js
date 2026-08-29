@@ -48,13 +48,45 @@ window.__audit = function () {
 
   const over = (top, bottom) => [0, 1, 2].map((i) => top[i] * top[3] + bottom[i] * (1 - top[3]));
 
+  /**
+   * Darkest colour stop in a gradient, if the element paints one.
+   *
+   * Scrims over photography are gradients, not background colours, and reading
+   * only `background-color` reported white-on-scrim text as white-on-card and
+   * failed it. Captions sit at the dark end of their scrim, so the most opaque
+   * stop is the honest backdrop to measure against. Approximate — it assumes
+   * the text is over the darkest part, which is how a scrim is built — but far
+   * closer than pretending the gradient is not there.
+   */
+  function gradientFloor(style) {
+    const image = style.backgroundImage;
+    if (!image || image === "none" || !/gradient/.test(image)) return null;
+    let darkest = null;
+    for (const match of image.matchAll(/rgba?\(([^)]+)\)/g)) {
+      const parts = match[1].split(/[\s,/]+/).filter(Boolean).map(Number);
+      if (parts.length < 3 || parts.some(Number.isNaN)) continue;
+      const rgba = [parts[0], parts[1], parts[2], parts[3] ?? 1];
+      if (rgba[3] < 0.05) continue;
+      const weight = rgba[3] * (1 - lum(rgba));
+      if (!darkest || weight > darkest.weight) darkest = { rgba, weight };
+    }
+    return darkest ? darkest.rgba : null;
+  }
+
   /** Effective background behind an element, compositing translucent layers. */
   function bgOf(el) {
     const layers = [];
     let node = el;
     while (node) {
-      const raw = getComputedStyle(node).backgroundColor;
-      const rgba = resolve(raw);
+      const style = getComputedStyle(node);
+
+      const scrim = gradientFloor(style);
+      if (scrim) {
+        layers.push(scrim);
+        if (scrim[3] > 0.99) break;
+      }
+
+      const rgba = resolve(style.backgroundColor);
       if (rgba && rgba[3] > 0.01) {
         layers.push(rgba);
         if (rgba[3] > 0.99) break;

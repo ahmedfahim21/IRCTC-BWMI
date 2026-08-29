@@ -2,6 +2,8 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+import type { Locale } from "@/lib/i18n/useLocale";
+
 export type ToolStatus = "calling" | "done" | "failed";
 
 export function toolStatus({ state, output }: { state: string; output: unknown }): ToolStatus {
@@ -11,7 +13,21 @@ export function toolStatus({ state, output }: { state: string; output: unknown }
   return "calling";
 }
 
-export function statusLabel(status: ToolStatus): string {
+export function statusLabel(status: ToolStatus, locale: Locale = "en"): string {
+  if (locale === "hi") {
+    switch (status) {
+      case "calling":
+        return "चल रहा है";
+      case "done":
+        return "पूरा";
+      case "failed":
+        return "विफल";
+      default: {
+        const _exhaustive: never = status;
+        return _exhaustive;
+      }
+    }
+  }
   switch (status) {
     case "calling":
       return "Calling";
@@ -26,12 +42,12 @@ export function statusLabel(status: ToolStatus): string {
   }
 }
 
-export function toolResultText(output: unknown): string | null {
+export function toolResultText(output: unknown, locale: Locale = "en"): string | null {
   if (!isRecord(output)) return null;
   if (typeof output.error === "string") return output.error;
   if (typeof output.detail === "string") return output.detail;
   if (typeof output.text === "string") return output.text;
-  if (typeof output.action === "string") return `Done: ${output.action}`;
+  if (typeof output.action === "string") return `${locale === "hi" ? "पूरा हुआ" : "Done"}: ${output.action}`;
   return null;
 }
 
@@ -58,29 +74,31 @@ export function stationMatches(output: unknown): StationMatch[] {
   return rows;
 }
 
-function primitiveLabel(value: unknown): string | null {
+function primitiveLabel(value: unknown, locale: Locale = "en"): string | null {
   if (typeof value === "string" || typeof value === "number") return String(value);
-  if (typeof value === "boolean") return value ? "on" : "off";
+  if (typeof value === "boolean") return value ? (locale === "hi" ? "चालू" : "on") : locale === "hi" ? "बंद" : "off";
   return null;
 }
 
 const HEADER_KEYS = ["query", "href", "number", "classCode", "pnr", "trainNumber", "coach"] as const;
 
-export function headerSummary(input: Record<string, unknown> | null): string {
+export function headerSummary(input: Record<string, unknown> | null, locale: Locale = "en"): string {
   if (!input) return "";
-  const from = primitiveLabel(input.from);
-  const to = primitiveLabel(input.to);
+  const from = primitiveLabel(input.from, locale);
+  const to = primitiveLabel(input.to, locale);
   if (from && to) return `${from} → ${to}`;
   for (const key of HEADER_KEYS) {
-    const label = primitiveLabel(input[key]);
+    const label = primitiveLabel(input[key], locale);
     if (!label) continue;
     if (key === "coach" && input.berth !== undefined) return `${label} · ${String(input.berth)}`;
     return label;
   }
-  if (Array.isArray(input.passengers)) return `${input.passengers.length} passengers`;
+  if (Array.isArray(input.passengers)) {
+    return locale === "hi" ? `${input.passengers.length} यात्री` : `${input.passengers.length} passengers`;
+  }
   const bits: string[] = [];
   for (const [key, value] of Object.entries(input)) {
-    const label = primitiveLabel(value);
+    const label = primitiveLabel(value, locale);
     if (!label) continue;
     bits.push(typeof value === "boolean" ? `${key.replaceAll("_", " ")} ${label}` : label);
     if (bits.length >= 3) break;

@@ -2,6 +2,7 @@
 
 import type { Coach, CoachType } from "@/lib/types";
 import type { PlatformPosition } from "@/lib/domain/platform";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 import { TrainFront } from "lucide-react";
 
@@ -32,9 +33,10 @@ export function CoachStrip({
   onSelect?: (coach: Coach) => void;
   className?: string;
 }) {
+  const { t, locale } = useLocale();
   return (
     <div className={cn("-mx-1 overflow-x-auto px-1 pb-1", className)}>
-      <ol className="flex items-center gap-1" aria-label="Coach order from the engine">
+      <ol className="flex items-center gap-1" aria-label={t("coach.orderAria")}>
         {rake.map((coach) => {
           const interactive = Boolean(onSelect) && coach.berthCount > 0;
           const Element = interactive ? "button" : "div";
@@ -44,8 +46,10 @@ export function CoachStrip({
                 {...(interactive ? { type: "button" as const, onClick: () => onSelect!(coach) } : {})}
                 aria-label={
                   coach.type === "ENG"
-                    ? "Engine"
-                    : `Coach ${coach.code}, ${coach.type}${coach.berthCount ? `, ${coach.berthCount} berths` : ""}`
+                    ? t("coach.engine")
+                    : locale === "hi"
+                      ? `कोच ${coach.code}, ${coach.type}${coach.berthCount ? `, ${coach.berthCount} बर्थ` : ""}`
+                      : `Coach ${coach.code}, ${coach.type}${coach.berthCount ? `, ${coach.berthCount} berths` : ""}`
                 }
                 className={cn(
                   "flex min-w-[2.75rem] flex-col items-center gap-0.5 rounded border px-1.5 py-1.5 transition-colors",
@@ -59,7 +63,7 @@ export function CoachStrip({
                   {coach.code}
                 </span>
                 <span className="text-[0.5625rem] leading-none opacity-70">
-                  {coach.type === "ENG" ? "loco" : coach.type}
+                  {coach.type === "ENG" ? t("coach.loco") : coach.type}
                 </span>
               </Element>
             </li>
@@ -85,6 +89,7 @@ export function PlatformDiagram({
   platform: number | null;
   highlightCoach?: string | null;
 }) {
+  const { t, locale } = useLocale();
   if (positions.length === 0) return null;
   const lengthM = positions[0].platformLengthM;
   const haulage = positions.filter((p) => p.coach.type !== "ENG");
@@ -103,10 +108,13 @@ export function PlatformDiagram({
         {platform !== null && (
           <>
             {" · "}
-            <span className="text-text">Platform {platform}</span>
+            <span className="text-text">{t("common.platform")} {platform}</span>
           </>
         )}
-        <span className="text-faint"> · {lengthM} m long</span>
+        <span className="text-faint">
+          {" · "}
+          {locale === "hi" ? `${lengthM} मी. लंबा` : `${lengthM} m long`}
+        </span>
       </p>
 
       <div className="relative rounded-lg border border-border bg-surface-2 px-3 pb-7 pt-8">
@@ -116,7 +124,7 @@ export function PlatformDiagram({
           style={{ left: `calc(${Math.max(6, Math.min(94, entryPercent))}% )` }}
         >
           <span className="whitespace-nowrap rounded bg-brand px-1.5 py-0.5 text-[0.5625rem] text-on-brand">
-            Foot-over-bridge
+            {t("coach.footOverBridge")}
           </span>
           <span className="h-2.5 w-px bg-brand" aria-hidden />
         </div>
@@ -139,8 +147,8 @@ export function PlatformDiagram({
         </div>
 
         <div className="absolute inset-x-3 bottom-2 flex justify-between text-[0.5625rem] text-faint">
-          <span>rear of platform</span>
-          <span>front of platform</span>
+          <span>{t("coach.rearOfPlatform")}</span>
+          <span>{t("coach.frontOfPlatform")}</span>
         </div>
       </div>
 

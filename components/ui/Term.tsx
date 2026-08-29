@@ -2,6 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { lookup } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "./cn";
 
 /**
@@ -19,7 +20,8 @@ export function Term({
   children?: React.ReactNode;
   className?: string;
 }) {
-  const entry = lookup(code);
+  const { locale } = useLocale();
+  const entry = lookup(code, locale);
   if (!entry) return <>{children ?? code}</>;
 
   return (

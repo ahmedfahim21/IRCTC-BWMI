@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ShieldCheck, TimerReset } from "lucide-react";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -10,6 +11,7 @@ import { cn } from "@/components/ui/cn";
  * is saved server-side and reloading brings you straight back to it.
  */
 export function HoldBanner({ holdExpiresAt, saving }: { holdExpiresAt: string; saving: boolean }) {
+  const { t } = useLocale();
   const [remaining, setRemaining] = useState(() => Date.parse(holdExpiresAt) - Date.now());
 
   useEffect(() => {
@@ -32,10 +34,10 @@ export function HoldBanner({ holdExpiresAt, saving }: { holdExpiresAt: string; s
       <span className={cn("flex items-center gap-1.5 text-[0.8125rem]", low && !expired ? "text-warn" : "text-dim")}>
         <TimerReset className="size-3.5" aria-hidden />
         {expired ? (
-          "Seat hold expired"
+          t("book.seatHoldExpired")
         ) : (
           <>
-            Seats held for{" "}
+            {t("book.seatsHeldFor")}{" "}
             <span className="tnum text-text">
               {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
             </span>
@@ -45,14 +47,10 @@ export function HoldBanner({ holdExpiresAt, saving }: { holdExpiresAt: string; s
 
       <span className="flex items-center gap-1.5 text-[0.75rem] text-faint">
         <ShieldCheck className="size-3.5 text-ok" aria-hidden />
-        {saving ? "Saving…" : "Saved — you can close this and come back"}
+        {saving ? t("book.savingEllipsis") : t("book.savedComeBack")}
       </span>
 
-      {expired && (
-        <span className="text-[0.75rem] text-dim">
-          Your details are still here. Availability will be re-checked when you confirm.
-        </span>
-      )}
+      {expired && <span className="text-[0.75rem] text-dim">{t("book.detailsStillHere")}</span>}
     </div>
   );
 }

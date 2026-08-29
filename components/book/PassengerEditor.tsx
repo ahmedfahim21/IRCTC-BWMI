@@ -2,6 +2,7 @@
 
 import { Plus, Trash2, Users } from "lucide-react";
 import type { BerthType, Passenger } from "@/lib/types";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 const SAVED_KEY = "irctc.savedPassengers";
@@ -51,6 +52,7 @@ export function PassengerEditor({
   maxPassengers?: number;
   selectionFor: (passenger: Passenger, index: number) => { coachCode: string; berthNumber: number; berthType: BerthType } | null;
 }) {
+  const { t, locale } = useLocale();
   const saved = readSaved().filter((s) => !passengers.some((p) => p.name === s.name));
 
   const update = (index: number, patch: Partial<Passenger>) =>
@@ -64,18 +66,18 @@ export function PassengerEditor({
           <div key={passenger.id} className="rounded-xl border border-border bg-surface-2 p-3">
             <div className="flex flex-wrap items-end gap-2">
               <label className="min-w-[9rem] flex-1">
-                <span className="eyebrow mb-1 block">Name</span>
+                <span className="eyebrow mb-1 block">{t("book.name")}</span>
                 <input
                   value={passenger.name}
                   onChange={(e) => update(index, { name: e.target.value })}
-                  placeholder="As on your ID"
+                  placeholder={t("book.asOnId")}
                   autoComplete="off"
                   className="h-10 w-full rounded-lg border border-border bg-surface px-2.5 text-[0.875rem] text-text outline-none transition-colors focus:border-brand placeholder:text-faint"
                 />
               </label>
 
               <label className="w-[4.5rem]">
-                <span className="eyebrow mb-1 block">Age</span>
+                <span className="eyebrow mb-1 block">{t("book.age")}</span>
                 <input
                   type="number"
                   min={1}
@@ -87,7 +89,7 @@ export function PassengerEditor({
               </label>
 
               <div>
-                <span className="eyebrow mb-1 block">Gender</span>
+                <span className="eyebrow mb-1 block">{t("book.gender")}</span>
                 <div className="flex gap-0.5 rounded-lg border border-border bg-surface p-0.5">
                   {(["male", "female", "other"] as const).map((gender) => (
                     <button
@@ -100,7 +102,7 @@ export function PassengerEditor({
                         passenger.gender === gender ? "bg-brand text-on-brand" : "text-dim hover:text-text"
                       )}
                     >
-                      {gender === "other" ? "Other" : gender === "male" ? "M" : "F"}
+                      {gender === "other" ? t("book.other") : gender === "male" ? "M" : "F"}
                     </button>
                   ))}
                 </div>
@@ -110,7 +112,7 @@ export function PassengerEditor({
                 <button
                   type="button"
                   onClick={() => onChange(passengers.filter((_, i) => i !== index))}
-                  aria-label={`Remove passenger ${index + 1}`}
+                  aria-label={`${t("book.removePassenger")} ${index + 1}`}
                   className="mb-0.5 flex size-10 items-center justify-center rounded-lg border border-border text-faint transition-colors hover:border-danger/40 hover:text-danger"
                 >
                   <Trash2 className="size-3.5" aria-hidden />
@@ -121,10 +123,10 @@ export function PassengerEditor({
             <p className="mt-2 text-[0.75rem] text-faint">
               {berth ? (
                 <span className="text-ok">
-                  Berth {berth.coachCode}/{berth.berthNumber} · {berth.berthType}
+                  {locale === "hi" ? "बर्थ" : "Berth"} {berth.coachCode}/{berth.berthNumber} · {berth.berthType}
                 </span>
               ) : (
-                "No berth chosen yet — pick one on the coach map above, or leave it and we'll allot the best free berth."
+                t("book.noBerthYet")
               )}
             </p>
           </div>
@@ -139,7 +141,7 @@ export function PassengerEditor({
             className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:border-border-strong hover:text-text"
           >
             <Plus className="size-3.5" aria-hidden />
-            Add passenger
+            {t("book.addPassenger")}
           </button>
         )}
 
@@ -147,7 +149,7 @@ export function PassengerEditor({
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="flex items-center gap-1.5 text-[0.6875rem] text-faint">
               <Users className="size-3" aria-hidden />
-              Saved
+              {t("book.saved")}
             </span>
             {saved.slice(0, 4).map((person) => (
               <button
@@ -167,7 +169,9 @@ export function PassengerEditor({
 
       {passengers.length >= maxPassengers && (
         <p className="text-[0.6875rem] text-faint">
-          One ticket covers up to {maxPassengers} passengers. Book a second ticket for more.
+          {locale === "hi"
+            ? `एक टिकट पर अधिकतम ${maxPassengers} यात्री। ज़्यादा के लिए दूसरा टिकट बुक करें।`
+            : `One ticket covers up to ${maxPassengers} passengers. Book a second ticket for more.`}
         </p>
       )}
     </div>

@@ -21,13 +21,6 @@ import {
 } from "@/lib/geo/slippy";
 
 
-function currentTheme(): "dark" | "light" {
-  if (typeof document === "undefined") return "dark";
-  const attr = document.documentElement.getAttribute("data-theme");
-  if (attr === "light" || attr === "dark") return attr;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -71,7 +64,6 @@ export function SlippyRasterMap({
   const animRef = useRef<number | null>(null);
   const readyRef = useRef(false);
 
-  const [theme, setTheme] = useState<"dark" | "light">(currentTheme);
   const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
@@ -121,7 +113,7 @@ export function SlippyRasterMap({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = theme === "dark" ? "#1c1917" : "#f5f5f5";
+    ctx.fillStyle = "#f5f5f5";
     ctx.fillRect(0, 0, width, height);
 
     const { centerLng, centerLat, zoom } = viewRef.current;
@@ -169,7 +161,7 @@ export function SlippyRasterMap({
       }
     }
 
-    const stroke = theme === "dark" ? "rgba(245,245,245,0.55)" : "rgba(28,25,23,0.55)";
+    const stroke = "rgba(28,25,23,0.55)";
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 1.4;
     ctx.beginPath();
@@ -186,7 +178,7 @@ export function SlippyRasterMap({
       readyRef.current = true;
       setReady(true);
     }
-  }, [theme]);
+  }, []);
 
   const stopAnim = useCallback(() => {
     if (animRef.current != null) {
@@ -313,18 +305,6 @@ export function SlippyRasterMap({
   }, [paint, tick]);
 
   useEffect(() => {
-    const onTheme = () => setTheme(currentTheme());
-    const observer = new MutationObserver(onTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", onTheme);
-    return () => {
-      observer.disconnect();
-      media.removeEventListener("change", onTheme);
-    };
-  }, []);
-
-  useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onChange = () => setReducedMotion(media.matches);
     onChange();
@@ -397,7 +377,6 @@ export function SlippyRasterMap({
     () => ({
       ready,
       viewEpoch,
-      theme,
       reducedMotion,
       project,
       flyTo,
@@ -405,7 +384,7 @@ export function SlippyRasterMap({
       fitBounds,
       zoomBy,
     }),
-    [ready, viewEpoch, theme, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
+    [ready, viewEpoch, reducedMotion, project, flyTo, fitIndia, fitBounds, zoomBy]
   );
 
   return (

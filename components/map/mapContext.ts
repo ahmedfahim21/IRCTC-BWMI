@@ -6,7 +6,6 @@ export interface RailMapApi {
   ready: boolean;
   /** Increments on pan/zoom/resize so HTML overlays stay pinned to the view. */
   viewEpoch: number;
-  theme: "dark" | "light";
   reducedMotion: boolean;
   project: (lng: number, lat: number) => { x: number; y: number } | null;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
