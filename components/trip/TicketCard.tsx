@@ -31,7 +31,13 @@ export function TicketCard({
 }) {
   return (
     <div className={cn("card overflow-hidden", booking.status === "cancelled" && "opacity-70")}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border px-4 py-3">
+      {/*
+        * The dashed rules are perforations, so they get the die-cut notches a
+        * real ticket has — two half-moons punched out of the card edge. The
+        * card's overflow-hidden clips them to semicircles.
+        */}
+      <div className="relative flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-border px-4 py-3">
+        <Notches />
         <div>
           <p className="eyebrow inline-flex items-center gap-1.5">
             <Ticket className="size-3 text-faint" aria-hidden />
@@ -92,12 +98,23 @@ export function TicketCard({
         ))}
       </ul>
 
-      <div className="border-t border-dashed border-border px-4 pb-3 pt-3.5">
+      <div className="relative border-t border-dashed border-border px-4 pb-3 pt-3.5">
+        <Notches side="top" />
         <Barcode value={booking.pnr} />
         <p className="mt-2 text-center text-[0.625rem] text-faint">
           Show this to the ticket examiner. Works without a network.
         </p>
       </div>
     </div>
+  );
+}
+
+function Notches({ side = "bottom" }: { side?: "top" | "bottom" }) {
+  const y = side === "bottom" ? "-bottom-[7px]" : "-top-[7px]";
+  return (
+    <>
+      <span aria-hidden className={`absolute -left-[7px] ${y} z-10 size-3.5 rounded-full border border-border bg-bg`} />
+      <span aria-hidden className={`absolute -right-[7px] ${y} z-10 size-3.5 rounded-full border border-border bg-bg`} />
+    </>
   );
 }
