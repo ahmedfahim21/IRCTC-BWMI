@@ -8,6 +8,7 @@ import type { Berth, BookingDraft, Passenger } from "@/lib/types";
 import { api, ApiError } from "@/lib/apiClient";
 import { formatDateShort, formatMinute, formatWeekday, journeyInstant } from "@/lib/domain/time";
 import { explainStatus } from "@/lib/glossary";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { CoachStrip } from "@/components/coach/CoachStrip";
 import { BerthMap, type BerthSelection } from "@/components/coach/BerthMap";
 import { PassengerEditor, blankPassenger, saveRoster } from "@/components/book/PassengerEditor";
@@ -25,6 +26,7 @@ import type { BerthType } from "@/lib/types";
 export function BookingFlow({ draftId }: { draftId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t, locale } = useLocale();
 
   const [passengers, setPassengers] = useState<Passenger[]>([]);
   const [selections, setSelections] = useState<BerthSelection[]>([]);
@@ -219,7 +221,13 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     },
     onError: (cause) => {
       setQueuePosition(null);
-      setConfirmError(cause instanceof ApiError ? cause.message : "Could not complete this booking");
+      setConfirmError(
+        cause instanceof ApiError
+          ? cause.message
+          : locale === "hi"
+            ? "यह बुकिंग पूरी नहीं हो सकी"
+            : "Could not complete this booking"
+      );
     },
   });
 
@@ -328,13 +336,19 @@ export function BookingFlow({ draftId }: { draftId: string }) {
   if (isError || !draft)
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <ErrorState error={error ?? new Error("This booking draft is no longer available")} onRetry={() => refetch()} />
+        <ErrorState
+          error={
+            error ??
+            new Error(locale === "hi" ? "यह बुकिंग ड्राफ्ट अब उपलब्ध नहीं है" : "This booking draft is no longer available")
+          }
+          onRetry={() => refetch()}
+        />
         <button
           type="button"
           onClick={() => router.push("/")}
           className="mt-3 text-[0.8125rem] text-brand underline decoration-dotted underline-offset-2"
         >
-          Start a new search
+          {t("book.startNewSearch")}
         </button>
       </div>
     );
@@ -360,7 +374,11 @@ export function BookingFlow({ draftId }: { draftId: string }) {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-4 px-4 py-20 sm:px-6">
         <BookingQueue position={Math.max(1, queuePosition)} total={4200} />
-        <p className="text-center text-[0.75rem] text-faint">Confirming {namedPassengers.length} passenger{namedPassengers.length === 1 ? "" : "s"} on {train.number}</p>
+        <p className="text-center text-[0.75rem] text-faint">
+          {locale === "hi"
+            ? `${train.number} पर ${namedPassengers.length} यात्री${namedPassengers.length === 1 ? "" : "यों"} की बुकिंग कन्फ़र्म हो रही है`
+            : `${t("book.confirming")} ${namedPassengers.length} passenger${namedPassengers.length === 1 ? "" : "s"} on ${train.number}`}
+        </p>
       </div>
     );
   }
@@ -382,15 +400,15 @@ export function BookingFlow({ draftId }: { draftId: string }) {
           <span className="text-dim">{stations[draft.toCode]?.name}</span>
         </div>
         <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[0.75rem] text-faint">
-          <span>{formatWeekday(draft.journeyDate)} {formatDateShort(draft.journeyDate)}</span>
+          <span>{formatWeekday(draft.journeyDate, locale)} {formatDateShort(draft.journeyDate, locale)}</span>
           <span>·</span>
           <span className="font-mono">{draft.classCode}</span>
           <span>·</span>
-          <span>{draft.quota} quota</span>
+          <span>{draft.quota} {t("search.quota").toLowerCase()}</span>
           {fromStop?.platform && (
             <>
               <span>·</span>
-              <span>Platform {fromStop.platform}</span>
+              <span>{t("common.platform")} {fromStop.platform}</span>
             </>
           )}
         </p>
@@ -413,7 +431,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div className="min-w-0 space-y-4">
           <section className="card p-4">
-            <h2 className="mb-1 text-[0.9375rem] text-text">Choose your berth</h2>
+            <h2 className="mb-1 text-[0.9375rem] text-text">{t("coach.chooseTitle")}</h2>
             {availability && (
               <p className="mb-3 text-[0.8125rem] text-dim">
                 <span
@@ -424,7 +442,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
                 >
                   {availability.label}
                 </span>
-                <span className="ml-2 text-faint">{explainStatus(availability.label)}</span>
+                <span className="ml-2 text-faint">{explainStatus(availability.label, locale)}</span>
               </p>
             )}
 
@@ -434,9 +452,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
                   <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border bg-surface-2 p-3">
                     <Info className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
                     <p className="text-[0.8125rem] leading-relaxed text-dim">
-                      {availability?.state === "rac"
-                        ? "RAC tickets share a side berth, so you can't claim one yet. The diagram still shows the coach."
-                        : "This class is waitlisted, so you can't claim a berth yet. The diagram still shows the coach."}
+                      {availability?.state === "rac" ? t("coach.racCantClaim") : t("coach.waitlistCantClaim")}
                     </p>
                   </div>
                 )}
@@ -462,7 +478,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
           </section>
 
           <section className="card p-4">
-            <h2 className="mb-3 text-[0.9375rem] text-text">Who&rsquo;s travelling</h2>
+            <h2 className="mb-3 text-[0.9375rem] text-text">{t("coach.whosTravelling")}</h2>
             <PassengerEditor
               passengers={passengers}
               onChange={(next) => {
@@ -480,26 +496,26 @@ export function BookingFlow({ draftId }: { draftId: string }) {
 
             <div className="mt-4 space-y-2 border-t border-border pt-3.5">
               <Toggle
-                label="Keep us in the same coach"
-                hint="Where there's room for everyone together"
+                label={t("book.keepTogether")}
+                hint={t("book.keepTogetherHint")}
                 checked={options.keepTogether}
                 onChange={(keepTogether) => setOptions({ ...options, keepTogether })}
               />
               <Toggle
-                label="Add meals"
-                hint={train.hasPantry ? "Ordered to your seat from the pantry car" : "Delivered to your seat at a station en route"}
+                label={t("book.addMeals")}
+                hint={train.hasPantry ? t("book.addMealsPantryHint") : t("book.addMealsStationHint")}
                 checked={options.addMeals}
                 onChange={(addMeals) => setOptions({ ...options, addMeals })}
               />
               <Toggle
-                label="Travel insurance"
-                hint="₹0.45 per passenger"
+                label={t("book.insurance")}
+                hint={t("book.insuranceHint")}
                 checked={options.travelInsurance}
                 onChange={(travelInsurance) => setOptions({ ...options, travelInsurance })}
               />
               <Toggle
-                label="Auto-upgrade if a higher class has space"
-                hint="No extra charge if it happens"
+                label={t("book.autoUpgrade")}
+                hint={t("book.autoUpgradeHint")}
                 checked={options.autoUpgrade}
                 onChange={(autoUpgrade) => setOptions({ ...options, autoUpgrade })}
               />
@@ -507,20 +523,20 @@ export function BookingFlow({ draftId }: { draftId: string }) {
           </section>
 
           <section className="card p-4">
-            <h2 className="mb-3 text-[0.9375rem] text-text">Where to send the ticket</h2>
+            <h2 className="mb-3 text-[0.9375rem] text-text">{t("coach.sendTicket")}</h2>
             <div className="flex flex-wrap gap-2">
               <label className="min-w-[9rem] flex-1">
-                <span className="eyebrow mb-1 block">Mobile</span>
+                <span className="eyebrow mb-1 block">{t("coach.mobile")}</span>
                 <input
                   value={contact.phone}
                   onChange={(e) => setContact({ ...contact, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
                   inputMode="numeric"
-                  placeholder="10 digits"
+                  placeholder={t("coach.tenDigits")}
                   className="tnum h-10 w-full rounded-lg border border-border bg-surface px-2.5 text-[0.875rem] text-text outline-none transition-colors focus:border-brand placeholder:text-faint"
                 />
               </label>
               <label className="min-w-[11rem] flex-[2]">
-                <span className="eyebrow mb-1 block">Email (optional)</span>
+                <span className="eyebrow mb-1 block">{t("coach.emailOptional")}</span>
                 <input
                   value={contact.email}
                   onChange={(e) => setContact({ ...contact, email: e.target.value })}
@@ -535,7 +551,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
 
         <aside className="min-w-0 space-y-3 lg:sticky lg:top-[4.5rem]">
           <div className="card p-4">
-            <h2 className="mb-3 text-[0.9375rem] text-text">What you&rsquo;ll pay</h2>
+            <h2 className="mb-3 text-[0.9375rem] text-text">{t("book.whatYoullPay")}</h2>
             {availability ? (
               <FareSummary
                 fare={{ ...availability.fare, total: totalFare, baseFare: availability.fare.baseFare * Math.max(1, passengers.length) }}
@@ -559,19 +575,17 @@ export function BookingFlow({ draftId }: { draftId: string }) {
               className="btn btn-primary h-12 w-full text-[0.9375rem]"
             >
               <Check className="size-4" aria-hidden />
-              Confirm and pay {formatRupees(totalFare)}
+              {t("book.confirmAndPay")} {formatRupees(totalFare)}
             </button>
 
             <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[0.6875rem] text-faint">
               <Lock className="size-3" aria-hidden />
-              No CAPTCHA. No session timeout.
+              {t("book.noCaptcha")}
             </p>
 
             {!ready && (
               <p className="mt-2 text-center text-[0.75rem] text-warn">
-                {namedPassengers.length !== passengers.length
-                  ? "Every passenger needs a name"
-                  : "Add a mobile number so we can send the ticket"}
+                {namedPassengers.length !== passengers.length ? t("book.everyoneNeedsName") : t("book.needMobile")}
               </p>
             )}
 

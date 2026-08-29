@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -20,6 +21,7 @@ export function TatkalPanel({
   onArm: (armed: boolean) => void;
   armed: boolean;
 }) {
+  const { t, locale } = useLocale();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -38,13 +40,30 @@ export function TatkalPanel({
     <div className={cn("rounded-xl border p-3.5", armed ? "border-warn/50 bg-warn-soft" : "border-border bg-surface-2")}>
       <div className="mb-2 flex items-center gap-2">
         <Zap className={cn("size-4", armed ? "text-warn" : "text-faint")} aria-hidden />
-        <span className="text-[0.875rem] text-text">Tatkal Ready</span>
-        {armed && <span className="ml-auto rounded bg-warn px-1.5 py-0.5 text-[0.625rem] text-[color:var(--surface)]">Armed</span>}
+        <span className="text-[0.875rem] text-text">{t("book.tatkalReady")}</span>
+        {armed && (
+          <span className="ml-auto rounded bg-warn px-1.5 py-0.5 text-[0.625rem] text-[color:var(--surface)]">
+            {t("book.armed")}
+          </span>
+        )}
       </div>
 
       <p className="mb-3 text-[0.8125rem] leading-relaxed text-dim">
         {open ? (
-          <>Tatkal booking for {classCode} is open now. Confirm below — everything is already filled in.</>
+          locale === "hi" ? (
+            <>{classCode} के लिए तत्काल बुकिंग अभी खुली है। नीचे कन्फ़र्म करें — सब कुछ पहले से भरा है।</>
+          ) : (
+            <>Tatkal booking for {classCode} is open now. Confirm below — everything is already filled in.</>
+          )
+        ) : locale === "hi" ? (
+          <>
+            {classCode} के लिए तत्काल{" "}
+            <span className="tnum text-text">
+              {hours > 0 && `${hours}घं `}
+              {String(minutes).padStart(2, "0")}मि {String(seconds).padStart(2, "0")}से
+            </span>{" "}
+            में खुलेगा। अभी सब भर दें और खुलते ही बुकिंग सिर्फ़ एक टैप की रह जाएगी।
+          </>
         ) : (
           <>
             Tatkal for {classCode} opens in{" "}
@@ -67,7 +86,7 @@ export function TatkalPanel({
             : "border-border-strong text-text hover:bg-surface-3"
         )}
       >
-        {armed ? "Disarm" : "Save this as Tatkal Ready"}
+        {armed ? t("book.disarm") : t("book.saveAsTatkalReady")}
       </button>
     </div>
   );
@@ -78,18 +97,21 @@ export function TatkalPanel({
  * that implies progress it can't know about.
  */
 export function BookingQueue({ position, total }: { position: number; total: number }) {
+  const { t, locale } = useLocale();
   const progress = Math.max(2, Math.round(((total - position) / total) * 100));
   return (
     <div className="rounded-xl border border-border bg-surface-2 p-4 text-center" role="status" aria-live="polite">
       <p className="tnum text-[1.75rem] leading-none text-text">#{position.toLocaleString("en-IN")}</p>
       <p className="mt-1.5 text-[0.8125rem] text-dim">
-        in the queue, of {total.toLocaleString("en-IN")} people booking this train right now
+        {t("book.inTheQueueOf")} {total.toLocaleString("en-IN")} {t("book.peopleBookingNow")}
       </p>
       <div className="mx-auto mt-3 h-1.5 max-w-xs overflow-hidden rounded-full bg-surface-3">
         <div className="h-full rounded-full bg-brand transition-[width] duration-700" style={{ width: `${progress}%` }} />
       </div>
       <p className="mt-2.5 text-[0.75rem] text-faint">
-        Roughly {Math.max(1, Math.ceil(position / 140))} seconds left. Your place is held — don&rsquo;t reload.
+        {locale === "hi"
+          ? `लगभग ${Math.max(1, Math.ceil(position / 140))} सेकंड बचे हैं। ${t("book.dontReload")}`
+          : `Roughly ${Math.max(1, Math.ceil(position / 140))} seconds left. ${t("book.dontReload")}`}
       </p>
     </div>
   );
