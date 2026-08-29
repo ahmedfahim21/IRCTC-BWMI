@@ -30,6 +30,16 @@ export default defineConfig({
      * would spend the monthly request budget on every run and make assertions
      * depend on what the railway is doing today.
      */
-    env: { ...(process.env as Record<string, string>), RAILRADAR_API_KEY: "", SARVAM_API_KEY: "", ANTHROPIC_API_KEY: "", CHAT_FAKE: "1", NEXT_DIST_DIR: ".next-e2e" },
+    env: {
+      ...(process.env as Record<string, string>),
+      RAILRADAR_API_KEY: "",
+      SARVAM_API_KEY: "",
+      ANTHROPIC_API_KEY: "",
+      AWS_BEARER_TOKEN_BEDROCK: "",
+      AWS_ACCESS_KEY_ID: "",
+      AWS_SECRET_ACCESS_KEY: "",
+      CHAT_FAKE: "1",
+      NEXT_DIST_DIR: ".next-e2e",
+    },
   },
 });

@@ -5,7 +5,7 @@ import { buildChatSystemPrompt } from "@/lib/agent/prompt";
 import type { AgentAppState } from "@/lib/agent/agentStore";
 
 describe("scripted chat planner", () => {
-  it("uses the scripted path when the Anthropic key is absent", () => {
+  it("uses the scripted path when live-chat credentials are absent", () => {
     expect(useFakeChat()).toBe(true);
   });
   it("resolves New Delhi to NDLS for search", () => {

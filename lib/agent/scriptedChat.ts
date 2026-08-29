@@ -1,5 +1,6 @@
 import { createUIMessageStream, createUIMessageStreamResponse, getToolName, isToolUIPart } from "ai";
 import { TOOLS, toolByName } from "@/lib/mcp/tools";
+import { hasLiveChatCredentials } from "@/lib/agent/chatBackend";
 import { todayIso, addDays } from "@/lib/domain/time";
 import { isUiAction } from "./uiActions";
 
@@ -122,7 +123,8 @@ type Step =
 
 /**
  * Canned sequences against the real MCP tools and UI actions. Used when
- * ANTHROPIC_API_KEY is absent or CHAT_FAKE=1 so Playwright can drive the
+ * Live-chat credentials for the active provider are absent or CHAT_FAKE=1 so
+ * Playwright can drive the
  * lifecycle without spending tokens or depending on the model.
  */
 export function planFromTranscript(text: string, session: SearchSession = defaultSession()): Step[] {
@@ -396,5 +398,5 @@ export async function scriptedChatResponse(body: unknown): Promise<Response> {
 }
 
 export function useFakeChat(): boolean {
-  return !process.env.ANTHROPIC_API_KEY || process.env.CHAT_FAKE === "1";
+  return !hasLiveChatCredentials() || process.env.CHAT_FAKE === "1";
 }
