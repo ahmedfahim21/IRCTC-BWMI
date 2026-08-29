@@ -11,6 +11,7 @@ import { ClassCell, formatRupees } from "./ClassCell";
 import { TrainSilhouette, TRAIN_TYPE_LABEL, TRAIN_TYPE_TONE } from "./TrainSilhouette";
 import { api } from "@/lib/apiClient";
 import { cn } from "@/components/ui/cn";
+import { RouteGlyph } from "@/components/rail/RouteGlyph";
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -82,11 +83,10 @@ export function JourneyRow({
     <article
       className={cn(
         "overflow-hidden transition-colors",
-        flush ? "border-b border-border last:border-b-0" : "card border-l-[3px]",
+        flush ? "border-b border-border last:border-b-0" : "card transition-shadow hover:border-border-strong",
         !journey.runsToday && "opacity-55",
-        selected && (flush ? "bg-brand-soft" : "border-brand")
+        selected && (flush ? "bg-brand-soft" : "border-brand shadow-[var(--shadow-md)]")
       )}
-      style={flush ? undefined : { borderLeftColor: TRAIN_TYPE_TONE[train.type].color }}
       aria-label={`${train.number} ${train.name}`}
       aria-current={selected ? "true" : undefined}
       onClick={onSelect}
@@ -116,9 +116,9 @@ export function JourneyRow({
             <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{journey.fromCode}</p>
           </div>
 
-          <div className="w-[5.25rem] shrink-0 pb-1">
-            <p className="mb-1 text-center text-[0.6875rem] text-faint">{formatDuration(journey.durationMins)}</p>
-            <div className="h-0.5 rounded-full bg-brand" aria-hidden />
+          <div className="w-[5.25rem] shrink-0 pb-1.5">
+            <p className="mb-1.5 text-center text-[0.6875rem] text-faint">{formatDuration(journey.durationMins)}</p>
+            <RouteGlyph />
           </div>
 
           <div className="min-w-[4.5rem] text-right">
