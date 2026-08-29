@@ -25,7 +25,7 @@ export function QuotaPicker({
           type="button"
           disabled={disabled}
           aria-disabled={disabled}
-          className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border"
+          className="field flex items-center gap-1.5 rounded-lg px-3 py-2 text-[0.8125rem] text-dim hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
         >
           <span className="text-faint">Quota</span>
           <span className="text-text">{GLOSSARY[value].short}</span>

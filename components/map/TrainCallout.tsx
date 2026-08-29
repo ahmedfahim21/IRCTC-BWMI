@@ -96,7 +96,7 @@ export function TrainCallout({
       <div className={cn("flex gap-2", compact && "mt-1")}>
         <Link
           href={`/trains/${train.number}`}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand py-2 text-[0.8125rem] text-on-brand transition-opacity hover:opacity-90"
+          className="btn btn-primary flex-1 py-2 text-[0.8125rem] transition-opacity hover:opacity-90"
         >
           Full route
           <ArrowRight className="size-3.5" aria-hidden />

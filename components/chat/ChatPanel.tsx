@@ -389,7 +389,7 @@ export function ChatPanel() {
               type="submit"
               disabled={busy || pendingTools || micBusy || mic.listening || !input.trim()}
               aria-label="Send message"
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand text-on-brand disabled:opacity-40"
+              className="btn btn-primary size-10 shrink-0 disabled:opacity-40"
             >
               <Send className="size-4" aria-hidden />
             </button>

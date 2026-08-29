@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, LocateFixed, Loader2, TrainFront } from "lucide-react";
+import { ArrowUpRight, LocateFixed, Loader2 } from "lucide-react";
 import { DESTINATIONS } from "@/lib/destinations";
 import { addDays, todayIso } from "@/lib/domain/time";
 import { useOrigin } from "@/lib/location/useOrigin";
@@ -25,7 +25,7 @@ export function Destinations({ className }: { className?: string }) {
     <section className={cn("mx-auto max-w-6xl px-4 sm:px-6 lg:px-8", className)} aria-labelledby="destinations-heading">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="destinations-heading" className="text-[1.25rem] tracking-[-0.02em] text-text sm:text-[1.5rem]">
+          <h2 id="destinations-heading" className="font-display text-[1.375rem] text-text sm:text-[1.625rem]">
             Worth the journey
           </h2>
           <p className="mt-1 text-[0.875rem] text-dim">
@@ -42,7 +42,7 @@ export function Destinations({ className }: { className?: string }) {
               type="button"
               onClick={useMyLocation}
               disabled={locating}
-              className="ml-1 inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[0.6875rem] text-dim transition-colors hover:border-border-strong hover:text-text disabled:opacity-60"
+              className="btn ml-1 gap-1 border border-border bg-surface px-2 py-0.5 text-[0.6875rem] text-dim hover:border-border-strong hover:text-text disabled:opacity-60"
             >
               {locating ? <Loader2 className="size-3 animate-spin" aria-hidden /> : <LocateFixed className="size-3" aria-hidden />}
               {source === "coords" ? "Update" : "Use my location"}
@@ -53,7 +53,7 @@ export function Destinations({ className }: { className?: string }) {
             type="button"
             onClick={useMyLocation}
             disabled={locating}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-[0.75rem] text-dim transition-colors hover:border-border-strong hover:text-text disabled:opacity-60"
+            className="btn btn-secondary gap-1.5 px-3 py-1.5 text-[0.75rem] text-dim hover:text-text"
           >
             {locating ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <LocateFixed className="size-3.5" aria-hidden />}
             Find my nearest station
@@ -112,23 +112,22 @@ export function Destinations({ className }: { className?: string }) {
                 </div>
               </div>
 
-              <div className="p-4">
-                <div className="flex items-start gap-2.5">
-                  <TrainFront className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[0.8125rem] text-text">
-                      Alight at {destination.railheadName}{" "}
-                      <span className="tnum font-mono text-[0.6875rem] text-faint">{destination.railhead}</span>
-                    </p>
-                    <p className="mt-0.5 text-[0.75rem] leading-relaxed text-faint">
-                      {destination.lastLeg ? `Then ${destination.lastLeg}.` : "The station is the destination."}
-                    </p>
-                  </div>
+              {/* A caption, set like one: label, station, then the last leg. */}
+              <div className="px-4 pb-3.5 pt-3">
+                <p className="text-[0.625rem] uppercase tracking-[0.09em] text-faint">Alight at</p>
+                <div className="mt-1 flex items-baseline justify-between gap-3">
+                  <p className="min-w-0 truncate text-[0.875rem] text-text">
+                    {destination.railheadName}{" "}
+                    <span className="tnum font-mono text-[0.6875rem] text-faint">{destination.railhead}</span>
+                  </p>
                   <ArrowUpRight
-                    className="mt-0.5 size-4 shrink-0 text-faint transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand"
+                    className="size-4 shrink-0 self-center text-faint transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand"
                     aria-hidden
                   />
                 </div>
+                <p className="mt-1 border-t border-border pt-1.5 text-[0.75rem] leading-relaxed text-faint">
+                  {destination.lastLeg ? `Then ${destination.lastLeg}.` : "The station is the destination."}
+                </p>
               </div>
             </Link>
           </li>

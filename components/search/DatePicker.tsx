@@ -137,7 +137,7 @@ export function DatePicker({
           type="button"
           disabled={disabled}
           aria-label="Journey date"
-          className="inline-flex h-11 min-w-[10.5rem] items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-text disabled:opacity-50"
+          className="field inline-flex h-11 min-w-[10.5rem] items-center gap-2 rounded-xl px-3 text-left text-sm text-text disabled:opacity-50"
         >
           <Calendar className="size-4 shrink-0 text-dim" aria-hidden />
           <span className="truncate">{formatTrigger(date)}</span>

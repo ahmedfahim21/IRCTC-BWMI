@@ -19,7 +19,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-[0.8125rem] text-text transition-colors hover:bg-surface-2"
+          className="btn btn-secondary px-3.5 py-1.5 text-[0.8125rem]"
         >
           <RotateCw className="size-3.5" aria-hidden />
           Try again

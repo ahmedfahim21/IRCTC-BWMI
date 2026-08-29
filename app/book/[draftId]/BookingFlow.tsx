@@ -556,7 +556,7 @@ export function BookingFlow({ draftId }: { draftId: string }) {
                 setConfirmError(null);
                 confirm.mutate();
               }}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn btn-primary h-12 w-full text-[0.9375rem]"
             >
               <Check className="size-4" aria-hidden />
               Confirm and pay {formatRupees(totalFare)}

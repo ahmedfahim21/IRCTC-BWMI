@@ -189,7 +189,7 @@ export function SearchForm({
           <button
             type="submit"
             disabled={!canSearch}
-            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn btn-primary h-11 shrink-0 px-6 text-[0.9375rem]"
           >
             <Search className="size-4" aria-hidden />
             {t("search.submit")}
@@ -216,7 +216,7 @@ export function SearchForm({
         <button
           type="submit"
           disabled={!canSearch}
-          className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[0.9375rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn btn-primary mt-4 h-12 w-full text-[0.9375rem]"
         >
           <Search className="size-4" aria-hidden />
           {t("search.submit")}
@@ -275,7 +275,7 @@ export function SearchForm({
       <button
         type="submit"
         disabled={!canSearch}
-        className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-brand text-[1rem] text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn btn-primary mt-6 h-14 w-full text-[1rem]"
       >
         <Search className="size-4" aria-hidden />
         {t("search.submit")}

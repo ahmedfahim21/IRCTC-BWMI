@@ -203,14 +203,14 @@ export function TripDetail({ pnr }: { pnr: string }) {
                     type="button"
                     onClick={() => cancel.mutate()}
                     disabled={cancel.isPending}
-                    className="flex-1 rounded-lg bg-danger px-3 py-2 text-[0.8125rem] text-[color:var(--surface)] transition-opacity hover:opacity-90 disabled:opacity-50"
+                    className="btn flex-1 bg-danger px-3 py-2 text-[0.8125rem] text-[color:var(--surface)] hover:opacity-90 disabled:opacity-50"
                   >
                     {cancel.isPending ? "Cancelling…" : "Yes, cancel"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmingCancel(false)}
-                    className="rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:border-border-strong"
+                    className="btn btn-secondary px-4 py-2 text-[0.8125rem] text-dim"
                   >
                     Keep it
                   </button>
@@ -219,7 +219,7 @@ export function TripDetail({ pnr }: { pnr: string }) {
                 <button
                   type="button"
                   onClick={() => setConfirmingCancel(true)}
-                  className="w-full rounded-lg border border-border px-3 py-2 text-[0.8125rem] text-dim transition-colors hover:border-danger/40 hover:text-danger"
+                  className="btn w-full border border-border bg-surface px-3 py-2 text-[0.8125rem] text-dim hover:border-danger/40 hover:text-danger"
                 >
                   Cancel ticket
                 </button>

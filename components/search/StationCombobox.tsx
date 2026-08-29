@@ -140,9 +140,8 @@ export function StationCombobox({
       <div ref={wrapRef} className="relative min-w-0 w-full">
       <div
         className={cn(
-          "flex items-center gap-2.5 border bg-surface transition-colors",
-          compact ? "rounded-lg px-3" : "rounded-xl px-3.5",
-          open ? "border-brand" : "border-border hover:border-border-strong"
+          "field flex items-center gap-2.5",
+          compact ? "rounded-lg px-3" : "rounded-xl px-3.5"
         )}
       >
         <span className="shrink-0 text-faint" aria-hidden>
