@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Ticket } from "lucide-react";
 import { api } from "@/lib/apiClient";
-import { formatMinute, formatWeekday, todayIso } from "@/lib/domain/time";
+import { formatMinute, formatMonthShort, formatWeekday, todayIso } from "@/lib/domain/time";
 import { RouteGlyph } from "@/components/rail/RouteGlyph";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -20,7 +20,7 @@ const STATUS_TONE = {
 
 export default function TripsPage() {
   const today = todayIso();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["bookings"],
     queryFn: ({ signal }) => api.bookings(signal),
@@ -40,7 +40,7 @@ export default function TripsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6">
       <header className="mb-8">
-        <p className="eyebrow mb-2">Your journeys</p>
+        <p className="eyebrow mb-2">{t("trips.eyebrow")}</p>
         <h1 className="font-display text-[1.75rem] leading-none">{t("trips.title")}</h1>
       </header>
 
@@ -54,8 +54,8 @@ export default function TripsPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          <Section title={t("trips.upcoming")} bookings={upcoming} stations={data.stations} empty="Nothing booked ahead." />
-          <Section title={t("trips.past")} bookings={past} stations={data.stations} empty="Nothing here yet." />
+          <Section title={t("trips.upcoming")} bookings={upcoming} stations={data.stations} empty={t("trips.emptyUpcoming")} />
+          <Section title={t("trips.past")} bookings={past} stations={data.stations} empty={t("trips.emptyPast")} />
         </div>
       )}
     </div>
@@ -73,6 +73,7 @@ function Section({
   stations: Record<string, import("@/lib/types").Station>;
   empty: string;
 }) {
+  const { t, locale } = useLocale();
   return (
     <section>
       <h2 className="eyebrow mb-3">{title}</h2>
@@ -93,7 +94,7 @@ function Section({
                     <span className="min-w-0 flex-1 truncate text-[0.9375rem] text-text">{booking.trainName}</span>
                     <span className={cn("inline-flex shrink-0 items-center gap-1.5 text-[0.75rem]", tone.text)}>
                       <span className={cn("size-1.5 rounded-full", tone.dot)} aria-hidden />
-                      {booking.status === "partiallyConfirmed" ? "Partly confirmed" : <span className="capitalize">{booking.status}</span>}
+                      {t(`status.${booking.status}` as const)}
                     </span>
                   </div>
 
@@ -112,11 +113,9 @@ function Section({
 
                     {/* The date as a calendar leaf, not a clause at the end of a sentence. */}
                     <div className="shrink-0 border-l border-border pl-4 text-center sm:pl-5">
-                      <p className="text-[0.625rem] uppercase tracking-[0.09em] text-faint">{formatWeekday(booking.journeyDate)}</p>
+                      <p className="text-[0.625rem] uppercase tracking-[0.09em] text-faint">{formatWeekday(booking.journeyDate, locale)}</p>
                       <p className="tnum text-[1.25rem] leading-tight text-text">{Number(booking.journeyDate.slice(8, 10))}</p>
-                      <p className="text-[0.6875rem] leading-none text-faint">
-                        {new Date(`${booking.journeyDate}T00:00:00`).toLocaleString("en-IN", { month: "short" })}
-                      </p>
+                      <p className="text-[0.6875rem] leading-none text-faint">{formatMonthShort(booking.journeyDate, locale)}</p>
                     </div>
                   </div>
 
@@ -124,7 +123,7 @@ function Section({
                     <span className="tnum tracking-[0.08em]">PNR {booking.pnr}</span>
                     <span className="font-mono">{booking.classCode}</span>
                     <span>
-                      {booking.passengers.length} passenger{booking.passengers.length === 1 ? "" : "s"}
+                      {booking.passengers.length} {t(booking.passengers.length === 1 ? "trips.passenger" : "trips.passengers")}
                     </span>
                   </p>
                 </Link>

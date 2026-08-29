@@ -12,9 +12,11 @@ import { TrainHeroMap } from "@/components/map/TrainHeroMap";
 import { RailSpine } from "@/components/rail/RailSpine";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
 export function TripDetail({ pnr }: { pnr: string }) {
+  const { t, locale } = useLocale();
   const queryClient = useQueryClient();
   const [showRoute, setShowRoute] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
@@ -56,7 +58,7 @@ export function TripDetail({ pnr }: { pnr: string }) {
   return (
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
       <div className="mb-4 flex items-center gap-2 text-[0.8125rem] text-faint">
-        <Link href="/trips" className="hover:text-dim">My trips</Link>
+        <Link href="/trips" className="hover:text-dim">{t("trip.myTrips")}</Link>
         <ChevronRight className="size-3" aria-hidden />
         <span className="tnum text-dim">{pnr}</span>
       </div>
@@ -65,15 +67,14 @@ export function TripDetail({ pnr }: { pnr: string }) {
         <div className="card mb-4 flex items-start gap-2.5 border-border bg-surface-2 p-3.5">
           <Undo2 className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
           <div>
-            <p className="text-[0.875rem] text-text">Ticket cancelled</p>
+            <p className="text-[0.875rem] text-text">{t("trip.ticketCancelled")}</p>
             <p className="mt-0.5 text-[0.8125rem] text-dim">
               {booking.refundAmount !== null ? (
                 <>
-                  <span className="tnum text-ok">{formatRupees(booking.refundAmount)}</span> is on its way back to your
-                  original payment method. Refunds usually land within 5 to 7 working days.
+                  <span className="tnum text-ok">{formatRupees(booking.refundAmount)}</span> {t("trip.refundOnItsWay")}
                 </>
               ) : (
-                "Refund is being processed."
+                t("trip.refundProcessing")
               )}
             </p>
           </div>
@@ -85,12 +86,10 @@ export function TripDetail({ pnr }: { pnr: string }) {
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
           <div>
             <p className="text-[0.875rem] text-text">
-              {booking.status === "partiallyConfirmed" ? "Some passengers are still waitlisted" : "Still on the waiting list"}
+              {t(booking.status === "partiallyConfirmed" ? "trip.someWaitlisted" : "trip.stillWaitlisted")}
             </p>
             <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-dim">
-              {booking.chartStatus === "prepared"
-                ? "The chart is prepared. Waitlisted passengers on this ticket cannot travel and are refunded automatically."
-                : "This resolves when the chart is prepared, about four hours before departure. We'll tell you either way — and if it doesn't clear, we'll have alternatives ready."}
+              {t(booking.chartStatus === "prepared" ? "trip.chartPreparedWaitlistBody" : "trip.chartNotPreparedWaitlistBody")}
             </p>
           </div>
         </div>
@@ -127,8 +126,8 @@ export function TripDetail({ pnr }: { pnr: string }) {
               aria-expanded={showRoute}
               className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-surface-2"
             >
-              <span className="text-[0.875rem] text-text">Full route</span>
-              <span className="text-[0.75rem] text-faint">{train.schedule.length} stops</span>
+              <span className="text-[0.875rem] text-text">{t("trip.fullRoute")}</span>
+              <span className="text-[0.75rem] text-faint">{train.schedule.length} {t("trip.stops")}</span>
               <ChevronRight className={cn("ml-auto size-4 text-faint transition-transform", showRoute && "rotate-90")} aria-hidden />
             </button>
             {showRoute && (
@@ -147,11 +146,11 @@ export function TripDetail({ pnr }: { pnr: string }) {
 
           {!cancelled && (
             <div className="card p-4">
-              <h2 className="mb-3 text-[0.9375rem] text-text">On board</h2>
+              <h2 className="mb-3 text-[0.9375rem] text-text">{t("trip.onBoard")}</h2>
               <div className="grid gap-2 sm:grid-cols-3">
-                <Action icon={UtensilsCrossed} label="Order food to your seat" detail="Delivered by PNR at a station en route" />
-                <Action icon={ShoppingBag} label="Coach attendant" detail="Bedding, cleaning, complaints" />
-                <Action icon={CircleAlert} label="Report a problem" detail="Safety, security or cleanliness" />
+                <Action icon={UtensilsCrossed} label={t("trip.orderFood")} detail={t("trip.orderFoodDetail")} />
+                <Action icon={ShoppingBag} label={t("trip.coachAttendant")} detail={t("trip.coachAttendantDetail")} />
+                <Action icon={CircleAlert} label={t("trip.reportProblem")} detail={t("trip.reportProblemDetail")} />
               </div>
             </div>
           )}
@@ -169,12 +168,10 @@ export function TripDetail({ pnr }: { pnr: string }) {
             <FileText className={cn("size-4 shrink-0", booking.chartStatus === "prepared" ? "text-info" : "text-faint")} aria-hidden />
             <div>
               <p className="text-[0.8125rem] text-text">
-                {booking.chartStatus === "prepared" ? "Chart prepared" : "Chart not prepared yet"}
+                {t(booking.chartStatus === "prepared" ? "trip.chartPrepared" : "trip.chartNotPrepared")}
               </p>
               <p className="text-[0.6875rem] leading-relaxed text-faint">
-                {booking.chartStatus === "prepared"
-                  ? "Berths are final. Any unclaimed berth is now the ticket examiner's to allot."
-                  : "Berths are finalised about four hours before departure."}
+                {t(booking.chartStatus === "prepared" ? "trip.chartPreparedFootnote" : "trip.chartNotPreparedFootnote")}
               </p>
             </div>
           </div>
@@ -190,10 +187,19 @@ export function TripDetail({ pnr }: { pnr: string }) {
 
           {!cancelled && refund && (
             <div className="card p-4">
-              <h2 className="mb-2 text-[0.9375rem] text-text">Cancel this ticket</h2>
+              <h2 className="mb-2 text-[0.9375rem] text-text">{t("trip.cancelThisTicket")}</h2>
               <p className="mb-3 text-[0.8125rem] leading-relaxed text-dim">
-                You&rsquo;d get <span className="tnum text-ok">{formatRupees(refund.quote.refundAmount)}</span> of{" "}
-                <span className="tnum">{formatRupees(refund.quote.bookingTotal)}</span> back.
+                {locale === "hi" ? (
+                  <>
+                    <span className="tnum">{formatRupees(refund.quote.bookingTotal)}</span> में से{" "}
+                    <span className="tnum text-ok">{formatRupees(refund.quote.refundAmount)}</span> वापस.
+                  </>
+                ) : (
+                  <>
+                    <span className="tnum text-ok">{formatRupees(refund.quote.refundAmount)}</span> {t("book.outOf")}{" "}
+                    <span className="tnum">{formatRupees(refund.quote.bookingTotal)}</span> {t("book.back")}.
+                  </>
+                )}
                 <span className="mt-1 block text-[0.75rem] text-faint">{refund.quote.slab}.</span>
               </p>
 
@@ -205,14 +211,14 @@ export function TripDetail({ pnr }: { pnr: string }) {
                     disabled={cancel.isPending}
                     className="btn flex-1 bg-danger px-3 py-2 text-[0.8125rem] text-[color:var(--surface)] hover:opacity-90 disabled:opacity-50"
                   >
-                    {cancel.isPending ? "Cancelling…" : "Yes, cancel"}
+                    {cancel.isPending ? t("trip.cancelling") : t("trip.yesCancel")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmingCancel(false)}
                     className="btn btn-secondary px-4 py-2 text-[0.8125rem] text-dim"
                   >
-                    Keep it
+                    {t("trip.keepIt")}
                   </button>
                 </div>
               ) : (
@@ -221,13 +227,13 @@ export function TripDetail({ pnr }: { pnr: string }) {
                   onClick={() => setConfirmingCancel(true)}
                   className="btn w-full border border-border bg-surface px-3 py-2 text-[0.8125rem] text-dim hover:border-danger/40 hover:text-danger"
                 >
-                  Cancel ticket
+                  {t("trip.cancelTicket")}
                 </button>
               )}
 
               {cancel.isError && (
                 <p role="alert" className="mt-2 rounded-lg bg-danger-soft px-2.5 py-2 text-[0.75rem] text-danger">
-                  {cancel.error instanceof Error ? cancel.error.message : "Could not cancel"}
+                  {cancel.error instanceof Error ? cancel.error.message : t("trip.couldNotCancel")}
                 </p>
               )}
             </div>

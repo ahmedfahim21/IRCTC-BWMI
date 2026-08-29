@@ -7,15 +7,20 @@ import { api } from "@/lib/apiClient";
 import { formatDelay, formatMinute, journeyInstant, todayIso } from "@/lib/domain/time";
 import { RouteRibbon } from "@/components/rail/RouteRibbon";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useLocale } from "@/lib/i18n/useLocale";
 import { cn } from "@/components/ui/cn";
 
-function countdown(ms: number): string {
-  if (ms <= 0) return "Departed";
+function countdown(ms: number, locale: "en" | "hi", departedLabel: string): string {
+  if (ms <= 0) return departedLabel;
   const mins = Math.floor(ms / 60000);
-  if (mins < 60) return `in ${mins} min`;
+  const inWord = locale === "hi" ? "में" : "in";
+  if (mins < 60) return locale === "hi" ? `${mins} मिनट ${inWord}` : `${inWord} ${mins} min`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `in ${hours}h ${mins % 60}m`;
-  return `in ${Math.floor(hours / 24)} day${Math.floor(hours / 24) === 1 ? "" : "s"}`;
+  if (hours < 24) return locale === "hi" ? `${hours}घं ${mins % 60}मि ${inWord}` : `${inWord} ${hours}h ${mins % 60}m`;
+  const days = Math.floor(hours / 24);
+  return locale === "hi"
+    ? `${days} दिन ${inWord}`
+    : `${inWord} ${days} day${days === 1 ? "" : "s"}`;
 }
 
 /**
@@ -23,6 +28,7 @@ function countdown(ms: number): string {
  * forgets you the moment you pay; this is the other half of the product.
  */
 export function NextTripCard() {
+  const { t, locale } = useLocale();
   const today = todayIso();
 
   const { data: list, isPending: listPending } = useQuery({
@@ -58,12 +64,14 @@ export function NextTripCard() {
         {isRunning ? (
           <span className="relative flex items-center gap-1.5 text-ok">
             <span className="live-ring relative inline-flex size-1.5 rounded-full bg-ok" aria-hidden />
-            <span className="text-[0.6875rem] uppercase tracking-wider">Running now</span>
+            <span className="text-[0.6875rem] uppercase tracking-wider">{t("trip.runningNow")}</span>
           </span>
         ) : (
-          <span className="eyebrow">Your next trip</span>
+          <span className="eyebrow">{t("home.upcoming")}</span>
         )}
-        <span className="ml-auto tnum text-[0.75rem] text-faint">{countdown(departureMs - Date.now())}</span>
+        <span className="ml-auto tnum text-[0.75rem] text-faint">
+          {countdown(departureMs - Date.now(), locale, t("trip.departed"))}
+        </span>
       </div>
 
       <div className="flex items-start justify-between gap-4">
@@ -79,7 +87,7 @@ export function NextTripCard() {
         </div>
         <div className="shrink-0 text-right">
           <p className="tnum text-lg text-text">{formatMinute(next.boardingMinute)}</p>
-          <p className={cn("tnum text-[0.6875rem]", delay > 5 ? "text-warn" : "text-ok")}>{formatDelay(delay)}</p>
+          <p className={cn("tnum text-[0.6875rem]", delay > 5 ? "text-warn" : "text-ok")}>{formatDelay(delay, locale)}</p>
         </div>
       </div>
 
@@ -99,17 +107,23 @@ export function NextTripCard() {
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3 text-[0.75rem]">
             <span className="flex items-center gap-1.5 text-dim">
               <MapPin className="size-3.5 text-faint" aria-hidden />
-              Platform <span className="tnum text-text">{trip.boardingStop.platform ?? "—"}</span>
+              {t("common.platform")} <span className="tnum text-text">{trip.boardingStop.platform ?? "—"}</span>
             </span>
             {trip.coachPosition && (
               <span className="flex items-center gap-1.5 text-dim">
-                Coach <span className="tnum text-text">{trip.coachPosition.coach.code}</span>
-                <span className="text-faint">· {trip.coachPosition.distanceFromEntryM} m from the bridge</span>
+                {t("trip.coach")} <span className="tnum text-text">{trip.coachPosition.coach.code}</span>
+                <span className="text-faint">
+                  {" "}
+                  ·{" "}
+                  {locale === "hi"
+                    ? `पुल से ${trip.coachPosition.distanceFromEntryM} मी.`
+                    : `${trip.coachPosition.distanceFromEntryM} m from the bridge`}
+                </span>
               </span>
             )}
             <span className="ml-auto flex items-center gap-1.5 text-faint">
               <Clock className="size-3.5" aria-hidden />
-              {trip.booking.chartStatus === "prepared" ? "Chart prepared" : "Chart not prepared"}
+              {t(trip.booking.chartStatus === "prepared" ? "trip.chartPrepared" : "trip.chartNotPrepared")}
             </span>
           </div>
         </>
