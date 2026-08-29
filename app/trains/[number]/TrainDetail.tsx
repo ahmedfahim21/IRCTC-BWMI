@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from "lucide-react";
+import { ChevronDown, Gauge, Info, MapPin, Repeat, Route, Timer, Utensils } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { formatDuration, formatMinute, todayIso } from "@/lib/domain/time";
 import { RailSpine } from "@/components/rail/RailSpine";
+import { RouteGlyph } from "@/components/rail/RouteGlyph";
 import { TrainHeroMap } from "@/components/map/TrainHeroMap";
 import { CoachStrip, PlatformDiagram } from "@/components/coach/CoachStrip";
 import { BerthMap } from "@/components/coach/BerthMap";
@@ -82,20 +83,22 @@ export function TrainDetail({ number }: { number: string }) {
   return (
     <div className="mx-auto max-w-4xl px-4 pb-20 pt-5 sm:px-6">
       <header className="mb-4">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="tnum text-[1.0625rem] text-brand">{train.number}</span>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          <span className="tnum rounded-md border border-border bg-surface px-1.5 py-0.5 font-mono text-[0.75rem] tracking-[0.06em] text-brand">
+            {train.number}
+          </span>
           <h1 className="text-[1.25rem] tracking-[-0.01em] text-text">{train.name}</h1>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-2">
+        <div className="mt-3.5 flex max-w-xs items-center gap-4">
           <div>
-            <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(first.departureMinute)}</p>
-            <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{first.stationCode}</p>
+            <p className="tnum text-[1.5rem] leading-none tracking-[-0.02em] text-text">{formatMinute(first.departureMinute)}</p>
+            <p className="mt-1.5 font-mono text-[0.6875rem] tracking-wide text-faint">{first.stationCode}</p>
           </div>
-          <ArrowRight className="mb-4 size-3.5 text-faint" aria-hidden />
-          <div>
-            <p className="tnum text-[1.375rem] leading-none text-text">{formatMinute(last.arrivalMinute)}</p>
-            <p className="mt-1 font-mono text-[0.6875rem] tracking-wide text-faint">{last.stationCode}</p>
+          <RouteGlyph className="mb-5" />
+          <div className="text-right">
+            <p className="tnum text-[1.5rem] leading-none tracking-[-0.02em] text-text">{formatMinute(last.arrivalMinute)}</p>
+            <p className="mt-1.5 font-mono text-[0.6875rem] tracking-wide text-faint">{last.stationCode}</p>
           </div>
         </div>
 
@@ -142,13 +145,16 @@ export function TrainDetail({ number }: { number: string }) {
         </Link>
       </header>
 
-      <dl className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-        <Stat icon={Route} label="Distance" value={`${train.distanceKm} km`} />
-        <Stat icon={Timer} label="Duration" value={formatDuration(train.durationMins)} />
-        <Stat icon={MapPin} label="Halts" value={`${train.haltCount}`} sub={`of ${train.schedule.length} stops`} />
-        <Stat icon={Gauge} label="Avg speed" value={`${train.avgSpeedKmph}`} sub="km/h" />
-        <Stat icon={Gauge} label="Fastest leg" value={`${train.maxSpeedKmph}`} sub="km/h" />
-      </dl>
+      {/* One instrument strip, not five loose boxes — hairlines, not gaps. */}
+      <div className="card mb-4 overflow-hidden">
+        <dl className="grid grid-cols-2 gap-px bg-border sm:grid-cols-5">
+          <Stat icon={Route} label="Distance" value={`${train.distanceKm} km`} />
+          <Stat icon={Timer} label="Duration" value={formatDuration(train.durationMins)} />
+          <Stat icon={MapPin} label="Halts" value={`${train.haltCount}`} sub={`of ${train.schedule.length} stops`} />
+          <Stat icon={Gauge} label="Avg speed" value={`${train.avgSpeedKmph}`} sub="km/h" />
+          <Stat icon={Gauge} label="Fastest leg" value={`${train.maxSpeedKmph}`} sub="km/h" className="col-span-2 sm:col-span-1" />
+        </dl>
+      </div>
 
       <TrainHeroMap
         trainNumber={train.number}
@@ -160,24 +166,25 @@ export function TrainDetail({ number }: { number: string }) {
         className="mb-4 aspect-[3/2] w-full sm:aspect-[16/7]"
       />
 
-      <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border" role="tablist">
-        {TABS.map((key) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={tab === key}
-            onClick={() => setTab(key)}
-            className={cn(
-              "shrink-0 border-b-2 px-3 py-2 text-[0.8125rem] transition-colors",
-              tab === key ? "border-brand text-text" : "border-transparent text-faint hover:text-dim"
-            )}
-          >
-            {TAB_LABEL[key]}
-          </button>
-        ))}
-      </div>
+      <div className="card min-w-0 overflow-hidden">
+        <div className="flex gap-1 overflow-x-auto border-b border-border bg-surface-2 px-2" role="tablist">
+          {TABS.map((key) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={cn(
+                "shrink-0 border-b-2 px-3 py-2.5 text-[0.8125rem] transition-colors",
+                tab === key ? "border-brand text-text" : "border-transparent text-faint hover:text-dim"
+              )}
+            >
+              {TAB_LABEL[key]}
+            </button>
+          ))}
+        </div>
 
-      <div className="card min-w-0 overflow-hidden p-4">
+        <div className="min-w-0 p-4">
         {tab === "route" && (
           <RailSpine
             schedule={train.schedule}
@@ -254,6 +261,7 @@ export function TrainDetail({ number }: { number: string }) {
           ) : (
             <PunctualitySparkline history={punctuality} />
           ))}
+        </div>
       </div>
     </div>
   );
@@ -276,14 +284,16 @@ function Stat({
   label,
   value,
   sub,
+  className,
 }: {
   icon: typeof Route;
   label: string;
   value: string;
   sub?: string;
+  className?: string;
 }) {
   return (
-    <div className="card px-3 py-2.5">
+    <div className={cn("bg-surface px-3.5 py-3", className)}>
       <dt className="mb-1 flex items-center gap-1.5 text-[0.625rem] uppercase tracking-wider text-faint">
         <Icon className="size-3" aria-hidden />
         {label}
