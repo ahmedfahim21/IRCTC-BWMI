@@ -3,6 +3,7 @@ import {
   headerSummary,
   stationMatches,
   statusLabel,
+  toolLabel,
   toolResultText,
   toolStatus,
 } from "@/components/chat/toolCallDisplay";
@@ -16,6 +17,11 @@ describe("tool call display", () => {
     expect(statusLabel("calling")).toBe("Calling");
     expect(statusLabel("done")).toBe("Done");
     expect(statusLabel("failed")).toBe("Failed");
+  });
+
+  it("title-cases tool names", () => {
+    expect(toolLabel("lookup_station")).toBe("Lookup Station");
+    expect(toolLabel("set_search")).toBe("Set Search");
   });
 
   it("summarises a route in the header", () => {

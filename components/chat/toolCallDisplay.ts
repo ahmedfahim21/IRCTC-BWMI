@@ -1,8 +1,16 @@
+import type { Locale } from "@/lib/i18n/useLocale";
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-import type { Locale } from "@/lib/i18n/useLocale";
+export function toolLabel(name: string): string {
+  return name
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
 
 export type ToolStatus = "calling" | "done" | "failed";
 
