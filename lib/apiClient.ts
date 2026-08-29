@@ -174,6 +174,12 @@ export interface RouteAvailabilityResponse {
 export interface StatusResponse {
   live: boolean;
   voice: boolean;
+  voiceModels: {
+    stt: string;
+    sttMode: string;
+    tts: string;
+    ttsSpeaker: string;
+  } | null;
   chatLive: boolean;
   quota: { month: string; used: number; budget: number; remaining: number } | null;
   sources: Record<string, string>;

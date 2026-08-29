@@ -7,12 +7,12 @@ import { cn } from "@/components/ui/cn";
 import { Armchair } from "lucide-react";
 
 const TONE = {
-  available: { label: "text-ok", ring: "hover:border-ok/40" },
-  rac: { label: "text-warn", ring: "hover:border-warn/40" },
-  waitlist: { label: "text-danger", ring: "hover:border-danger/40" },
-  regretted: { label: "text-faint", ring: "" },
-  notAvailable: { label: "text-faint", ring: "" },
-  departed: { label: "text-faint", ring: "" },
+  available: { label: "text-ok", ring: "hover:border-ok/40", fill: "border-ok/35 bg-ok-soft" },
+  rac: { label: "text-warn", ring: "hover:border-warn/40", fill: "border-warn/35 bg-warn-soft" },
+  waitlist: { label: "text-danger", ring: "hover:border-danger/40", fill: "border-danger/35 bg-danger-soft" },
+  regretted: { label: "text-faint", ring: "", fill: "border-border bg-surface-2" },
+  notAvailable: { label: "text-faint", ring: "", fill: "border-border bg-surface-2" },
+  departed: { label: "text-faint", ring: "", fill: "border-border bg-surface-2" },
 } as const;
 
 export const formatRupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
@@ -30,11 +30,13 @@ export function ClassCell({
   onSelect,
   selected,
   compact = false,
+  className,
 }: {
   availability: Availability;
   onSelect?: () => void;
   selected?: boolean;
   compact?: boolean;
+  className?: string;
 }) {
   const tone = TONE[availability.state];
   const bookable =
@@ -52,10 +54,11 @@ export function ClassCell({
       className={cn(
         "flex shrink-0 flex-col text-left transition-colors",
         compact
-          ? "w-[6.25rem] gap-0.5 rounded-lg border bg-surface px-2 py-1.5"
+          ? "w-[6.25rem] gap-0.5 rounded-lg border px-2 py-1.5"
           : "w-[8.5rem] gap-1.5 rounded-xl border bg-surface-2 p-2.5",
-        selected ? "border-brand bg-brand-soft" : "border-border",
-        bookable && onSelect ? cn("cursor-pointer", tone.ring) : "cursor-default opacity-60"
+        selected ? "border-brand bg-brand-soft" : compact ? tone.fill : "border-border",
+        bookable && onSelect ? cn("cursor-pointer", tone.ring) : "cursor-default opacity-60",
+        className
       )}
     >
       <span className="flex items-baseline justify-between gap-1">
