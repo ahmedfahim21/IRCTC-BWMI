@@ -26,17 +26,26 @@ export function TypeLegend({
             onClick={() => onToggle(index)}
             aria-pressed={active}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[0.75rem] transition-colors",
-              active ? "border-border-strong bg-surface text-text" : "border-border bg-surface-2 text-faint"
+              "btn shrink-0 gap-1.5 border px-2.5 py-1 text-[0.75rem]",
+              /*
+               * On and off must read at a glance: an active chip is a lifted
+               * white pill with its line's colour; a hidden one goes hollow
+               * and grey, visibly switched off rather than merely unhovered.
+               */
+              active
+                ? "border-border-strong bg-surface text-text shadow-[var(--shadow-sm)]"
+                : "border-transparent bg-surface-2 text-faint hover:text-dim"
             )}
           >
             <span
-              className="size-2 rounded-full"
+              className={cn("size-2 rounded-full", !active && "opacity-40")}
               style={{ background: active ? typeColourVar(index) : "var(--text-faint)" }}
               aria-hidden
             />
             {label}
-            <span className="tnum text-faint">{counts[index]}</span>
+            <span className={cn("tnum border-l pl-1.5 text-[0.6875rem] text-faint", active ? "border-border" : "border-border-strong/40")}>
+              {counts[index]}
+            </span>
           </button>
         );
       })}

@@ -144,7 +144,7 @@ export function LiveMap() {
                 value={listFilter}
                 onChange={(event) => setListFilter(event.target.value)}
                 placeholder="Find a train"
-                className="h-9 w-full rounded-lg border border-border bg-surface-2 pl-8 pr-3 text-[0.8125rem] text-text placeholder:text-faint"
+                className="field h-9 w-full rounded-full pl-8 pr-3 text-[0.8125rem] text-text outline-none placeholder:text-faint"
               />
             </label>
           </div>
@@ -159,6 +159,11 @@ export function LiveMap() {
                 <ErrorState error={error} onRetry={() => refetch()} />
               </div>
             )}
+            {!isPending && !isError && listed.length === 0 && (
+              <p className="px-3 py-6 text-center text-[0.8125rem] text-faint">
+                No running train matches &ldquo;{listFilter}&rdquo;.
+              </p>
+            )}
             {listed.map((train, index) => {
               const item = unpackTrain(train);
               const active = item.number === selectedNumber;
@@ -170,21 +175,19 @@ export function LiveMap() {
                   aria-selected={active}
                   onClick={() => selectTrain(item)}
                   className={cn(
-                    "flex w-full items-start gap-2.5 border-b border-border px-3 py-2.5 text-left transition-colors hover:bg-surface-2",
-                    active && "bg-brand-soft"
+                    "flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-surface-2",
+                    active && "bg-brand-soft shadow-[inset_2px_0_0_var(--brand)]"
                   )}
                 >
                   <span
-                    className="mt-1.5 size-2 shrink-0 rounded-full"
+                    className="size-2 shrink-0 rounded-full"
                     style={{ background: typeColourVar(item.type) }}
                     aria-hidden
                   />
-                  <span className="min-w-0">
-                    <span className="flex items-baseline gap-2">
-                      <span className="tnum text-[0.8125rem] text-brand">{item.number}</span>
-                      <span className="truncate text-[0.8125rem] text-dim">{item.name}</span>
-                    </span>
-                    <span className="text-[0.6875rem] text-faint">{data?.types[item.type]}</span>
+                  <span className="tnum shrink-0 font-mono text-[0.75rem] text-brand">{item.number}</span>
+                  <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-dim">{item.name}</span>
+                  <span className="shrink-0 text-[0.5625rem] uppercase tracking-[0.08em] text-faint">
+                    {data?.types[item.type]}
                   </span>
                 </button>
               );

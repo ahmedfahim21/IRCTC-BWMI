@@ -86,6 +86,19 @@ export function TrainLayer({
       hits.push({ train: unpack(packed), x: pt.x, y: pt.y });
     }
     hitsRef.current = hits;
+    /*
+     * Where the first train landed, in canvas px — so a test (or a human
+     * debugging why a click missed) can find a real target instead of
+     * guessing at pixels whose occupants move with the wall clock.
+     */
+    canvas.dataset.trainCount = String(hits.length);
+    if (hits[0]) {
+      canvas.dataset.trainX = String(Math.round(hits[0].x));
+      canvas.dataset.trainY = String(Math.round(hits[0].y));
+    } else {
+      delete canvas.dataset.trainX;
+      delete canvas.dataset.trainY;
+    }
   }, [trains, activeTypes, selectedNumber, project, viewEpoch]);
 
   const hitTest = (clientX: number, clientY: number) => {
