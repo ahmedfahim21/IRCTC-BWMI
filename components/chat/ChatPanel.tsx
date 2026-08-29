@@ -163,10 +163,19 @@ export function ChatPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label={t("chat.openBooking")}
-          className="fixed bottom-20 left-4 z-40 flex size-12 items-center justify-center rounded-full border border-border bg-surface text-dim shadow-[var(--shadow-lg)] hover:text-text sm:bottom-6 sm:left-6"
+          aria-label={`${t("chat.openBooking")} — ${t("chat.trigger.title")}, ${t("chat.trigger.subtitle")}`}
+          className="fixed bottom-20 left-4 z-40 flex items-center gap-2.5 rounded-full border border-border bg-surface py-2 pl-2 pr-4 text-left shadow-[var(--shadow-lg)] hover:border-brand/40 sm:bottom-6 sm:left-6"
         >
-          <MessageCircle className="size-5" aria-hidden />
+          <span className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand">
+            <MessageCircle className="size-4" aria-hidden />
+            <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-surface bg-surface text-dim">
+              <Mic className="size-2.5" aria-hidden />
+            </span>
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-[0.75rem] text-text">{t("chat.trigger.title")}</span>
+            <span className="text-[0.625rem] text-faint">{t("chat.trigger.subtitle")}</span>
+          </span>
         </button>
       )}
 
