@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useSyncExternalStore, type ReactNode } fro
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ClassCode, QuotaCode } from "@/lib/types";
 import type { UiActionName } from "./uiActions";
+import { WebMcpRegistrar } from "./webmcp";
 
 export type IntentResult = {
   ok: boolean;
@@ -286,6 +287,7 @@ export function AgentStoreProvider({ children }: { children: ReactNode }) {
     <>
       <Suspense fallback={null}>
         <AgentRouteSync />
+        <WebMcpRegistrar />
       </Suspense>
       {children}
     </>
